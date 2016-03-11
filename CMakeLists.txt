@@ -7,14 +7,14 @@ find_package(LIBRT)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${CPPCMS_INCLUDE_DIR})
 
 set(OSCAR_WEB_SOURCES_CPP
-oscarweb.cpp
-MainHandler.cpp
-IndexDB.cpp
-ItemDB.cpp
-GeoHierarchySubSetSerializer.cpp
-CQRCompleter.cpp
-CellQueryResultsSerializer.cpp
-BinaryWriter.cpp
+server/oscarweb.cpp
+server/MainHandler.cpp
+server/IndexDB.cpp
+server/ItemDB.cpp
+server/GeoHierarchySubSetSerializer.cpp
+server/CQRCompleter.cpp
+server/CellQueryResultsSerializer.cpp
+server/BinaryWriter.cpp
 )
 
 IF(CPPCMS_FOUND AND NOT CMAKE_CROSSCOMPILING)
