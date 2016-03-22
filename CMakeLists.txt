@@ -7,7 +7,7 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/vendor/sserialize/cmake/
 )
 
-find_package(CPPCMS Required)
+find_package(CPPCMS REQUIRED)
 find_package(LIBRT)
 
 include_directories(
