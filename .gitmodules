@@ -1,0 +1,3 @@
+[submodule "vendor/liboscar"]
+	path = vendor/liboscar
+	url = https://github.com/dbahrdt/liboscar
