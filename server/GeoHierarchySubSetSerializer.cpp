@@ -162,4 +162,52 @@ std::ostream & GeoHierarchySubSetSerializer::toBinary(std::ostream & out, const 
 	return out;
 }
 
+std::ostream&
+GeoHierarchySubSetSerializer::dagJson(std::ostream& out, const sserialize::Static::spatial::GeoHierarchy::SubSet& subSet) const
+{
+	std::unordered_set<uint32_t> writtenRegions;
+	out << "{";
+	if (subSet.root().priv() && subSet.root()->size()) {
+		std::queue<sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr> nodes;
+		out << "\"rootchildren\":";
+		char regionSeparator = '[';
+		for(const sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr & child : *subSet.root()) {
+			out << regionSeparator;
+			regionSeparator = ',';
+			out << m_gh.ghIdToStoreId(child->ghId());
+			writtenRegions.insert(child->ghId());
+			nodes.push(child);
+		}
+		out << "],\"regions\":";
+		regionSeparator = '{';
+		const sserialize::Static::spatial::GeoHierarchy * gh = &m_gh;
+		auto childToStoreIdDerfer = [gh](const sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr & n){ return gh->ghIdToStoreId(n->ghId()); };
+		while (nodes.size()) {
+			sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr node = nodes.front();
+			nodes.pop();
+			out << regionSeparator;
+			regionSeparator = ','; //should be faster than a branch
+			out << "\"" << m_gh.ghIdToStoreId(node->ghId()) << "\":{\"apxitems\":" << node->maxItemsSize();
+			out << ",\"children\":";
+			if (node->size()) {
+				typedef sserialize::TransformIterator<decltype(childToStoreIdDerfer), uint32_t, sserialize::Static::spatial::GeoHierarchy::SubSet::Node::ChildrenStorageContainer::const_iterator> ChildIdIterator;
+				printUintArray(out, ChildIdIterator(childToStoreIdDerfer, node->cbegin()), ChildIdIterator(childToStoreIdDerfer, node->cend()));
+			}
+			out << "}";
+			for(const sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr & child : *node) {
+				if (!writtenRegions.count(child->ghId())) {
+					writtenRegions.insert(child->ghId());
+					nodes.push(child);
+				}
+			}
+		}
+	}
+	else {
+		out << "rootchildren\":[],\"regions\":{}";
+	}
+	out << "}";
+	return out;
+}
+
+
 }//end namespace

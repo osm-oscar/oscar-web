@@ -25,6 +25,7 @@ private:
 	CellQueryResultsSerializer m_cqrSerializer;
 private:
 	void writeSubSet(std::ostream & out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
+	void writeDag(std::ostream & out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
 	void writeLogStats(const std::string & fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize);
 public:
 	CQRCompleter(cppcms::service& srv, const CompletionFileDataPtr & dataPtr);
@@ -73,6 +74,15 @@ public:
 	  * array<uint32_t>: [regionId]
 	  */
 	void maximumIndependentChildren();
+	
+	/** returns the dag for the query
+	  *
+	  * sst=(flatjson)
+	  * rf=<region filter>
+	  * q=<searchstring>
+	  * returns GeoHierarchySubSetSerializer dag-only
+	  */
+	void dag();
 };
 
 }//end namespace

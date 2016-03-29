@@ -44,9 +44,25 @@ namespace oscar_web {
   * (ID|MAX_ITEMS|CELLPOSITIONS_SIZE|CHILDREN_SIZE|(CELLPOSITION)*CELLPOSITIONS_SIZE|(CHILDID)*CHILDREN_SIZE
   * ----------------------------------------------------------------------------------------------------------
   * u32|u32      |u32               |u32          |(u32)                            |(u32)
+  * 
+  * The Dag-only versions are as follows:
+  * Flat-json:
+  * {
+  *   root-children : [int],
+  *   regions : {
+  *       "id" : {
+  *         children : [<int>, ...],
+  *         apxitems : <int>
+  *       }
+  *     }
+  * }
+  * 
+  * 
   */
 
 class GeoHierarchySubSetSerializer {
+public:
+	typedef enum {FLAT_JSON_FULL, FLAT_XML_FULL, TREE_XML_FULL, BINARY_FULL, FLAT_JSON_DAG} Type;
 private:
 	sserialize::Static::spatial::GeoHierarchy m_gh;
 private:
@@ -58,6 +74,7 @@ public:
 	std::ostream & toTreeXML(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet) const;
 	std::ostream & toJson(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet) const;
 	std::ostream & toBinary(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet) const;
+	std::ostream & dagJson(std::ostream & out, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet) const;
 };
 
 }

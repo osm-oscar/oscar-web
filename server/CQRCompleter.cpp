@@ -47,6 +47,12 @@ void CQRCompleter::writeSubSet(std::ostream& out, const std::string & sst, const
 	}
 }
 
+void CQRCompleter::writeDag(std::ostream& out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet& subSet) {
+	if (sst == "flatjson") {
+		m_subSetSerializer.dagJson(out, subSet);
+	}
+}
+
 void CQRCompleter::fullCQR() {
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
@@ -444,7 +450,34 @@ void CQRCompleter::maximumIndependentChildren() {
 	writeLogStats("maximumIndependentChildren", cqs, ttm, cqrSize, 0);
 }
 
+
+void CQRCompleter::dag() {
+	sserialize::TimeMeasurer ttm;
+	ttm.begin();
 	
+	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
+	
+	response().set_content_header("text/json");
+	
+	//params
+	std::string cqs = request().get("q");
+	std::string dagType = request().get("sst");
+	std::string regionFilter = request().get("rf");
+	
+	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
+	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+	}
+	else {
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+	}
+	
+	std::ostream & out = response().out();
+	
+	writeDag(out, dagType, subSet);
+	
+	ttm.end();
+	writeLogStats("dag", cqs, ttm, subSet.cqr().cellCount(), 0);
 }
 
 }//end namespace
