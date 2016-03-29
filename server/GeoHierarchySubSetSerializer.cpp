@@ -79,7 +79,7 @@ std::ostream & GeoHierarchySubSetSerializer::toJson(std::ostream & out, const ss
 		std::queue<sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr> nodes;
 		out << ",\"rootchildren\":";
 		char regionSeparator = '[';
-		for(const sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr & child : *subSet.root()) {;
+		for(const sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr & child : *subSet.root()) {
 			out << regionSeparator;
 			regionSeparator = ',';
 			out << m_gh.ghIdToStoreId(child->ghId());
