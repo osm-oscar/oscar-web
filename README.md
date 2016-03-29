@@ -1,1 +1,1 @@
-oscar-web: a simple webfront-end/backend based on liboscar
+Oscar-web is a simple search engine for OpenStreetMap based on liboscar.
