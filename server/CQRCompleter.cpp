@@ -100,12 +100,12 @@ void CQRCompleter::fullCQR() {
 
 void CQRCompleter::simpleCQR() {
 	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
-	typedef GeoHierarchy::SubSet::NodePtr SubSetNodePtr;
-	typedef std::unordered_set<const sserialize::Static::spatial::GeoHierarchy::SubSet::Node*> RegionSet;
+	typedef std::unordered_set<const GeoHierarchy::SubSet::Node*> RegionSet;
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
+	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 	
@@ -199,10 +199,10 @@ void CQRCompleter::simpleCQR() {
 }
 
 void CQRCompleter::items() {
-	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
-	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
+	
+	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 	
@@ -256,10 +256,9 @@ void CQRCompleter::items() {
 }
 
 void CQRCompleter::children() {
-	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr SubSetNodePtr;
-	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
+	
 	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
@@ -311,10 +310,9 @@ void CQRCompleter::children() {
 }
 
 void CQRCompleter::maximumIndependentChildren() {
-	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr SubSetNodePtr;
-	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
+	
 	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");

@@ -18,6 +18,8 @@ namespace oscar_web {
 
 class CQRCompleter: public cppcms::application {
 private:
+	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr SubSetNodePtr;
+private:
 	CompletionFileDataPtr m_dataPtr;
 	GeoHierarchySubSetSerializer m_subSetSerializer;
 	CellQueryResultsSerializer m_cqrSerializer;
