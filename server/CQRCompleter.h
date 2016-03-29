@@ -25,7 +25,7 @@ private:
 	CellQueryResultsSerializer m_cqrSerializer;
 private:
 	void writeSubSet(std::ostream & out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
-	void writeLogStats(const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize);
+	void writeLogStats(const std::string & fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize);
 public:
 	CQRCompleter(cppcms::service& srv, const CompletionFileDataPtr & dataPtr);
 	virtual ~CQRCompleter();

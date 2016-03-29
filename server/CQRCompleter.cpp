@@ -11,10 +11,9 @@
 
 namespace oscar_web {
 
-void CQRCompleter::writeLogStats(const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize) {
-	*(m_dataPtr->log) << "CQRCompleter: t=" << tm.beginTime() << "s, rip=" << request().remote_addr() << ", q=[" << query << "], rs=" << cqrSize <<  " is=" << idxSize << ", ct=" << tm.elapsedMilliSeconds() << "ms" << std::endl;
+void CQRCompleter::writeLogStats(const std::string & fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize) {
+	*(m_dataPtr->log) << "CQRCompleter::" << fn << ": t=" << tm.beginTime() << "s, rip=" << request().remote_addr() << ", q=[" << query << "], rs=" << cqrSize <<  " is=" << idxSize << ", ct=" << tm.elapsedMilliSeconds() << "ms" << std::endl;
 }
-
 
 CQRCompleter::CQRCompleter(cppcms::service& srv, const CompletionFileDataPtr & dataPtr) :
 application(srv),
@@ -57,8 +56,6 @@ void CQRCompleter::fullCQR() {
 	std::string sst = request().get("sst");
 	bool ssonly = sserialize::toBool(request().get("ssonly"));
 	
-	std::cout << "query is: " << cqs << std::endl;
-	
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
 		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
@@ -66,8 +63,6 @@ void CQRCompleter::fullCQR() {
 	else {
 		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
 	}
-	
-	std::cout << "cqr.size=" << subSet.cqr().cellCount() << std::endl;
 	
 	if (!ssonly || sst == "binary") {
 		response().set_content_header("application/octet-stream");
@@ -83,19 +78,13 @@ void CQRCompleter::fullCQR() {
 	
 	std::ostream & out = response().out();
 
-	sserialize::TimeMeasurer tm;
 	if (!ssonly) {
-		tm.begin();
 		m_cqrSerializer.write(out, subSet.cqr());
-		tm.end();
-		std::cout << "Time to write cqr: " << tm.elapsedMilliSeconds() << " msec" << std::endl;
 	}
-	tm.begin();
 	writeSubSet(out, sst, subSet);
-	tm.end();
+	
 	ttm.end();
-	std::cout << "Time to write SubSet: "<< tm.elapsedMilliSeconds() << " ms " << std::endl;
-	writeLogStats(cqs, ttm, subSet.cqr().cellCount(), 0);
+	writeLogStats("fullCQR", cqs, ttm, subSet.cqr().cellCount(), 0);
 }
 
 void CQRCompleter::simpleCQR() {
@@ -194,8 +183,7 @@ void CQRCompleter::simpleCQR() {
 	}
 
 	ttm.end();
-	std::cout << "oscar_web::CQRCompleter::simpleCQR: query=" << cqs << ", cqr.size=" << cqrSize <<  " took " << ttm.elapsedMilliSeconds() << " ms" << std::endl;
-	writeLogStats(cqs, ttm, cqrSize, 0);
+	writeLogStats("simpleCQR", cqs, ttm, cqrSize, 0);
 }
 
 void CQRCompleter::items() {
@@ -251,8 +239,7 @@ void CQRCompleter::items() {
 	}
 
 	ttm.end();
-	std::cout << "oscar_web::CQRCompleter::items: query=" << cqs << ", cqr.size=" << cqrSize << ", idx.size=" << idx.size() <<  " took " << ttm.elapsedMilliSeconds() << " ms" << std::endl;
-	writeLogStats(cqs, ttm, cqrSize, idx.size());
+	writeLogStats("items", cqs, ttm, cqrSize, idx.size());
 }
 
 void CQRCompleter::children() {
@@ -305,8 +292,7 @@ void CQRCompleter::children() {
 	}
 
 	ttm.end();
-	std::cout << "oscar_web::CQRCompleter::children: query=" << cqs << ", cqr.size=" << cqrSize  << " took " << ttm.elapsedMilliSeconds() << " ms" << std::endl;
-	writeLogStats(cqs, ttm, cqrSize, 0);
+	writeLogStats("children", cqs, ttm, cqrSize, 0);
 }
 
 void CQRCompleter::maximumIndependentChildren() {
@@ -455,8 +441,9 @@ void CQRCompleter::maximumIndependentChildren() {
 	}
 
 	ttm.end();
-	std::cout << "oscar_web::CQRCompleter::maximumIndependentChildren: query=" << cqs << ", cqr.size=" << cqrSize  << " took " << ttm.elapsedMilliSeconds() << " ms" << std::endl;
-	writeLogStats(cqs, ttm, cqrSize, 0);
+	writeLogStats("maximumIndependentChildren", cqs, ttm, cqrSize, 0);
+}
+
 	
 }
 
