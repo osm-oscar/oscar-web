@@ -8,10 +8,29 @@ define(["jquery", "search"], function ($, search) {
             if (c.is(":empty")) {
                 var container = $("<div class='list-group'></div>");
                 for (var category in this.categories) {
-                    $("<a style='border: none' class='list-group-item'><i class='fa fa-" + this.categories[category].img
-                        + "' category='" + category + "'></i>&nbsp; " + this.categories[category].desc + "</a>").on("click", this.displaySubCategories.bind(this)).appendTo(container);
+                    $("<a style='border: none' class='list-group-item'><i class='fa fa-" + menu.categories[category].img
+                        + "' category='" + category + "'></i>&nbsp; " + menu.categories[category].desc + "</a>").on("click", menu.displaySubCategories).appendTo(container);
                 }
+                $("<div class='ui-widget'><label for='tagsSearch' data-toggle='tooltip' data-placement='right' title='Search for tags not covered by the menu above'>Tagsearch: </label><input id='tagsSearch' placeholder='Was möchten Sie suchen?'></div>").appendTo(container);
                 c.append(container);
+
+                $("#tagsSearch").autocomplete({
+                    source: function (request, response) {
+                        var service = "http://taginfo.openstreetmap.org/api/4/tags/popular?sortname=count_all&sortorder=desc&page=1&rp=8&query=" + request['term'];
+                        var result = [];
+
+                        $.getJSON(service, function (data) {
+                            for (var suggestion in data.data) {
+                                result.push("@" + data.data[suggestion].key + ":" + data.data[suggestion].value);
+                            }
+                            response(result);
+                        });
+                    },
+                    select: function(event, ui){
+                        $("#search_text").tokenfield('createToken', {value:  ui.item.value, label:  ui.item.value});
+                    }
+                });
+                $('[data-toggle="tooltip"]').tooltip();
             }
         },
 
@@ -25,11 +44,11 @@ define(["jquery", "search"], function ($, search) {
             var c = $("#subCategories");
             c.empty();
             var container = $("<div class='list-group'></div>");
-            for (var subcategory in this.categories[category]["subcategories"]) {
+            for (var subcategory in menu.categories[category]["subcategories"]) {
                 // exists a special key?
-                var key = this.categories[category]["subcategories"][subcategory].key ? this.categories[category]["subcategories"][subcategory].key : this.categories[category]["key"];
-                $("<a style='border: none' class='list-group-item' key='" + key +"' value='" + this.categories[category]["subcategories"][subcategory].value + "'>"
-                    + this.categories[category]["subcategories"][subcategory].desc + "</a>").on("click", function(e){menu.appendToSearchString(e); search.doCompletion();}).appendTo(container);
+                var key = menu.categories[category]["subcategories"][subcategory].key ? menu.categories[category]["subcategories"][subcategory].key : menu.categories[category]["key"];
+                $("<a style='border: none' class='list-group-item' key='" + key +"' value='" + menu.categories[category]["subcategories"][subcategory].value + "'>"
+                    + menu.categories[category]["subcategories"][subcategory].desc + "</a>").on("click", function(e){menu.appendToSearchString(e); search.doCompletion();}).appendTo(container);
             }
 
             c.append(container);

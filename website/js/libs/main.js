@@ -127,9 +127,12 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             $('#graph').click(function () {
                 $("#onePath").button();
                 $("#wholeTree").button().click(function () {
+                    map.loadWholeTree();
                     tree.visualizeDAG(state.DAG.at(0xFFFFFFFF));
                 });
-                tree.visualizeDAG(state.DAG.at(0xFFFFFFFF));
+                if (state.DAG.at(0xFFFFFFFF)) {
+                    tree.visualizeDAG(state.DAG.at(0xFFFFFFFF));
+                }
             });
 
             $('#closeTree a').click(function () {
@@ -270,5 +273,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 
             //check if there's a query in our location string
             search.queryFromSearchLocation();
+
         });
     });
