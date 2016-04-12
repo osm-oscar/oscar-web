@@ -26,7 +26,7 @@ m_cqrSerializer(dataPtr->completer->indexStore().indexType())
 	dispatcher().assign("/clustered/children", &CQRCompleter::children, this);
 	dispatcher().assign("/clustered/michildren", &CQRCompleter::maximumIndependentChildren, this);
 	dispatcher().assign("/clustered/items", &CQRCompleter::items, this);
-	dispatcher().assign("/clustered/dag", &CQRCompleter::items, this);
+	dispatcher().assign("/clustered/dag", &CQRCompleter::dag, this);
 	mapper().assign("clustered","/clustered");
 }
 
