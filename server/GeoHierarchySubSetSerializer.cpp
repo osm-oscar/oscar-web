@@ -209,5 +209,4 @@ GeoHierarchySubSetSerializer::dagJson(std::ostream& out, const sserialize::Stati
 	return out;
 }
 
-
 }//end namespace

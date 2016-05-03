@@ -95,7 +95,6 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
 			}
 			return { id : e.id, name : e.name, type : t};
 		},
-	   
         resultListTemplateDataFromItem: function (item, shapeSrcType) {
             function isMatchedTag(key, value) {
                 var testString = key + ":" + value;
