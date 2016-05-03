@@ -340,14 +340,14 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
             );
 			map.addKeyValueQuery("activeItems", itemId, inserted);
 		},
-		addKeyValueQuery: function(shapeSrcType, itemId, inserted) {
+		addKeyValueQuery: function(element) {
 			function itemIdQuery(e) {
 				var me = $(this);
-				var myKey = me.attr('data-query');
-				if (myKey === undefined) {
+				var myItemId = me.attr('data-item-id');
+				if (myItemId === undefined) {
 					return false;
 				}
-				var myQstr = "$item:" + myKey;
+				var myQstr = "$item:" + myItemId;
 				tools.addSingleQueryStatementToQuery(myQstr);
 				return false;
 			}
@@ -367,9 +367,9 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
                 return false;
             }
 
-            $('#' + shapeSrcType + 'Details' + itemId + " .item-detail-key", inserted).click(itemDetailQuery);
-            $('#' + shapeSrcType + 'Details' + itemId + " .item-detail-value", inserted).click(itemDetailQuery);
-			$('#' + shapeSrcType + 'Details'+itemId+" .item-detail-id", inserted).click(itemIdQuery);
+            $(".item-detail-key", element).click(itemDetailQuery);
+            $(".item-detail-value", element).click(itemDetailQuery);
+			$(".item-detail-id", element).click(itemIdQuery);
         },
         flatCqrTreeDataSource: function (cqr) {
             function getItems(regionChildrenInfo, context) {
