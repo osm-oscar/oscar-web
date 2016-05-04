@@ -95,7 +95,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
 			}
 			return { id : e.id, name : e.name, type : t};
 		},
-        resultListTemplateDataFromItem: function (item, shapeSrcType) {
+        resultListTemplateDataFromItem: function (item) {
             function isMatchedTag(key, value) {
                 var testString = key + ":" + value;
                 return state.cqrRegExp.test(testString);
@@ -136,7 +136,6 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
                 itemKv.push(entry);
             }
             return {
-                "shapeSrcType": shapeSrcType,
                 "itemId": item.id(),
                 "score": item.score(),
                 "osmId": item.osmid(),
