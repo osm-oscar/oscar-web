@@ -400,7 +400,11 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner'], function (jQuer
                 },
                 ohPath: function () {
                     return this.d.ohPath;
-                }
+                },
+				//get the dag for this query, this fetches the whole dag
+				getDag: function(successCB, errorCB) {
+					this.p.getDag(this.d.query, successCB, errorCB, this.d.regionFilter);
+				}
             };
             return tmp;
         },
@@ -823,6 +827,39 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner'], function (jQuer
                 }
             });
         },
+		/*
+			calls successCB with the DAG in json
+		*/
+		getDag: function(query, successCB, errorCB, regionFilter) {
+			var params = {};
+			params['q'] = query;
+			params['sst'] = "flatjson";
+			if (regionFilter !== undefined) {
+				params['rf'] = regionFilter;
+			}
+			
+			var qpath = this.completerBaseUrl + "/cqr/clustered/dag";
+			var myPtr = this;
+			jQuery.ajax({
+				type: "GET",
+				url: qpath,
+				data: params,
+				mimeType: 'text/plain',
+				success: function( plain ) {
+					try {
+						json = JSON.parse(plain);
+					}
+					catch (err) {
+						errorCB("Parsing the dag failed with the following parameters: " + JSON.stringify(params), err);
+						return;
+					}
+					successCB(json);
+				},
+				error: function(jqXHR, textStatus, errorThrown) {
+					errorCB(textStatus, errorThrown);
+				}
+			});
+		},
         /*
          on success: successCB is called with sserialize/ReducedCellQueryResult representing matching cells
          */
