@@ -106,30 +106,6 @@
 								}, tools.defErrorCB);
 			}
 		},
-		toggleSpatialObjectMapShape: function(internalId) {
-			if (state.spatialObjects.store.count(internalId)) {
-				var d = state.spatialObjects.store.at(internalId);
-				var active = d['active'];
-				if (active === undefined || active === false) {
-					state.map.addLayer(d.mapshape);
-					d['active'] = true;
-				}
-				else {
-					state.map.removeLayer(d.mapshape);
-					d['active'] = false;
-				}
-			}
-		},
-		removeSpatialObject: function(internalId) {
-			if (state.spatialObjects.store.count(internalId)) {
-				var d = state.spatialObjects.store.at(internalId);
-				if (d.active === true) {
-					state.map.removeLayer(d.mapshape);
-				}
-				state.spatialObjects.names.erase(d.name);
-				state.spatialObjects.store.erase(internalId);
-			}
-		},
         visualizeResultListItems: function () {
             state.items.shapes.promised.clear();
             var itemsToDraw = [];
@@ -205,37 +181,6 @@
 					}
 				}, tools.defErrorCB);
 			}, tools.defErrorCB);
-		},   
-		appendSpatialObjectToTable : function(name) {
-			var internalId = state.spatialObjects.names.at(name);
-			if (internalId === undefined) {
-				return;
-			}
-			var so = state.spatialObjects.store.at(internalId);
-			var data = {
-				type : so.type,
-				id : internalId,
-				name : name
-			};
-			var parentElement = $('#spatial_objects_table_body');
-            var templateData = state.spatialQueryTableRowTemplateDataFromSpatialObject(data);
-            var rendered = $.Mustache.render('spatialQueryTableRowTemplate', templateData);
-            var inserted = $($(rendered).appendTo(parentElement));
-			$(".checkbox", inserted).change(function() {
-				map.toggleSpatialObjectMapShape(internalId);
-			});
-			$(".form-control", inserted).change(function() {
-				var me = $(this);
-				var d = state.spatialObjects.store.at(internalId);
-				var oldName = d.name;
-				d.name = me.val();
-				state.spatialObjects.names.erase(oldName);
-				state.spatialObjects.names.insert(d.name, internalId);
-			});
-			$(".fa-remove", inserted).click(function() {
-				inserted.remove();
-				map.removeSpatialObject(internalId);
-			});
 		},
         appendToItemsList: function (item, parentElement) {
             if (item === undefined) {
@@ -457,101 +402,6 @@
                     }, function () {
                     }
                 );
-            }, function () {
-            });
-        },
-
-        loadWholeTree: function () {
-            function fullSubSetTreeDataSource(cqr) {
-                state.DAG = tools.SimpleHash();
-                var subSet = cqr.subSet();
-                var regions = [];
-                for (var region in subSet.regions) {
-                    regions.push(region);
-                }
-
-                //fetch the items
-                oscar.getItems(regions,
-                    function (items) {
-                        var marker;
-                        for (var i in items) {
-                            var item = items[i];
-                            var itemId = item.id();
-                            var regionInSubSet = subSet.regions[itemId];
-                            var node = state.DAG.at(itemId);
-
-                            if (node) {
-                                marker = L.marker(item.centerPoint());
-                                marker.rid = itemId;
-                                node.name = marker.name = item.name();
-                                node.count = marker.count = regionInSubSet.apxitems;
-                                node.bbox = marker.bbox = item.bbox();
-                                map.decorateMarker(marker);
-                            } else {
-                                var newNode = new tools.TreeNode(itemId, undefined);
-                                newNode.count = regionInSubSet.apxitems;
-                                newNode.name = item.name();
-                                newNode.bbox = item.bbox();
-                                state.DAG.insert(itemId, newNode);
-                                node = newNode;
-                            }
-
-                            for (var child in regionInSubSet.children) {
-                                node.addChild(regionInSubSet.children[child]);
-                            }
-                        }
-
-                        var root = state.DAG.at(0xFFFFFFFF);
-                        for (var j in subSet.rootchildren) {
-                            root.children.push(state.DAG.at(subSet.rootchildren[j]));
-                        }
-                    },
-                    oscar.defErrorCB
-                );
-            }
-
-            var callFunc = function (q, scb, ecb) {
-                oscar.completeFull(q, scb, ecb);
-            };
-
-            callFunc($("#search_text").val(),
-                function (cqr) {
-                    //orbit reached, iniate coupling with user
-                    spinner.endLoadingSpinner();
-                    state.cqr = cqr;
-                    state.cqrRegExp = oscar.cqrRexExpFromQuery(cqr.query());
-                    fullSubSetTreeDataSource(cqr);
-                },
-                function (jqXHR, textStatus, errorThrown) {
-                    //BOOM!
-                    spinner.endLoadingSpinner();
-                    alert("Failed to retrieve completion results. textstatus=" + textStatus + "; errorThrown=" + errorThrown);
-                });
-        },
-
-        loadItems: function (rid) {
-            state.items.listview.selectedRegionId = rid;
-            state.cqr.regionItemIds(state.items.listview.selectedRegionId,
-                map.getItemIds,
-                tools.defErrorCB,
-                0 // offset
-            );
-        },
-	   
-
-
-        displayCqr: function (cqr) {
-            state.regionHandler = map.flatCqrTreeDataSource(cqr);
-            var process = map.pathProcessor(cqr);
-            var root = new tools.TreeNode(0xFFFFFFFF, undefined);
-            root.count = cqr.rootRegionApxItemCount();
-            root.name = "World";
-            state.DAG.insert(0xFFFFFFFF, root);
-
-            if (cqr.ohPath().length) {
-                state.regionHandler({rid: 0xFFFFFFFF, draw: false, pathProcessor: process});
-            } else {
-                state.regionHandler({rid: 0xFFFFFFFF, draw: true, pathProcessor: process});
-            }
+            }, function(){});
         },
 }
