@@ -274,9 +274,13 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 					handler._slot_itemLinkClicked(itemId);
 				});
 			},
-			//destroy this list by removing the respective dom elements
-			//emits itemDetailsClosed on all open panels
-			destroy : function() {
+			appendItems: function(items) {
+				for(var i in items) {
+					handler.appendItem(items[i]);
+				}
+			},
+			//emits itemDetailsClosed on all open panels   
+			clear: function() {
 				$("div[class~='panel'] div[class~='panel-collapse']", handler.m_domRoot).each(function() {
 					var me = $(this);
 					var itemIdStr = me.attr("data-item-id");
@@ -287,6 +291,12 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 						handler.emit_itemDetailsClosed(itemId);
 					}
 				});
+				$(handler.m_domRoot).empty();
+			}
+			//destroy this list by removing the respective dom elements
+			//emits itemDetailsClosed on all open panels
+			destroy : function() {
+				handler.clear();
 				$(handler.m_domRoot).remove();
 			}
 		};
@@ -375,25 +385,176 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 // 				handler.m_domRoot.tabs("option", "active", 0);
 			},
 
-			destroy: function () {
+			clear: function() {
 				for(var i in handler.m_regions.values()) {
 					handler.m_regions.at(i).destroy();
 				}
+			},
+
+			destroy: function () {
+				handler.clear();
 				handler.m_domRoot.destroy();
 			}
 		};
 		return handler;
 	};
 	
+	var LayerHandler = {
+		m_layers: tools.simpleHash(), //maps from LeafletLayer
+	};
+	
+	//The ShapeHandler handles the map shapes. It uses ref-counting to track the usage of shapes
+	//Style is of the form:
+	var ItemShapeHandler = function(style) {
+		return handler = {
+			m_style: style,
+			m_shapes : tools.SimpleHash(), //maps from itemId -> {shape: LeafletShape, refCount: <int>}
+			//calls cb after adding if cb !== undefined
+			add: function(itemId, cb) {
+				if (handler.count(itemId)) {
+					handler.m_shapes.at(itemId).refCount += 1;
+					if (cb !== undefined) {
+						cb();
+					}
+					return;
+				}
+				handler.m_shapes.insert(itemId, {shape: undefined, refCount : 1});
+				var me = handler;
+				oscar.getShape(itemId, function(shape) {
+					if (!me.count(itemId) {
+						return;
+					}
+					var lfs = oscar.leafletItemFromShape(shape);
+					lfs.setStyle(handler.m_style);
+					me.m_shapes.at(itemId).shape = lfs;
+					state.map.addLayer(me.m_shapes.at(itemId).shape);
+					if (cb !== undefined) {
+						cb();
+					}
+				}, tools.defErrorCB);
+			},
+			count: function() {
+				if (handler.m_shapes.count(itemId)) {
+					return handler.m_shapes.at(itemId).refCount;
+				}
+				return 0;
+			},
+			remove: function(itemId) {
+				if (handler.count(itemId)) {
+					handler.m_shapes.at(itemId).refCount -= 1;
+					if (handler.m_shapes.at(itemId).refCount <= 0) {
+						if (handler.m_shapes.at(itemId).shape !== undefined) {
+							state.map.removeLayer(handler.m_shapes.at(itemId).shape);
+						}
+						handler.m_shapes.erase(itemId);
+					}
+				}
+			},
+			zoomTo: function(itemId) {
+				if (!handler.count(itemId)) {
+					return;
+				}
+				var lfs = handler.m_shapes.at(itemId).shape;
+				state.map.fitBounds(lfs.getBounds());
+			},
+			destroy: function() {
+				for(var i in handler.m_shapes.values()) {
+					if (handler.m_shapes.at(i).shape !== undefined) {
+						state.map.removeLayer(handler.m_shapes.at(i).shape);
+					}
+				}
+				handler.m_shapes = tools.SimpleHash();
+			}
+		};
+	};
+	var ItemMarkerHandler = function() {
+		return handler {
+			m_markers : tools.SimpleHash(), //maps from itemId -> { marker: LeafletMarker, refCount: <int> }
+			add: function(itemId) {
+				if (handler.count(itemId)) {
+					handler.m_markers.at(itemId).refCount += 1;
+					return;
+				}
+				handler.m_markers.insert(itemId, {marker: undefined, refCount: 1});
+				var me = handler;
+				oscar.getShape(itemId, function(shape) {
+					if (!me.count(itemId)) {
+						return;
+					}
+					var lfs = oscar.leafletItemFromShape(shape);
+					if (itemShape instanceof L.MultiPolygon) {
+						geopos = itemShape.getLatLngs()[0][0];
+					} else if (itemShape instanceof L.Polygon) {
+						geopos = itemShape.getLatLngs()[0];
+					} else if (itemShape instanceof L.Polyline) {
+						geopos = itemShape.getLatLngs()[0];
+					} else {
+						geopos = itemShape.getLatLng();
+					}
+					
+				}, tools.defErrorCB);
+			},
+			remove: function(itemId) {
+				if (handler.count(itemId)) {
+					handler.m_markers.at(itemId).refCount -= 1;
+					if (handler.m_markers.at(itemId).refCount <= 0) {
+						if (handler.m_markers.at(itemId).marker !== undefined) {
+							state.map.removeLayer(handler.m_markers.at(itemId).marker);
+						}
+						handler.m_markers.erase(itemId);
+					}
+				}
+			},
+			count: function(itemId) {
+				if (handler.m_markers.count(itemId)) {
+					return handler.m_markers.at(itemId).refCount;
+				}
+				return 0;
+			},
+			coords: function(itemId) {
+				if (!handler.count(itemId)) {
+					throw new RangeError();
+				}
+				
+			},
+			destroy: function() {
+				for(var i in handler.m_markers.values()) {
+					if (handler.m_markers.at(i).marker !== undefined) {
+						state.map.removeLayer(handler.m_markers.at(i).marker);
+					}
+				}
+				handler.m_markers = tools.SimpleHash();
+			}
+		};
+	};
+	
     return map = {
 		flatCqrTreeDataSource : flatCqrTreeDataSource,
 		ItemListHandler: ItemListHandler,
-		TabbedItemListHandler : TabbedItemListHandler,
+		TabbedItemListHandler: TabbedItemListHandler,
+		ItemShapeHandler: ItemShapeHandler,
 		
 		resultListTabs: undefined,
+		relativesTab: { activeItemHandler: undefined, relativesHandler: undefined },
+		
+		//map shapes
+		itemShapes: ItemShapeHandler(config.styles.shapes.items.normal),
+		regionShapes: ItemShapeHandler(config.styles.shapes.regions.normal),
+		relativesShapes: ItemShapeHandler(config.styles.shapes.relatives.normal),
+		highlightItemShapes: ItemShapeHandler(config.styles.shapes.activeItems),
+		
+		//markers
+		itemMarkers: ItemMarkerHandler(),
+		
 		
 		init: function() {
 			map.resultListTabs = map.TabbedItemListHandler($('#left_menu_parent'));
+			map.relativesTab.activeItemHandler = map.ItemListHandler($('#activeItemsList'));
+			map.relativesTab.relativesHandler = map.ItemListHandler($('#relativesList'));
+			
+			//register slots
+			$(map.resultListTabs.domRoot()).on("itemDetailsOpened", map.onItemDetailsOpen);
+			$(map.resultListTabs.domRoot()).on("itemDetailsClosed", map.onItemDetailsClosed);
 		}
 		
 		displayCqr: function (cqr) {
@@ -468,9 +629,65 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				map.removeSpatialObject(internalId);
 			});
 		},
+		
+		//relatives handling
+
+		//shows the relatives of the currently active item if the relatives pane is active
+		showItemRelatives: function() {
+			if (!$('#item_relatives').hasClass("active") || state.items.activeItem === undefined) {
+				return;
+			}
+			map.relativesTab.activeItemHandler.clear();
+			map.relativesTab.relativesHandler.clear();
+			var itemId = state.items.activeItem;
+			oscar.getItem(itemId, function(item) {
+				if (itemId != state.items.activeItem) {
+					return;
+				}
+				map.relativesTab.activeItemHandler.appendItem(item);
+			});
+			oscar.getItemsRelativesIds(itemId, function(relativesIds) {
+				if (state.items.activeItem != itemId) {
+					return;
+				}
+				var myItemId = itemId;
+				oscar.getItems(relativesIds, function(relatives) {
+					if (state.items.activeItem != myItemId) {
+						return;
+					}
+					map.relativesTab.relativesHandler.appendItems(relatives);
+				}, tools.defErrorCB);
+			}, tools.defErrorCB);
+		},
+		
+		//panel event handlers
+		onItemDetailsOpen: function(e) {
+			var itemId = e.itemId;
+			state.items.activeItem = itemId;
+			map.highlightItemShapes.add(itemId, function() {
+				if (state.items.activeItem == itemId) {
+					map.highlightItemShapes.zoomTo(itemId);
+				}
+			});
+			
+			L.popup({offset: new L.Point(0, -25)})
+				.setLatLng(geopos)
+				.setContent($(this).text()).openOn(state.map);
+
+			if ($('#show_flickr').is(':checked')) {
+				flickr.getImagesForLocation($.trim($(this).text()), geopos);
+			}
+		},
+		onItemDetailsClosed: function(e) {
+			var itemId = e.itemId;
+			if (state.items.activeItem === itemId) {
+				state.items.activeItem = -1;
+			}
+			map.highlightItemShapes.remove(itemId);
+			//TODO: close flickr bar
+		},
 	   
-	   
-		//now form some old stuff, everything below needs refactoring
+		//now for some old stuff, everything below needs refactoring
 	   
 		loadWholeTree: function () {
 			function subSetHandler(subSet) {
