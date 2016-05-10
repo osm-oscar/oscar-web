@@ -1,7 +1,7 @@
 requirejs.config({
     baseUrl: "js/libs",
     config: {
-        'oscar': {url: "http://oscardev.fmi.uni-stuttgart.de/oscar"}
+        'oscar': {url: "http://localhost:8080"}
     },
     paths: {
         "jquery": "jquery/jquery.min",
@@ -34,7 +34,8 @@ requirejs.config({
         "prototype": "prototype/prototype",
         "state": "state/manager",
         "query": "query/query",
-        "search": "search/search"
+        "search": "search/search",
+		"dag": "dag/dag"
     },
     shim: {
         'bootstrap': {deps: ['jquery']},

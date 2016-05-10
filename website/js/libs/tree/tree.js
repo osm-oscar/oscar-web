@@ -97,14 +97,15 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
         _recursiveAddToGraph: function (node, graph) {
             if (node.name) {
                 this.graph.setNode(node.id, tree._nodeAttr(node));
-                for (var child in node.children) {
-                    if (node.children[child].count) {
-                        this.graph.setNode(node.children[child].id);
-                        this.graph.setEdge(node.id, node.children[child].id, {
+                for (var childId in node.children) {
+					var child = state.DAG.at(childId);
+                    if (child.count) {
+                        this.graph.setNode(child.id);
+                        this.graph.setEdge(node.id, child.id, {
                             lineInterpolate: 'basis',
                             class: "origin-" + node.id
                         });
-                        this._recursiveAddToGraph(node.children[child], graph);
+                        this._recursiveAddToGraph(child, graph);
                     }
                 }
             }
@@ -268,8 +269,8 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
             while (currentNode.id != node.id) {
                 this.graph.setNode(currentNode.id, tree._nodeAttr(currentNode));
 
-                for (var child in currentNode.children) {
-                    childNode = currentNode.children[child];
+                for (var childId in currentNode.children) {
+                    childNode = state.DAG.at(childId);
                     this.graph.setNode(childNode.id, tree._nodeAttr(childNode));
                     this.graph.setEdge(currentNode.id, childNode.id, {
                         lineInterpolate: 'basis',
@@ -298,8 +299,8 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
 
         hideChildren: function (node) {
             var childNode;
-            for (var child in node.children) {
-                childNode = node.children[child];
+            for (var childId in node.children) {
+                childNode = state.DAG.at(childId);
                 tree.graph.removeNode(childNode.id);
             }
         }

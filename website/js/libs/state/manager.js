@@ -1,8 +1,9 @@
-define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster"], function ($, mustache, tools, L, spinner, config) {
+define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster", "dag"], function ($, mustache, tools, L, spinner, config) {
+	var dag = require("dag");
     var state = {
         map: {},
         visualizationActive: false,
-        DAG: tools.SimpleHash(),
+        DAG: dag.dag(),
         markers: L.markerClusterGroup(),
         sidebar: undefined,
         handler: undefined,

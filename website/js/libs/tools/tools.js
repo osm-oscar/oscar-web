@@ -5,79 +5,53 @@ define(["jquery"], function ($) {
          *
          * @returns {{}} hashmap-object
          */
-        SimpleHash: function () {
-            return {
-                m_size: 0,
-                m_values: {},
-                values: function () {
-                    return this.m_values;
-                },
-                size: function () {
-                    return this.m_size;
-                },
-                insert: function (key, value) {
-                    if (this.m_values[key] === undefined) {
-                        this.m_size += 1;
-                    }
-                    this.m_values[key] = value;
-                },
+		SimpleHash: function () {
+			return {
+				m_size: 0,
+				m_values: {},
+				values: function () {
+					return this.m_values;
+				},
+				size: function () {
+					return this.m_size;
+				},
+				insert: function (key, value) {
+					if (this.m_values[key] === undefined) {
+						this.m_size += 1;
+					}
+					this.m_values[key] = value;
+				},
 				set: function (key, value) {
 					this.insert(key, value);
 				},
-                count: function (key) {
-                    return this.m_values[key] !== undefined;
-                },
-                at: function (key) {
-                    return this.m_values[key];
-                },
-                erase: function (key) {
-                    if (this.m_values[key] !== undefined) {
-                        this.m_size -= 1;
-                        delete this.m_values[key];
-                    }
-                },
-                clear: function () {
-                    this.m_size = 0;
-                    this.m_values = {};
-                }
-            };
-        },
-	   
-        /**
-         * Represents a Treenode, which can be used to model directed-acylic graphs.
-         *
-         * @param id of the node
-         * @param parent one parent of the node
-         * @returns
-         */
-        TreeNode: function (id, parent) {
-            var parents = [];
-            parents.push(parent);
-            return {
-                id: id,
-                name: undefined,
-                parents: parents,
-                children: [],
-                count: undefined,
-                marker: undefined,
-                bbox: undefined,
-                addChild: function (id) {
-                    var node = tools.TreeNode(id, this);
-                    this.children.push(node);
-                    return node;
-                },
-                kill: function () {
-                    // kill all references to this node
-                    for (var parent in parents) {
-                        for (var child in parents[parent].children) {
-                            if (parents[parent].children[child].id == this.id) {
-                                parents[parent].children.splice(child, 1);
-                            }
-                        }
-                    }
-                }
-            };
-        },
+				count: function (key) {
+					return this.m_values[key] !== undefined;
+				},
+				at: function (key) {
+					return this.m_values[key];
+				},
+				erase: function (key) {
+					if (this.m_values[key] !== undefined) {
+						this.m_size -= 1;
+						delete this.m_values[key];
+					}
+				},
+				clear: function () {
+					this.m_size = 0;
+					this.m_values = {};
+				}
+			};
+		},
+		SimpleSet: function() {
+			var ss = tools.SimpleHash();
+			ss.insert = function(key) {
+				if (this.m_values[key] === undefined) {
+					this.m_size += 1;
+				}
+				this.m_values[key] = value;
+			};
+			return ss;
+		},
 
         /**
          * Calculates the overlap of the viewport and a bbox. Returns the percentage of overlap.
