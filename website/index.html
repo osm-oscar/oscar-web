@@ -2,195 +2,192 @@
 <!--
 -->
 <html>
-<head>
-    <title>OSCAR - OpenStreetMap at your fingertips</title>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A simple search engine for OpenStreetMap">
-    <meta name="author" content="Daniel Bahrdt">
-    <link rel="stylesheet" href="js/libs/leaflet/leaflet.css">
-    <link rel="stylesheet" media="screen" href="js/libs/twitter-bootstrap/css/bootstrap.css">
-    <link rel="stylesheet" href="js/libs/jquery-ui/jquery-ui.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="js/libs/switch-button/jquery.switchButton.css">
-    <link rel="stylesheet" href="js/libs/slimbox/css/slimbox2.css" type="text/css" media="screen"/>
-    <link rel="stylesheet" href="css/loadingspinner.css">
-    <link rel='stylesheet' href='css/MarkerCluster.css'/>
-    <link rel='stylesheet' href='css/MarkerCluster.Default.css'/>
-    <link rel='stylesheet' href="css/font-awesome.min.css"/>
-    <link rel="stylesheet" href="css/leaflet-sidebar.css"/>
-    <link rel="stylesheet" href="css/bootstrap-tokenfield.min.css"/>
-</head>
+    <head>
+        <title>OSCAR - OpenStreetMap at your fingertips</title>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="A simple search engine for OpenStreetMap">
+        <meta name="author" content="Daniel Bahrdt">
+        <link rel="stylesheet" href="js/libs/leaflet/leaflet.css">
+        <link rel="stylesheet" media="screen" href="js/libs/twitter-bootstrap/css/bootstrap.css">
+        <link rel="stylesheet" href="js/libs/jquery-ui/jquery-ui.min.css">
+        <link rel="stylesheet" href="css/style.css">
+        <link rel="stylesheet" href="js/libs/switch-button/jquery.switchButton.css">
+        <link rel="stylesheet" href="js/libs/slimbox/css/slimbox2.css" type="text/css" media="screen"/>
+        <link rel="stylesheet" href="css/loadingspinner.css">
+        <link rel='stylesheet' href='css/MarkerCluster.css'/>
+        <link rel='stylesheet' href='css/MarkerCluster.Default.css'/>
+        <link rel='stylesheet' href="css/font-awesome.min.css"/>
+        <link rel="stylesheet" href="css/leaflet-sidebar.css"/>
+        <link rel="stylesheet" href="css/bootstrap-tokenfield.min.css"/>
+    </head>
 
-<body>
+    <body>
 
-<div class="sidebar" id="flickr">
-    <div id="flickrHead">
-        <a href="https://s.yimg.com/pw/images/goodies/white-small-chiclet.png" rel="lightbox"><img
-                src="https://s.yimg.com/pw/images/goodies/white-small-chiclet.png"/></a>
+        <div class="sidebar" id="flickr">
+            <div id="flickrHead">
+                <a href="https://s.yimg.com/pw/images/goodies/white-small-chiclet.png" rel="lightbox"><img
+                        src="https://s.yimg.com/pw/images/goodies/white-small-chiclet.png"/></a>
 
-        <div id="closeFlickr"><a href="#"><i class="remove glyphicon glyphicon-remove-sign glyphicon-black"></i></a>
-        </div>
-    </div>
-    <div id="flickr_images"></div>
-</div>
-
-<div id="loader"></div>
-<div id="tree">
-    <div id="closeTree"><a href="#"><i class="remove glyphicon glyphicon-remove-sign glyphicon-black"></i></a></div>
-    <div id="toolbar" class="ui-widget-header ui-corner-all"><label for="onePath">One Path</label><input type="checkbox" id="onePath" /><button id="wholeTree">Draw whole tree</button></div>
-    <svg id="dag"></svg>
-</div>
-<div id="content_container">
-    <div id="sidebar" class="sidebar collapsed">
-
-        <!-- Nav tabs -->
-        <div class="sidebar-tabs">
-            <ul role="tablist">
-                <li><a href="#search" role="tab"><i class="fa fa-search"></i></a></li>
-                <li><a href="#help" role="tab"><i class="fa fa-question"></i></a></li>
-                <li><a href="#options" role="tab"><i class="fa fa-wrench"></i></a></li>
-                <li><a href="#item_relatives" role="tab"><i class="fa fa-group"></i></a></li>
-            </ul>
-        </div>
-
-        <!-- Tab panes -->
-        <div class="sidebar-content" id='sidebar-content'>
-            <div class="sidebar-pane" id="search">
-                <h1 class="sidebar-header">Search
-                    <div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
-                </h1>
-                <div>
-                    <form id="searchModi" data-toggle="tooltip" data-placement="right" title="Use 'Local' to search in viewport">
-                        <input type="checkbox" name="searchModi" class="form-control">
-                    </form>
-                    <span id="advancedToggle" mod="hide"><a href="#">Show advanced search</a></span>
-                </div>
-                <div>
-                    <form class="form-inline pull-left" id="search_form">
-                        <input name="q" type="text" placeholder="What are you looking for?" class="form-control"
-                               id="search_text">
-                        <input type="submit" value="Submit"
-                               style="position: absolute; left: -9999px; width: 1px; height: 1px;"
-                               tabindex="-1">
-                    </form>
-                    <a href="#" id="graph" class="fa fa-sitemap" data-toggle="tooltip" data-placement="left" title="Show the region-hierarchy"></a>
-                </div>
-                <span id="showCategories" mod="show"><a href="#">Hide categories</a></span>
-
-                <div id="search_container">
-                    <div id="categorieWrapper">
-                        <div style="clear:both;"></div>
-                        <div id="advancedSearch">
-							<div class='form-group'>
-								<div class="input-group">
-									<span class="input-group-btn">
-										<button type="button" class="btn btn-default" id="spatialquery_selectbutton">Create</button>
-									</span>
-									<select class='form-control' id="spatialquery_type"/>
-										<option value="rect" selected="selected">Rectangle</option>
-										<option value="poly">Polygon</option>
-										<option value="path">Path</option>
-									</select>
-									<span class="input-group-btn">
-										<button type="button" class="btn btn-default" id="spatialquery_acceptbutton">Accept</button>
-									</span>
-								</div>
-							</div>
-							<div class='form-group hidden' id="spatialquery_radius_group">
-								<div class="input-group">
-									<span class="input-group-addon">Radius:</span>
-									<input id="spatialquery_radius" type="number" value="100" min="50" max="20000" step="50"/>
-								</div>
-							</div>
-							<div class ="form-group">
-								<table class="table table-hover table-bordered table-condense">
-									<thead>
-										<tr>
-											<th colspan="4" class="text-center">Available spatial objects</th>
-										</tr>
-										<tr>
-											<th>Name</th>
-											<th>Type</th>
-											<th>Show</th>
-											<th>Remove</th>
-										</tr>
-									</thead>
-									<tbody id='spatial_objects_table_body'>
-									</tbody>
-								</table>
-							</div>
-                        </div>
-                        <div id="categories"></div>
-                        <div id="subCategories"></div>
-                    </div>
-                </div>
-                <div id="left_menu_parent" class="menu_parent">
+                <div id="closeFlickr"><a href="#"><i class="remove glyphicon glyphicon-remove-sign glyphicon-black"></i></a>
                 </div>
             </div>
+            <div id="flickr_images"></div>
+        </div>
 
-            <div class="sidebar-pane" id="help">
-            </div>
-            <div class="sidebar-pane" id="options">
-                <h1 class="sidebar-header">Options
-                    <div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
-                </h1>
+        <div id="loader"></div>
+        <div id="tree">
+            <div id="closeTree"><a href="#"><i class="remove glyphicon glyphicon-remove-sign glyphicon-black"></i></a></div>
+            <div id="toolbar" class="ui-widget-header ui-corner-all"><label for="onePath">One Path</label><input type="checkbox" id="onePath" /><button id="wholeTree">Draw whole tree</button></div>
+            <svg id="dag"></svg>
+        </div>
+        <div id="content_container">
+            <div id="sidebar" class="sidebar collapsed">
+                <!-- Nav tabs -->
+                <div class="sidebar-tabs">
+                    <ul role="tablist">
+                        <li><a href="#search" role="tab"><i class="fa fa-search"></i></a></li>
+                        <li><a href="#help" role="tab"><i class="fa fa-question"></i></a></li>
+                        <li><a href="#options" role="tab"><i class="fa fa-wrench"></i></a></li>
+                        <li><a href="#item_relatives" role="tab"><i class="fa fa-group"></i></a></li>
+                    </ul>
+                </div>
 
-                <div id='options_menu_parent' class='menu_parent'>
-                    <div id='config_parent'>
-                        <div class='form-group-sm'>
-                            <label for='show_flickr'>
-                                <input type="checkbox" class="checkbox" id="show_flickr" checked>Show flickr images
-                            </label>
+                <!-- Tab panes -->
+                <div class="sidebar-content" id='sidebar-content'>
+                    <div class="sidebar-pane" id="search">
+                        <h1 class="sidebar-header">Search
+                            <div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
+                        </h1>
+                        <div>
+                            <form id="searchModi" data-toggle="tooltip" data-placement="right" title="Use 'Local' to search in viewport">
+                                <input type="checkbox" name="searchModi" class="form-control">
+                            </form>
+                            <span id="advancedToggle" mod="hide"><a href="#">Show advanced search</a></span>
                         </div>
-                        <div class='form-group-sm'>
-							<label for='full_cqr_checkbox'>
-								<input type="checkbox" class="checkbox" id="full_cqr_checkbox">Load all at once
-							</label>
-						</div>
-                        <div class='form-group'>
-                            <label for='oht_checkbox'>
-                                <input type="checkbox" class="checkbox" id="oht_checkbox" checked>Global unfold ratio
-                            </label>
-                            <div class="input-group" id='ohf_spinner_group'>
-                                <span class="input-group-addon">unfold ratio</span>
-                                <input class='form-control' type="number" value='95' min='0' max='100' id='ohf_spinner'
-                                       step="1"/>
+                        <div>
+                            <form class="form-inline pull-left" id="search_form">
+                                <input name="q" type="text" placeholder="What are you looking for?" class="form-control"
+                                       id="search_text">
+                                <input type="submit" value="Submit"
+                                       style="position: absolute; left: -9999px; width: 1px; height: 1px;"
+                                       tabindex="-1">
+                            </form>
+                            <a href="#" id="graph" class="fa fa-sitemap" data-toggle="tooltip" data-placement="left" title="Show the region-hierarchy"></a>
+                        </div>
+                        <span id="showCategories" mod="show"><a href="#">Hide categories</a></span>
+
+                        <div id="search_container">
+                            <div id="categorieWrapper">
+                                <div style="clear:both;"></div>
+                                <div id="advancedSearch">
+                                    <div class='form-group'>
+                                        <div class="input-group">
+                                            <span class="input-group-btn">
+                                                <button type="button" class="btn btn-default" id="spatialquery_selectbutton">Create</button>
+                                            </span>
+                                            <select class='form-control' id="spatialquery_type"/>
+                                            <option value="rect" selected="selected">Rectangle</option>
+                                            <option value="poly">Polygon</option>
+                                            <option value="path">Path</option>
+                                            </select>
+                                            <span class="input-group-btn">
+                                                <button type="button" class="btn btn-default" id="spatialquery_acceptbutton">Accept</button>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class='form-group hidden' id="spatialquery_radius_group">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Radius:</span>
+                                            <input id="spatialquery_radius" type="number" value="100" min="50" max="20000" step="50"/>
+                                        </div>
+                                    </div>
+                                    <div class ="form-group">
+                                        <table class="table table-hover table-bordered table-condense">
+                                            <thead>
+                                                <tr>
+                                                    <th colspan="4" class="text-center">Available spatial objects</th>
+                                                </tr>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Type</th>
+                                                    <th>Show</th>
+                                                    <th>Remove</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id='spatial_objects_table_body'>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div id="categories"></div>
+                                <div id="subCategories"></div>
                             </div>
                         </div>
-                        <div class='form-group'>
-                            <div class="input-group" id='region_filter_group'>
-                                <span class="input-group-addon">Display</span>
-                                <select class='form-control' id="region_filter"/>
-                                    <option value="named" selected="selected">named</option>
-                                    <option value="admin_level">administrative</option>
-                                    <option value="all">all</option>
-                                    <option value="natural_landuse">natural/landuse</option>
-                                </select>
-                                <span class="input-group-addon">regions</span>
+                        <div id="left_menu_parent" class="menu_parent">
+                        </div>
+                    </div>
+
+                    <div class="sidebar-pane" id="help">
+                    </div>
+                    <div class="sidebar-pane" id="options">
+                        <h1 class="sidebar-header">Options
+                            <div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
+                        </h1>
+
+                        <div id='options_menu_parent' class='menu_parent'>
+                            <div id='config_parent'>
+                                <div class='form-group-sm'>
+                                    <label for='show_flickr'>
+                                        <input type="checkbox" class="checkbox" id="show_flickr" checked>Show flickr images
+                                    </label>
+                                </div>
+                                <div class='form-group-sm'>
+                                    <label for='full_cqr_checkbox'>
+                                        <input type="checkbox" class="checkbox" id="full_cqr_checkbox">Load all at once
+                                    </label>
+                                </div>
+                                <div class='form-group'>
+                                    <label for='oht_checkbox'>
+                                        <input type="checkbox" class="checkbox" id="oht_checkbox" checked>Global unfold ratio
+                                    </label>
+                                    <div class="input-group" id='ohf_spinner_group'>
+                                        <span class="input-group-addon">unfold ratio</span>
+                                        <input class='form-control' type="number" value='95' min='0' max='100' id='ohf_spinner'
+                                               step="1"/>
+                                    </div>
+                                </div>
+                                <div class='form-group'>
+                                    <div class="input-group" id='region_filter_group'>
+                                        <span class="input-group-addon">Display</span>
+                                        <select class='form-control' id="region_filter"/>
+                                        <option value="named" selected="selected">named</option>
+                                        <option value="admin_level">administrative</option>
+                                        <option value="all">all</option>
+                                        <option value="natural_landuse">natural/landuse</option>
+                                        </select>
+                                        <span class="input-group-addon">regions</span>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="sidebar-pane" id="item_relatives">
+                        <h1 class="sidebar-header">Item relatives
+                            <div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
+                        </h1>
+                        <div id="relatives_parent">
+                            <div id="activeItemsList"></div>
+                            <h4 class="text-center">has the following relatives</h4>
+                            <div id="relativesList"></div>
                         </div>
                     </div>
                 </div>
             </div>
-    <div class="sidebar-pane" id="item_relatives">
-                <h1 class="sidebar-header">Item relatives
-                    <div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
-                </h1>
-				<div id="relatives_parent">
-					<div class="panel-group" id="activeItemsList" role="tablist">
-					</div>
-					<h4 class="text-center">has the following relatives</h4>
-					<div class="panel-group" id="relativesList" role="tablist">
-					</div>
-				</div>
-			</div>
+            <div id="map"></div>
         </div>
-    </div>
-    <div id="map"></div>
-</div>
-<script type="text/javascript" data-main="js/libs/main.js"
+        <script type="text/javascript" data-main="js/libs/main.js"
         src="js/libs/require.js/require.js"></script>
-</body>
+    </body>
 </html>
