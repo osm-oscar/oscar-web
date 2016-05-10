@@ -207,6 +207,9 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				$(".item-detail-value", element).click(itemDetailQuery);
 				$(".item-detail-id", element).click(itemIdQuery);
 			},
+			_domItemHeader: function(itemId) {
+				return $("div[class~='panel'][data-item-id~='" + itemId + "'] div[class~='panel-heading']", handler.m_domRoot);
+			},
 			_domItemDetails: function(itemId) {
 				return $("div[class~='panel'][data-item-id~='" + itemId + "'] div[class~='panel-collapse'][data-item-id~='"+ itemId +"']", handler.m_domRoot);
 			},
@@ -219,7 +222,13 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 
 			//public functions
 	   
-			domRoot: function() { return handler.m_domRoot; }
+			domRoot: function() {
+				return handler.m_domRoot;
+			},
+			
+			hasItem: function(itemId) {
+				return handler._domItemHeader(itemId).length;
+			},
 	   
 			open: function(itemId) {
 				var details = handler._domItemDetails(itemId);
@@ -261,6 +270,21 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 					}
 				});
 			},
+			scrollTo: function(itemId) {
+				if (!hasItem(itemId)) {
+					return;
+				}
+				var domItemHader = handler._domItemHeader();
+				var itemPanelRootDiv = $(itemPanelRootId);
+				if (itemPanelRootDiv === undefined) {
+					console.log("addItemMarkerToMap: undefined PanelRoot", marker, itemId, shapeSrcType, state);
+				}
+				else {
+					var scrollPos = itemPanelRootDiv.offset().top - container.offset().top + container.scrollTop();
+					container.animate({scrollTop: scrollPos});
+					//container.animate({scrollTop: itemPanelRootDiv.position().top + $("itemsList").position().top});
+				}
+			},
 			//returns jquery object of the inserted dom item element
 			appendItem: function(item) {
 				var itemTemplateData = state.resultListTemplateDataFromItem(item);
@@ -292,7 +316,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 					}
 				});
 				$(handler.m_domRoot).empty();
-			}
+			},
 			//destroy this list by removing the respective dom elements
 			//emits itemDetailsClosed on all open panels
 			destroy : function() {
@@ -344,7 +368,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				//add a new tab
 				var tabHeadId = tools.generateDocumentUniqueId();
 				var tabContentId = tools.generateDocumentUniqueId();
-				var tabHeadHtml = '<li id="' + tabHeadId '"><a href="#' + tabContentId + '">' + regionName + '</a><span class="badge">' + itemCount + "</span></li>';
+				var tabHeadHtml = '<li id="' + tabHeadId + '"><a href="#' + tabContentId + '">' + regionName + '</a><span class="badge">' + itemCount + '</span></li>';
 				var tabContentHtml = '<div id="' + tabContentId + '"></div>';
 				var tabHead = $(handler.m_domTabRoot).append(tabHeadHtml);
 				var tabContent = $(handler.m_domRoot).append(tabContentHtml);
@@ -380,9 +404,18 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				return false;
 			},
 			
+			openTab: function(regionId) {
+				if (!hasRegion(regionId)) {
+					return;
+				}
+				var index = $("#" + handler.m_regions.at(i).tabHeadId).index();
+				handler.m_domRoot.tabs("option", "active", index);
+				
+			},
+			
 			refresh: function () {
 				handler.m_domRoot.tabs("refresh");
-// 				handler.m_domRoot.tabs("option", "active", 0);
+				handler.m_domRoot.tabs("option", "active", 0);
 			},
 
 			clear: function() {
@@ -396,143 +429,145 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				handler.m_domRoot.destroy();
 			}
 		};
+		handler._init(parent);
 		return handler;
 	};
 	
-	var LayerHandler = {
-		m_layers: tools.simpleHash(), //maps from LeafletLayer
+	var ItemLayerHandler = function() {
+		this.m_layers = tools.SimpleHash(); //maps from LeafletLayer -> {layer: LeafletLay, refCount: <int> }
+		this.count = function() {
+			if (this.m_layers.count(itemId)) {
+				return this.m_layers.at(itemId).refCount;
+			}
+			return 0;
+		};
+		this.incRefCount = function(itemId) {
+			if (!this.m_layers.count(itemId)) {
+				this.m_layers.insert(itemId, {layer: undefined, refCount : 0});
+			}
+			this.m_layers.at(itemId).refCount += 1;
+		};
+		this.setLayer = function(itemId, layer) {
+			if (!this.m_layers.count(itemId)) {
+				this.incRefCount(itemId);
+			}
+			if (this.m_layers.at(itemId).layer !== undefined) {
+				state.map.removeLayer(this.m_layers.at(itemId).layer);
+				this.m_layers.at(itemId).layer = undefined;
+			}
+			if (layer !== undefined) {
+				this.m_layers.at(itemId).layer = layer;
+				state.map.addLayer(this.m_layers.at(itemId).layer);
+			}
+		};
+		this.remove = function(itemId) {
+			if (this.count(itemId)) {
+				this.m_layers.at(itemId).refCount -= 1;
+				if (this.m_layers.at(itemId).refCount <= 0) {
+					if (this.m_layers.at(itemId).layer !== undefined) {
+						state.map.removeLayer(this.m_layers.at(itemId).layer);
+					}
+					this.m_layers.erase(itemId);
+				}
+			}
+		};
+		this.layer = function(itemId) {
+			if (this.count(itemId)) {
+				this.m_layers.at(itemId).layer;
+			}
+			return undefined;
+		};
+		this.destroy = function() {
+			for(var i in this.m_layers.values()) {
+				if (this.m_layers.at(i).layer !== undefined) {
+					state.map.removeLayer(this.m_layers.at(i).layer);
+				}
+			}
+			this.m_layers = tools.SimpleHash();
+		};
 	};
 	
 	//The ShapeHandler handles the map shapes. It uses ref-counting to track the usage of shapes
 	//Style is of the form:
 	var ItemShapeHandler = function(style) {
-		return handler = {
-			m_style: style,
-			m_shapes : tools.SimpleHash(), //maps from itemId -> {shape: LeafletShape, refCount: <int>}
-			//calls cb after adding if cb !== undefined
-			add: function(itemId, cb) {
-				if (handler.count(itemId)) {
-					handler.m_shapes.at(itemId).refCount += 1;
-					if (cb !== undefined) {
-						cb();
-					}
-					return;
+		var handler = new ItemLayerHandler();
+		handler.m_style = style,
+	   
+		//calls cb after adding if cb !== undefined
+		handler.add = function(itemId, cb) {
+			if (this.count(itemId)) {
+				this.incRefCount(itemId);
+				if (cb !== undefined) {
+					cb();
 				}
-				handler.m_shapes.insert(itemId, {shape: undefined, refCount : 1});
-				var me = handler;
-				oscar.getShape(itemId, function(shape) {
-					if (!me.count(itemId) {
-						return;
-					}
-					var lfs = oscar.leafletItemFromShape(shape);
-					lfs.setStyle(handler.m_style);
-					me.m_shapes.at(itemId).shape = lfs;
-					state.map.addLayer(me.m_shapes.at(itemId).shape);
-					if (cb !== undefined) {
-						cb();
-					}
-				}, tools.defErrorCB);
-			},
-			count: function() {
-				if (handler.m_shapes.count(itemId)) {
-					return handler.m_shapes.at(itemId).refCount;
-				}
-				return 0;
-			},
-			remove: function(itemId) {
-				if (handler.count(itemId)) {
-					handler.m_shapes.at(itemId).refCount -= 1;
-					if (handler.m_shapes.at(itemId).refCount <= 0) {
-						if (handler.m_shapes.at(itemId).shape !== undefined) {
-							state.map.removeLayer(handler.m_shapes.at(itemId).shape);
-						}
-						handler.m_shapes.erase(itemId);
-					}
-				}
-			},
-			zoomTo: function(itemId) {
-				if (!handler.count(itemId)) {
-					return;
-				}
-				var lfs = handler.m_shapes.at(itemId).shape;
-				state.map.fitBounds(lfs.getBounds());
-			},
-			destroy: function() {
-				for(var i in handler.m_shapes.values()) {
-					if (handler.m_shapes.at(i).shape !== undefined) {
-						state.map.removeLayer(handler.m_shapes.at(i).shape);
-					}
-				}
-				handler.m_shapes = tools.SimpleHash();
+				return;
 			}
+			this.incRefCount(itemId);
+			var me = this;
+			oscar.getShape(itemId, function(shape) {
+				if (!me.count(itemId)) {
+					return;
+				}
+				var lfs = oscar.leafletItemFromShape(shape);
+				lfs.setStyle(me.m_style);
+				me.setLayer(lfs);
+				if (cb !== undefined) {
+					cb();
+				}
+			}, tools.defErrorCB);
 		};
+		handler.zoomTo = function(itemId) {
+			if (!this.count(itemId)) {
+				return;
+			}
+			var ll = this.layer(itemId);
+			state.map.fitBounds(ll.getBounds());
+		};
+		return handler;
 	};
 	var ItemMarkerHandler = function() {
-		return handler {
-			m_markers : tools.SimpleHash(), //maps from itemId -> { marker: LeafletMarker, refCount: <int> }
-			add: function(itemId) {
-				if (handler.count(itemId)) {
-					handler.m_markers.at(itemId).refCount += 1;
+		var handler = new ItemLayerHandler();
+		handler.add = function(itemId) {
+			if (this.count(itemId)) {
+				this.incRefCount(itemId);
+				return;
+			}
+			this.incRefCount(itemId);
+			var me = handler;
+			oscar.getShape(itemId, function(shape) {
+				if (!me.count(itemId)) {
 					return;
 				}
-				handler.m_markers.insert(itemId, {marker: undefined, refCount: 1});
-				var me = handler;
-				oscar.getShape(itemId, function(shape) {
-					if (!me.count(itemId)) {
-						return;
-					}
-					var lfs = oscar.leafletItemFromShape(shape);
-					if (itemShape instanceof L.MultiPolygon) {
-						geopos = itemShape.getLatLngs()[0][0];
-					} else if (itemShape instanceof L.Polygon) {
-						geopos = itemShape.getLatLngs()[0];
-					} else if (itemShape instanceof L.Polyline) {
-						geopos = itemShape.getLatLngs()[0];
-					} else {
-						geopos = itemShape.getLatLng();
-					}
-					
-				}, tools.defErrorCB);
-			},
-			remove: function(itemId) {
-				if (handler.count(itemId)) {
-					handler.m_markers.at(itemId).refCount -= 1;
-					if (handler.m_markers.at(itemId).refCount <= 0) {
-						if (handler.m_markers.at(itemId).marker !== undefined) {
-							state.map.removeLayer(handler.m_markers.at(itemId).marker);
-						}
-						handler.m_markers.erase(itemId);
-					}
+				var lfs = oscar.leafletItemFromShape(shape);
+				if (itemShape instanceof L.MultiPolygon) {
+					geopos = itemShape.getLatLngs()[0][0];
+				} else if (itemShape instanceof L.Polygon) {
+					geopos = itemShape.getLatLngs()[0];
+				} else if (itemShape instanceof L.Polyline) {
+					geopos = itemShape.getLatLngs()[0];
+				} else {
+					geopos = itemShape.getLatLng();
 				}
-			},
-			count: function(itemId) {
-				if (handler.m_markers.count(itemId)) {
-					return handler.m_markers.at(itemId).refCount;
-				}
-				return 0;
-			},
-			coords: function(itemId) {
-				if (!handler.count(itemId)) {
-					throw new RangeError();
-				}
-				
-			},
-			destroy: function() {
-				for(var i in handler.m_markers.values()) {
-					if (handler.m_markers.at(i).marker !== undefined) {
-						state.map.removeLayer(handler.m_markers.at(i).marker);
-					}
-				}
-				handler.m_markers = tools.SimpleHash();
-			}
+				var marker = L.marker(geopos);
+				me.setLayer(itemId, marker);
+			}, tools.defErrorCB);
 		};
+		///returns leaflet LatLng
+		handler.coords = function(itemId) {
+			if (!this.count(itemId)) {
+				throw new RangeError();
+			}
+			return this.layer(itemId).getLatLng();
+		};
+		return handler;
 	};
 	
     return map = {
 		flatCqrTreeDataSource : flatCqrTreeDataSource,
 		ItemListHandler: ItemListHandler,
-		TabbedItemListHandler: TabbedItemListHandler,
+		RegionItemListTabHandler: RegionItemListTabHandler,
 		ItemShapeHandler: ItemShapeHandler,
+		ItemMarkerHandler: ItemMarkerHandler,
 		
 		resultListTabs: undefined,
 		relativesTab: { activeItemHandler: undefined, relativesHandler: undefined },
@@ -548,14 +583,14 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		
 		
 		init: function() {
-			map.resultListTabs = map.TabbedItemListHandler($('#left_menu_parent'));
+			map.resultListTabs = map.RegionItemListTabHandler($('#left_menu_parent'));
 			map.relativesTab.activeItemHandler = map.ItemListHandler($('#activeItemsList'));
 			map.relativesTab.relativesHandler = map.ItemListHandler($('#relativesList'));
 			
 			//register slots
 			$(map.resultListTabs.domRoot()).on("itemDetailsOpened", map.onItemDetailsOpen);
 			$(map.resultListTabs.domRoot()).on("itemDetailsClosed", map.onItemDetailsClosed);
-		}
+		},
 		
 		displayCqr: function (cqr) {
 			state.regionHandler = map.flatCqrTreeDataSource(cqr);
@@ -686,8 +721,50 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			map.highlightItemShapes.remove(itemId);
 			//TODO: close flickr bar
 		},
+		
 	   
 		//now for some old stuff, everything below needs refactoring
+		
+		decorateItemMaker: function(itemId, marker) {
+			marker.on('click', function () {
+				map.highlightItemShapes(itemId);
+
+				if ($('#show_flickr').is(':checked')) {
+					flickr.getImagesForLocation($.trim(state.DAG.at(itemId).name), marker.getLatLng());
+				}
+				
+				if (!$('#item_relatives').hasClass('active')) {
+					state.sidebar.open("search");
+				}
+				// open a tab, that contains the element
+				var parentId = state.DAG.at(itemId).parents[0].id;
+				var index = $("#tabs a[href='#tab-" + parentId + "']").parent().index();
+
+				$("#items_parent").tabs("option", "active", index);
+
+				$('#' + shapeSrcType + "List").find('.panel-collapse').each(
+					function () {
+						if ($(this).hasClass('in')) {
+							$(this).collapse('hide');
+						}
+					}
+				);
+				$(itemDetailsId).collapse('show');
+				state.items.activeItem = itemId;
+				//var container = $('#'+ shapeSrcType +'_parent');
+				var container = $(".sidebar-content");
+				var itemPanelRootDiv = $(itemPanelRootId);
+				if (itemPanelRootDiv === undefined) {
+					console.log("addItemMarkerToMap: undefined PanelRoot", marker, itemId, shapeSrcType, state);
+				}
+				else {
+					var scrollPos = itemPanelRootDiv.offset().top - container.offset().top + container.scrollTop();
+					container.animate({scrollTop: scrollPos});
+					//container.animate({scrollTop: itemPanelRootDiv.position().top + $("itemsList").position().top});
+				}
+				map.showItemRelatives();
+			});
+		},
 	   
 		loadWholeTree: function () {
 			function subSetHandler(subSet) {

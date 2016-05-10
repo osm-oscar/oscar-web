@@ -163,32 +163,12 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             });
 			
 			state.sidebar.on('tab-closed', function(e) {
-				if (e.id !== "item_relatives") {
-					return;
-				}
-				map.clearHighlightedShapes("relatives");
-				map.clearHighlightedShapes("activeItems");
 			});
 			
 			state.sidebar.on('tab-opened', function(e) {
 				if (e.id !== "item_relatives") {
 					return;
 				}
-				//check if the active item is opened, if so add its shape to the map
-				var activeItemsList = $('#activeItemsList');
-				var activeItems = activeItemsList.find("[class~='collapse'][class~='in']");
-				if (activeItems.length) {
-					var activeItem = activeItems.first();
-					var itemId = parseInt(activeItem.attr("data-item-id"));
-					map.highlightShape(itemId, "activeItems");
-				}
-				//do the same for the relatives
-				var relativesList = $('#relativesList');
-				var activeRelatives = relativesList.find("[class~='collapse'][class~='in']");
-				activeRelatives.each(function() {
-					var itemId = parseInt($(this).attr("data-item-id"));
-					map.highlightShape(itemId, "relatives");
-				});
 			});
 
             $('#spatialquery_selectbutton').click(function() {

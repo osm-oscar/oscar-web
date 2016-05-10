@@ -40,7 +40,7 @@ define([], function() {
                     highlight: {color: 'green', stroke: true, fill: false, opacity: 1.0}
                 },
                 activeItems: {
-                    normal: {color: 'blue', stroke: true, fill: false, opacity: 0.8},
+                    normal: {color: 'red', stroke: true, fill: false, opacity: 0.8},
                     highlight: {color: 'red', stroke: true, fill: false, opacity: 1.0}
                 },
                 geoquery: {

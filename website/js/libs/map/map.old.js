@@ -55,57 +55,6 @@
 			}
 		},
 		
-        addShapeToMap: function (leafletItem, itemId, shapeSrcType) {
-            var itemDetailsId = '#' + shapeSrcType + 'Details' + itemId;
-            var itemPanelRootId = '#' + shapeSrcType + 'PanelRoot' + itemId;
-			state.map.addLayer(leafletItem);
-			state[shapeSrcType].shapes.drawn.insert(itemId, leafletItem);
-        },
-		clearHighlightedShapes: function(shapeSrcType) {
-			for(var i in state[shapeSrcType].shapes.highlighted.values()) {
-				if (!state[shapeSrcType].shapes.regular.count(i)) {//if it's not regularly drawn, remove it
-					state.map.removeLayer(state[shapeSrcType].shapes.drawn.at(i));
-					state[shapeSrcType].shapes.drawn.erase(i);
-				}
-				else {
-					state[shapeSrcType].shapes.drawn.at(i).setStyle(myConfig.styles.shapes[shapeSrcType]['normal']);
-				}
-			}
-			state[shapeSrcType].shapes.highlighted.clear();
-		},
-		highlightShape: function(itemId, shapeSrcType) {
-			if (state[shapeSrcType].shapes.highlighted.count(itemId)) {//already highlighted
-				return;
-			} 
-			if (state[shapeSrcType].shapes.drawn.count(itemId)) { //this already on the map, change the style
-				var lfi = state[shapeSrcType].shapes.drawn.at(itemId);
-				map.clearHighlightedShapes(shapeSrcType);
-				state[shapeSrcType].shapes.highlighted.set(itemId, lfi);
-				lfi.setStyle(config.styles.shapes[shapeSrcType]['highlight']);
-				state.map.fitBounds(lfi.getBounds());
-			}
-			else {
-				state[shapeSrcType].shapes.promised.clear();
-				state[shapeSrcType].shapes.promised.set(itemId, itemId);
-				oscar.getShape(itemId,
-								function(shape) {
-									if (!state[shapeSrcType].shapes.promised.count(itemId) || state[shapeSrcType].shapes.drawn.count(itemId)) {
-										return;
-									}
-									map.clearHighlightedShapes(shapeSrcType);
-									var leafLetItem = oscar.leafletItemFromShape(shape);
-									leafLetItem.setStyle(config.styles.shapes[shapeSrcType]['highlight']);
-									state[shapeSrcType].shapes.highlighted.set(itemId, itemId);
-									map.addShapeToMap(leafLetItem, itemId, shapeSrcType);
-								},
-								tools.defErrorCB
-				);
-				oscar.getItem(itemId,
-								function(item) {
-									state.map.fitBounds(item.bbox());
-								}, tools.defErrorCB);
-			}
-		},
         visualizeResultListItems: function () {
             state.items.shapes.promised.clear();
             var itemsToDraw = [];
