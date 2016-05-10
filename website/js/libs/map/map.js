@@ -1,154 +1,6 @@
 define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner"], function (require, state, $, config, oscar, flickr, tools, tree) {
     spinner = require("spinner");
 
-	//and now some classes
-	
-	var flatCqrTreeDataSource = function (cqr) {
-		function getItems(regionChildrenInfo, context) {
-			var regionChildrenApxItemsMap = {};
-			var childIds = [];
-			var parentRid = context.rid;
-			var parentNode = state.DAG.at(parentRid);
-			var parentCount = parentNode.count;
-
-			for (var i in regionChildrenInfo) {
-				var ci = regionChildrenInfo[i];
-				regionChildrenApxItemsMap[ci['id']] = ci['apxitems'];
-				childIds.push(ci['id']);
-			}
-
-			oscar.getItems(childIds,
-				function (items) {
-					var itemMap = {}, node, item, itemId, marker;
-
-					// modify DAG
-					if (!context.dynamic) {
-						for (var i in items) {
-							item = items[i];
-							itemId = item.id();
-							itemMap[itemId] = item;
-							if (!cqr.ohPath().length || ($.inArray(itemId, cqr.ohPath()) != -1 || (parentRid == cqr.ohPath()[cqr.ohPath().length - 1] && parentCount > oscar.maxFetchItems))) {
-								if (!state.DAG.count(itemId)) {
-									node = parentNode.addChild(itemId);
-									marker = L.marker(item.centerPoint());
-									node.count = marker.count = regionChildrenApxItemsMap[itemId];
-									node.bbox = marker.bbox = item.bbox();
-									node.name = marker.name = item.name();
-									marker.rid = itemId;
-									map.decorateMarker(marker);
-									node.marker = marker;
-									state.DAG.insert(itemId, node);
-								}
-								else {
-									state.DAG.at(itemId).parents.push(parentNode);
-									parentNode.children.push(state.DAG.at(itemId));
-								}
-							}
-						}
-					}
-					else if (parentCount > oscar.maxFetchItems) {
-						for (var i in items) {
-							item = items[i];
-							itemId = item.id();
-							itemMap[itemId] = item;
-							if (!state.DAG.count(itemId)) {
-								node = parentNode.addChild(itemId);
-								marker = L.marker(item.centerPoint());
-								node.count = marker.count = regionChildrenApxItemsMap[itemId];
-								node.bbox = marker.bbox = item.bbox();
-								node.name = marker.name = item.name();
-								marker.rid = itemId;
-								map.decorateMarker(marker);
-								node.marker = marker;
-								state.DAG.insert(itemId, node);
-							}
-							else {
-								state.DAG.at(itemId).parents.push(parentNode);
-								parentNode.children.push(state.DAG.at(itemId));
-							}
-						}
-					}
-
-					// DAG-modification finished, now dicide whether items should be loaded, or clusters be drawn
-					if (!items.length || (parentCount <= oscar.maxFetchItems)) {
-						if (context.draw || !cqr.ohPath().length || cqr.ohPath()[cqr.ohPath().length - 1] == parentRid) {
-							$("#left_menu_parent").css("display", "block");
-
-							if (cqr.ohPath().length) {
-								state.items.listview.selectedRegionId = parentRid;
-								state.cqr.regionItemIds(state.items.listview.selectedRegionId,
-									map.getItemIds,
-									tools.defErrorCB,
-									0 // offset
-								);
-							}
-							else {
-								if (state.DAG.at(parentRid).children.length == 0) {
-									state.items.listview.selectedRegionId = parentRid;
-									state.cqr.regionItemIds(state.items.listview.selectedRegionId,
-										map.getItemIds,
-										tools.defErrorCB,
-										0 // offset
-									);
-								}
-								else {
-									for (var child in state.DAG.at(parentRid).children) {
-										state.items.listview.selectedRegionId = state.DAG.at(parentRid).children[child].id;
-										state.cqr.regionItemIds(state.items.listview.selectedRegionId,
-											map.getItemIds,
-											tools.defErrorCB,
-											0 // offset
-										);
-									}
-								}
-							}
-						}
-					}
-					else if (context.draw) {
-						state.items.clusters.drawn.erase(parentRid);
-
-						var j;
-						var regions = [];
-						for (var i in items) {
-							j = itemMap[items[i].id()];
-
-							if (!state.items.clusters.drawn.count(j.id())) {
-								regions.push(j.id());
-								marker = state.DAG.at(j.id()).marker;
-								state.items.clusters.drawn.insert(j.id(), marker);
-								state.markers.addLayer(marker);
-								state.DAG.at(marker.rid).marker = marker;
-							}
-						}
-
-						// just load regionShapes into the cache
-						oscar.getShapes(regions, function (res) {}, tools.defErrorCB);
-
-						if (state.visualizationActive) {
-							tree.refresh(parentRid);
-						}
-					}
-
-					if (context.pathProcessor) {
-						context.pathProcessor.process();
-					}
-
-				},
-				tools.defErrorCB
-			);
-		}
-
-		return function (context) {
-			spinner.startLoadingSpinner();
-			cqr.regionChildrenInfo(context.rid, function (regionChildrenInfo) {
-					spinner.endLoadingSpinner()
-					getItems(regionChildrenInfo, context);
-				},
-				tools.defErrorCB
-			);
-		};
-	};
-
 	//handles a single item list
 	//parent is the parent element of the Item list the handler should take care of
 	//It adds a panel div with class panel-group as parent for the list
@@ -433,8 +285,26 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		return handler;
 	};
 	
+	//base class form Leaflet layers which take care of layers of items
+	//Derived classes need to provide a function _fetchLayer(itemId, call-back)
 	var ItemLayerHandler = function() {
-		this.m_layers = tools.SimpleHash(); //maps from LeafletLayer -> {layer: LeafletLay, refCount: <int> }
+		this.m_domRoot = $('#map');
+		this.m_layers = tools.SimpleHash(); //maps from LeafletLayer -> {layer: LeafletLayer, refCount: <int> }
+		this.m_forwardedSignals = [], //add the name of the signals you want to process here in the form ["layer signal name", "map signal name"]
+		this._addSignalHandlers = function(layer) {
+			var me = this;
+			for(var i in this.m_forwardedSignals) {
+				var srcTgtSignal = this.m_forwardedSignals[i];
+				layer.on(srcTgtSignal[0], function(e) {
+					var itemId = e.target.itemId;
+					e.itemId = itemId;
+					me.m_domRoot.trigger(srcTgtSignal[1], e);
+				});
+			}
+		},
+		this.domRoot() = function() {
+			return this.m_domRoot;
+		}
 		this.count = function() {
 			if (this.m_layers.count(itemId)) {
 				return this.m_layers.at(itemId).refCount;
@@ -460,6 +330,22 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				state.map.addLayer(this.m_layers.at(itemId).layer);
 			}
 		};
+		this.add = function(itemId) {
+			if (this.count(itemId)) {
+				this.incRefCount(itemId);
+				return;
+			}
+			this.incRefCount(itemId);
+			var me = handler;
+			//call super class
+			this._fetchLayer(itemId, function(layer) {
+				if (me.count(itemId) && me.layer(itemId) === undefined) {
+					layer.itemId = itemId;
+					me._addSignalHandlers(layer);
+					me.setLayer(itemId, layer);
+				}
+			});
+		};
 		this.remove = function(itemId) {
 			if (this.count(itemId)) {
 				this.m_layers.at(itemId).refCount -= 1;
@@ -477,6 +363,13 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			}
 			return undefined;
 		};
+		this.zoomTo = function(itemId) {
+			if (!this.count(itemId)) {
+				return;
+			}
+			var ll = this.layer(itemId);
+			state.map.fitBounds(ll.getBounds());
+		};
 		this.destroy = function() {
 			for(var i in this.m_layers.values()) {
 				if (this.m_layers.at(i).layer !== undefined) {
@@ -492,52 +385,37 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 	var ItemShapeHandler = function(style) {
 		var handler = new ItemLayerHandler();
 		handler.m_style = style,
-	   
+		handler.m_forwardedSignals = [["click", "itemShapeClicked"]];
 		//calls cb after adding if cb !== undefined
-		handler.add = function(itemId, cb) {
-			if (this.count(itemId)) {
-				this.incRefCount(itemId);
-				if (cb !== undefined) {
-					cb();
-				}
-				return;
-			}
-			this.incRefCount(itemId);
-			var me = this;
+		handler._fetchLayer = function(itemId, cb) {
 			oscar.getShape(itemId, function(shape) {
-				if (!me.count(itemId)) {
-					return;
-				}
 				var lfs = oscar.leafletItemFromShape(shape);
 				lfs.setStyle(me.m_style);
-				me.setLayer(lfs);
-				if (cb !== undefined) {
-					cb();
-				}
+				cb(lfs);
 			}, tools.defErrorCB);
-		};
-		handler.zoomTo = function(itemId) {
-			if (!this.count(itemId)) {
-				return;
-			}
-			var ll = this.layer(itemId);
-			state.map.fitBounds(ll.getBounds());
 		};
 		return handler;
 	};
-	var ItemMarkerHandler = function() {
+	
+	var MarkerHandler = function() {
 		var handler = new ItemLayerHandler();
-		handler.add = function(itemId) {
-			if (this.count(itemId)) {
-				this.incRefCount(itemId);
-				return;
+
+		///returns leaflet LatLng
+		handler.coords = function(itemId) {
+			if (!this.count(itemId)) {
+				throw new RangeError();
 			}
-			this.incRefCount(itemId);
-			var me = handler;
+			return this.layer(itemId).getLatLng();
+		};
+		
+		return handler;
+	};
+
+	var ItemMarkerHandler = function() {
+		var handler = MarkerHandler();
+		handler.m_forwardedSignals = [["click", "itemMarkerClicked"], ["mouseout", "itemMarkerMouseOut"], ["mouseover", "itemMarkerMouseOver"]];
+		handler._fetchLayer = function(itemId, cb) {
 			oscar.getShape(itemId, function(shape) {
-				if (!me.count(itemId)) {
-					return;
-				}
 				var lfs = oscar.leafletItemFromShape(shape);
 				if (itemShape instanceof L.MultiPolygon) {
 					geopos = itemShape.getLatLngs()[0][0];
@@ -549,25 +427,40 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 					geopos = itemShape.getLatLng();
 				}
 				var marker = L.marker(geopos);
-				me.setLayer(itemId, marker);
+				cb(marker);
 			}, tools.defErrorCB);
-		};
-		///returns leaflet LatLng
-		handler.coords = function(itemId) {
-			if (!this.count(itemId)) {
-				throw new RangeError();
-			}
-			return this.layer(itemId).getLatLng();
 		};
 		return handler;
 	};
+	///the region marker emits the follwing event on the map div:
+	///regionMarkerClicked, regionMarkerMouseOver, regionMarkerMouseOut
+	///the event will have a property called regionId
+	var RegionMarkerHandler = function() {
+		var handler = MarkerHandler();
+		handler.m_forwardedSignals = [["click", "regionMarkerClicked"], ["mouseout", "regionMarkerMouseOut"], ["mouseover", "regionMarkerMouseOver"]];
+		handler._fetchLayer = function(itemId, cb) {
+			if (this.count(itemId)) {
+				this.incRefCount(itemId);
+				return;
+			}
+			this.incRefCount(itemId);
+			var me = handler;
+			oscar.getItem(itemId, function(item) {
+				if (!me.count(itemId)) {
+					return;
+				}
+				var marker = L.marker(item.centerPoint());
+				me.setLayer(itemId, marker);
+			}, tools.defErrorCB);
+		};
+	};
 	
     return map = {
-		flatCqrTreeDataSource : flatCqrTreeDataSource,
 		ItemListHandler: ItemListHandler,
 		RegionItemListTabHandler: RegionItemListTabHandler,
 		ItemShapeHandler: ItemShapeHandler,
 		ItemMarkerHandler: ItemMarkerHandler,
+		RegionMarkerHandler: RegionMarkerHandler,
 		
 		resultListTabs: undefined,
 		relativesTab: { activeItemHandler: undefined, relativesHandler: undefined },
@@ -580,6 +473,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		
 		//markers
 		itemMarkers: ItemMarkerHandler(),
+		regionMarkers: RegionMarkerHandler(),
 		
 		
 		init: function() {
@@ -590,6 +484,10 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			//register slots
 			$(map.resultListTabs.domRoot()).on("itemDetailsOpened", map.onItemDetailsOpen);
 			$(map.resultListTabs.domRoot()).on("itemDetailsClosed", map.onItemDetailsClosed);
+			
+			$(map.regionMarkers.domRoot()).on("regionMarkerClicked", map.onRegionMarkerClicked);
+			$(map.regionMarkers.domRoot()).on("regionMarkerMouseOver", map.onRegionMarkerMouseOver);
+			$(map.regionMarkers.domRoot()).on("regionMarkerMouseOut", map.onRegionMarkerMouseOut);
 		},
 		
 		displayCqr: function (cqr) {
@@ -721,10 +619,163 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			map.highlightItemShapes.remove(itemId);
 			//TODO: close flickr bar
 		},
-		
-	   
+		onRegionMarkerClicked: function(e) {
+			map.closePopups();
+			map.regionMarkers.remove(e.target.rid);
+			state.regionHandler({rid: e.target.rid, draw: true, dynamic: true});
+		},
+		onRegionMarkerMouseOver: function(e) {
+			map.regionShapes.add(e.target.rid);
+
+			L.popup({offset: new L.Point(0, -10)})
+				.setLatLng(e.latlng)
+				.setContent(e.target.name).openOn(state.map);
+		},
+		onRegionMarkerMouseOut: function(e) {
+			map.closePopups();
+			map.regionShapes.remove(e.target.rid)
+		},
 		//now for some old stuff, everything below needs refactoring
-		
+
+
+		flatCqrTreeDataSource: function (cqr) {
+			function getItems(regionChildrenInfo, context) {
+				var regionChildrenApxItemsMap = {};
+				var childIds = [];
+				var parentRid = context.rid;
+				var parentNode = state.DAG.at(parentRid);
+				var parentCount = parentNode.count;
+
+				for (var i in regionChildrenInfo) {
+					var ci = regionChildrenInfo[i];
+					regionChildrenApxItemsMap[ci['id']] = ci['apxitems'];
+					childIds.push(ci['id']);
+				}
+
+				oscar.getItems(childIds,
+					function (items) {
+						var itemMap = {}, node, item, itemId, marker;
+
+						// modify DAG
+						if (!context.dynamic) {
+							for (var i in items) {
+								item = items[i];
+								itemId = item.id();
+								itemMap[itemId] = item;
+								if (!cqr.ohPath().length || ($.inArray(itemId, cqr.ohPath()) != -1 || (parentRid == cqr.ohPath()[cqr.ohPath().length - 1] && parentCount > oscar.maxFetchItems))) {
+									if (!state.DAG.count(itemId)) {
+										node = parentNode.addChild(itemId);
+										node.count = regionChildrenApxItemsMap[itemId];
+										node.bbox = item.bbox();
+										node.name = item.name();
+										state.DAG.insert(itemId, node);
+									}
+									else {
+										state.DAG.at(itemId).parents.push(parentNode);
+										parentNode.children.push(state.DAG.at(itemId));
+									}
+								}
+							}
+						}
+						else if (parentCount > oscar.maxFetchItems) {
+							for (var i in items) {
+								item = items[i];
+								itemId = item.id();
+								itemMap[itemId] = item;
+								if (!state.DAG.count(itemId)) {
+									node = parentNode.addChild(itemId);
+									node.count = regionChildrenApxItemsMap[itemId];
+									node.bbox = item.bbox();
+									node.name = item.name();
+									state.DAG.insert(itemId, node);
+								}
+								else {
+									state.DAG.at(itemId).parents.push(parentNode);
+									parentNode.children.push(state.DAG.at(itemId));
+								}
+							}
+						}
+
+						// DAG-modification finished, now dicide whether items should be loaded, or clusters be drawn
+						if (!items.length || (parentCount <= oscar.maxFetchItems)) {
+							if (context.draw || !cqr.ohPath().length || cqr.ohPath()[cqr.ohPath().length - 1] == parentRid) {
+								$("#left_menu_parent").css("display", "block");
+
+								if (cqr.ohPath().length) {
+									state.items.listview.selectedRegionId = parentRid;
+									state.cqr.regionItemIds(state.items.listview.selectedRegionId,
+										map.getItemIds,
+										tools.defErrorCB,
+										0 // offset
+									);
+								}
+								else {
+									if (state.DAG.at(parentRid).children.length == 0) {
+										state.items.listview.selectedRegionId = parentRid;
+										state.cqr.regionItemIds(state.items.listview.selectedRegionId,
+											map.getItemIds,
+											tools.defErrorCB,
+											0 // offset
+										);
+									}
+									else {
+										for (var child in state.DAG.at(parentRid).children) {
+											state.items.listview.selectedRegionId = state.DAG.at(parentRid).children[child].id;
+											state.cqr.regionItemIds(state.items.listview.selectedRegionId,
+												map.getItemIds,
+												tools.defErrorCB,
+												0 // offset
+											);
+										}
+									}
+								}
+							}
+						}
+						else if (context.draw) {
+							state.items.clusters.drawn.erase(parentRid);
+
+							var j;
+							var regions = [];
+							for (var i in items) {
+								j = itemMap[items[i].id()];
+
+								if (!state.items.clusters.drawn.count(j.id())) {
+									regions.push(j.id());
+									marker = state.DAG.at(j.id()).marker;
+									state.items.clusters.drawn.insert(j.id(), marker);
+									state.markers.addLayer(marker);
+									state.DAG.at(marker.rid).marker = marker;
+								}
+							}
+
+							// just load regionShapes into the cache
+							oscar.getShapes(regions, function (res) {}, tools.defErrorCB);
+
+							if (state.visualizationActive) {
+								tree.refresh(parentRid);
+							}
+						}
+
+						if (context.pathProcessor) {
+							context.pathProcessor.process();
+						}
+
+					},
+					tools.defErrorCB
+				);
+			}
+
+			return function (context) {
+				spinner.startLoadingSpinner();
+				cqr.regionChildrenInfo(context.rid, function (regionChildrenInfo) {
+						spinner.endLoadingSpinner()
+						getItems(regionChildrenInfo, context);
+					},
+					tools.defErrorCB
+				);
+			};
+		};
+
 		decorateItemMaker: function(itemId, marker) {
 			marker.on('click', function () {
 				map.highlightItemShapes(itemId);
@@ -785,12 +836,9 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 							var node = state.DAG.at(itemId);
 
 							if (node) {
-								marker = L.marker(item.centerPoint());
-								marker.rid = itemId;
-								node.name = marker.name = item.name();
-								node.count = marker.count = regionInSubSet.apxitems;
-								node.bbox = marker.bbox = item.bbox();
-								map.decorateMarker(marker);
+								node.name = item.name();
+								node.count = regionInSubSet.apxitems;
+								node.bbox = item.bbox();
 							} else {
 								var newNode = new tools.TreeNode(itemId, undefined);
 								newNode.count = regionInSubSet.apxitems;
@@ -884,36 +932,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			state.shownBoundaries = [];
 		},
 
-		decorateMarker: function (marker) {
-			marker.on("click", function (e) {
-				map.closePopups();
-				state.items.clusters.drawn.erase(e.target.rid);
-				map.removeMarker(e.target);
-				state.regionHandler({rid: e.target.rid, draw: true, dynamic: true});
-			});
 
-			marker.on("mouseover", function (e) {
-				if (oscar.isShapeInCache(e.target.rid)) {
-					oscar.getShape(e.target.rid, function (shape) {
-						var leafletItem = oscar.leafletItemFromShape(shape);
-						leafletItem.setStyle(config.styles.shapes['regions']['normal']);
-						e.target.shape = leafletItem;
-						state.map.addLayer(leafletItem);
-					}, tools.defErrorCB);
-				}
-
-				L.popup({offset: new L.Point(0, -10)})
-					.setLatLng(e.latlng)
-					.setContent(e.target.name).openOn(state.map);
-			});
-
-			marker.on("mouseout", function (e) {
-				map.closePopups();
-				if (e.target.shape) {
-					state.map.removeLayer(e.target.shape);
-				}
-			});
-		},
 		
 		removeMarker: function (marker) {
 			if (marker.shape) {
@@ -924,18 +943,11 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		},
 
 		removeClusterMarker: function (node) {
-			map.removeMarker(node.marker);
-			state.items.clusters.drawn.erase(node.id);
-			map.removeBoundaries();
+			map.regionMarkers.remove(node.id);
 		},
 
-		addClusterMarker: function (node, buffer) {
-			state.items.clusters.drawn.insert(node.id, node.marker);
-			if (buffer) {
-				buffer.push(node.marker)
-			} else {
-				state.markers.addLayer(node.marker);
-			}
+		addClusterMarker: function (node) {
+			map.regionMarkers.add(node.id);
 		},
 
 		removeItemMarker: function (node) {
