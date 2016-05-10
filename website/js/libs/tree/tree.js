@@ -72,6 +72,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
                     var id = $(this).attr("id");
                     var node = state.DAG.at(id);
                     var marker = node.marker;
+					//BUG: we should not remove stuff here, breaks encapsulation
                     state.markers.removeLayer(marker);
                     state.items.clusters.drawn.erase(id);
                     map.loadSubhierarchy(id, function () {

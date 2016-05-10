@@ -6,49 +6,6 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
         markers: L.markerClusterGroup(),
         sidebar: undefined,
         handler: undefined,
-        items: {
-            shapes: {
-                promised: tools.SimpleHash(),//referenced by id
-                cache: tools.SimpleHash(), //id -> leaflet shape
-                drawn: tools.SimpleHash(),//id -> marker
-				regular : tools.SimpleHash(), //id -> leaflet shape
-				highlighted : tools.SimpleHash(),
-				markers: tools.SimpleHash()//id -> marker
-            },
-            listview: {
-                promised: tools.SimpleHash(),//referenced by id
-                drawn: tools.SimpleHash(),//referenced by id
-				activeItem: undefined,//id of the currently active item
-                selectedRegionId: undefined
-            },
-            clusters: {
-                drawn: tools.SimpleHash()//id -> marker
-            }
-        },
-		relatives : {
-			shapes : {
-				promised : tools.SimpleHash(),//id -> id
-				drawn : tools.SimpleHash(),//id -> leaflet-item
-				regular : tools.SimpleHash(),
-				highlighted : tools.SimpleHash()
-			},
-			listview : {
-				promised : tools.SimpleHash(),//id -> id
-				drawn : tools.SimpleHash()//id -> id
-			}
-		},
-		activeItems : {
-			shapes : {
-				promised : tools.SimpleHash(),//id -> id
-				drawn : tools.SimpleHash(),//id -> leaflet-item
-				regular : tools.SimpleHash(),
-				highlighted : tools.SimpleHash()
-			},
-			listview : {
-				promised : tools.SimpleHash(),//id -> id
-				drawn : tools.SimpleHash()//id -> id
-			}
-		},
         loadingtasks: 0,
         cqr: {},
         regionHandler: undefined,
@@ -80,7 +37,9 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
             searchResultsCounter: undefined
         },
         shownBoundaries: [],
-		
+		items : {
+			activeItem: undefined,
+		},
 		//e = {type : type, id : internalId, name : name}
 		spatialQueryTableRowTemplateDataFromSpatialObject: function(e) {
 			var t = "invalid";
@@ -151,51 +110,12 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
         },
 
         clearViews: function () {
-            $('#itemsList').empty();
-            $('#tabs').empty();
-            var tabs = $('#items_parent');
-            if (tabs.data("ui-tabs")) {
-                tabs.tabs("destroy");
-            }
             if (state.handler !== undefined) {
                 state.map.off("zoomend dragend", state.handler);
             }
-            state.map.removeLayer(state.markers);
-            delete state.markers;
-            state.initMarkers();
-            state.map.addLayer(state.markers);
-            state.items.listview.drawn.clear();
-            state.items.listview.promised.clear();
-            state.items.listview.selectedRegionId = undefined;
-            state.items.shapes.promised.clear();
 			state.items.activeItem = undefined;
-            for (var i in state.items.shapes.drawn.values()) {
-                state.map.removeLayer(state.items.shapes.drawn.at(i));
-                state.items.shapes.drawn.erase(i);
-            }
-			for (var i in state.items.shapes.markers.values()) {
-                state.map.removeLayer(state.items.shapes.markers.at(i));
-                state.items.shapes.markers.erase(i);
-            }
-            for (var i in state.items.clusters.drawn.values()) {
-                state.map.removeLayer(state.items.clusters.drawn.at(i));
-                state.items.clusters.drawn.erase(i);
-            }
-            state.clearListAndShapes("relatives");
-			state.clearListAndShapes("activeItems");
             state.DAG = tools.SimpleHash();
         },
-		clearListAndShapes: function(shapeSrcType) {
-			$('#'+shapeSrcType+'List').empty();
-			for(i in state[shapeSrcType].shapes.drawn.values()) {
-				state.map.removeLayer(state[shapeSrcType].shapes.drawn.at(i));
-				state[shapeSrcType].shapes.drawn.erase(i);
-			}
-			state[shapeSrcType].listview.drawn.clear();
-			state[shapeSrcType].listview.promised.clear();
-			state[shapeSrcType].shapes.promised.clear();
-			
-		},
         initMarkers: function(){
             state.markers = L.markerClusterGroup();
             state.markers.on('clusterclick', function (a) {

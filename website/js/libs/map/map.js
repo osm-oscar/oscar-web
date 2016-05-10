@@ -220,7 +220,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				//add a new tab
 				var tabHeadId = tools.generateDocumentUniqueId();
 				var tabContentId = tools.generateDocumentUniqueId();
-				var tabHeadHtml = '<li id="' + tabHeadId + '"><a href="#' + tabContentId + '">' + regionName + '</a><span class="badge">' + itemCount + '</span></li>';
+				var tabHeadHtml = '<li id="' + tabHeadId + ' regionId="' + regionId + '"><a href="#' + tabContentId + '">' + regionName + '</a><span class="badge">' + itemCount + '</span></li>';
 				var tabContentHtml = '<div id="' + tabContentId + '"></div>';
 				var tabHead = $(handler.m_domTabRoot).append(tabHeadHtml);
 				var tabContent = $(handler.m_domRoot).append(tabContentHtml);
@@ -262,7 +262,23 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				}
 				var index = $("#" + handler.m_regions.at(i).tabHeadId).index();
 				handler.m_domRoot.tabs("option", "active", index);
-				
+			},
+			
+			openItem: function(itemId) {
+				for(var i in handler.m_regions) {
+					if (handler.m_regions.at(i).handler.hasItem(itemId)) {
+						openTab(i);
+						handler.m_regions.at(i).handler.open(itemId);
+						break;
+					}
+				}
+			},
+			//return handler of the active tab
+			activeTab: function() {
+				var index = handler.m_domRoot.tabs("option", "active");
+				var li = handler.m_domTabRoot.children().eq(index);
+				var regionId = parseInt(li.attr["regionId"]);
+				return handler.m_regions.at(regionId).handler;
 			},
 			
 			refresh: function () {
@@ -286,6 +302,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 	};
 	
 	//base class form Leaflet layers which take care of layers of items
+	//It triggers event on itself
 	//Derived classes need to provide a function _fetchLayer(itemId, call-back)
 	var ItemLayerHandler = function() {
 		this.m_domRoot = $('#map');
@@ -296,13 +313,13 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			for(var i in this.m_forwardedSignals) {
 				var srcTgtSignal = this.m_forwardedSignals[i];
 				layer.on(srcTgtSignal[0], function(e) {
-					var itemId = e.target.itemId;
-					e.itemId = itemId;
-					me.m_domRoot.trigger(srcTgtSignal[1], e);
+					var e = $.Event(srcTgtSignal[1]);
+					e.itemId = e.target.itemId;
+					$(me).triggerHandler(e);
 				});
 			}
 		},
-		this.domRoot() = function() {
+		this.domRoot = function() {
 			return this.m_domRoot;
 		}
 		this.count = function() {
@@ -385,7 +402,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 	var ItemShapeHandler = function(style) {
 		var handler = new ItemLayerHandler();
 		handler.m_style = style,
-		handler.m_forwardedSignals = [["click", "itemShapeClicked"]];
+		handler.m_forwardedSignals = [["click", "click"]];
 		//calls cb after adding if cb !== undefined
 		handler._fetchLayer = function(itemId, cb) {
 			oscar.getShape(itemId, function(shape) {
@@ -413,7 +430,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 
 	var ItemMarkerHandler = function() {
 		var handler = MarkerHandler();
-		handler.m_forwardedSignals = [["click", "itemMarkerClicked"], ["mouseout", "itemMarkerMouseOut"], ["mouseover", "itemMarkerMouseOver"]];
+		handler.m_forwardedSignals = [["click", "click"]];
 		handler._fetchLayer = function(itemId, cb) {
 			oscar.getShape(itemId, function(shape) {
 				var lfs = oscar.leafletItemFromShape(shape);
@@ -432,12 +449,10 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		};
 		return handler;
 	};
-	///the region marker emits the follwing event on the map div:
-	///regionMarkerClicked, regionMarkerMouseOver, regionMarkerMouseOut
-	///the event will have a property called regionId
+	
 	var RegionMarkerHandler = function() {
 		var handler = MarkerHandler();
-		handler.m_forwardedSignals = [["click", "regionMarkerClicked"], ["mouseout", "regionMarkerMouseOut"], ["mouseover", "regionMarkerMouseOver"]];
+		handler.m_forwardedSignals = [["click", "click"], ["mouseout", "mouseout"], ["mouseover", "mouseover"]];
 		handler._fetchLayer = function(itemId, cb) {
 			if (this.count(itemId)) {
 				this.incRefCount(itemId);
@@ -450,8 +465,18 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 					return;
 				}
 				var marker = L.marker(item.centerPoint());
+				marker.name = item.name();
 				me.setLayer(itemId, marker);
 			}, tools.defErrorCB);
+		};
+	};
+	
+	var SpatialQueryGeoObjectHandler = function() {
+		var handler = MarkerHandler();
+		handler.m_forwardedSignals = [["click", "click"]];
+		handler._fetchLayer = function(itemId, cb) {
+			//fetched by internal id
+			cb( state.spatialObjects.store.at(itemId).mapshape );
 		};
 	};
 	
@@ -485,9 +510,11 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			$(map.resultListTabs.domRoot()).on("itemDetailsOpened", map.onItemDetailsOpen);
 			$(map.resultListTabs.domRoot()).on("itemDetailsClosed", map.onItemDetailsClosed);
 			
-			$(map.regionMarkers.domRoot()).on("regionMarkerClicked", map.onRegionMarkerClicked);
-			$(map.regionMarkers.domRoot()).on("regionMarkerMouseOver", map.onRegionMarkerMouseOver);
-			$(map.regionMarkers.domRoot()).on("regionMarkerMouseOut", map.onRegionMarkerMouseOut);
+			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
+			
+			$(map.regionMarkers).on("click", map.onRegionMarkerClicked);
+			$(map.regionMarkers).on("mouseover", map.onRegionMarkerMouseOver);
+			$(map.regionMarkers).on("mouseout", map.onRegionMarkerMouseOut);
 		},
 		
 		displayCqr: function (cqr) {
@@ -603,6 +630,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				}
 			});
 			
+			//TODO populate geopos here
 			L.popup({offset: new L.Point(0, -25)})
 				.setLatLng(geopos)
 				.setContent($(this).text()).openOn(state.map);
@@ -619,17 +647,24 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			map.highlightItemShapes.remove(itemId);
 			//TODO: close flickr bar
 		},
+	   
+		onItemMarkerClicked: function(e) {
+			map.resultListTabs.openItem(e.itemId);
+			map.resultListTabs.activeTab().scrollTo(e.itemId);
+		},
+		
 		onRegionMarkerClicked: function(e) {
 			map.closePopups();
-			map.regionMarkers.remove(e.target.rid);
-			state.regionHandler({rid: e.target.rid, draw: true, dynamic: true});
+			map.regionMarkers.remove(e.itemId);
+			state.regionHandler({rid: e.itemId, draw: true, dynamic: true});
 		},
 		onRegionMarkerMouseOver: function(e) {
-			map.regionShapes.add(e.target.rid);
-
+			map.regionShapes.add(e.itemId);
+			var coords = map.regionMarkers.coords(e.itemId);
+			var marker = map.regionMarkers.layer(e.itemId);
 			L.popup({offset: new L.Point(0, -10)})
-				.setLatLng(e.latlng)
-				.setContent(e.target.name).openOn(state.map);
+				.setLatLng(coords)
+				.setContent(marker.name).openOn(state.map);
 		},
 		onRegionMarkerMouseOut: function(e) {
 			map.closePopups();
@@ -696,7 +731,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 							}
 						}
 
-						// DAG-modification finished, now dicide whether items should be loaded, or clusters be drawn
+						// DAG-modification finished, now decide whether items should be loaded, or clusters be drawn
 						if (!items.length || (parentCount <= oscar.maxFetchItems)) {
 							if (context.draw || !cqr.ohPath().length || cqr.ohPath()[cqr.ohPath().length - 1] == parentRid) {
 								$("#left_menu_parent").css("display", "block");
@@ -774,49 +809,180 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 					tools.defErrorCB
 				);
 			};
-		};
+		},
 
-		decorateItemMaker: function(itemId, marker) {
-			marker.on('click', function () {
-				map.highlightItemShapes(itemId);
-
-				if ($('#show_flickr').is(':checked')) {
-					flickr.getImagesForLocation($.trim(state.DAG.at(itemId).name), marker.getLatLng());
+		visualizeResultListItems: function () {
+			state.items.shapes.promised.clear();
+			var itemsToDraw = [];
+			for (var i in state.items.listview.drawn.values()) {
+				if (!state.items.shapes.cache.count(i)) {
+					state.items.shapes.promised.set(i, state.items.listview.drawn.at(i));
+					itemsToDraw.push(i);
 				}
-				
-				if (!$('#item_relatives').hasClass('active')) {
-					state.sidebar.open("search");
+			}
+
+			spinner.startLoadingSpinner();
+			oscar.getShapes(itemsToDraw, function (shapes) {
+				spinner.endLoadingSpinner();
+
+				var marker;
+				for (var i in itemsToDraw) {
+					var itemId = itemsToDraw[i];
+					if (!state.items.shapes.promised.count(itemId)) {
+						continue;
+					}
+					if (shapes[itemId] === undefined || !state.items.listview.drawn.count(itemId) ||
+						state.items.shapes.cache.count(itemId))
+					{
+						state.items.shapes.promised.erase(itemId);
+						continue;
+					}
+
+					state.items.shapes.promised.erase(itemId);
+					var itemShape = oscar.leafletItemFromShape(shapes[itemId]);
+					itemShape.setStyle(config.styles.shapes.items.normal);
+
+					if (itemShape instanceof L.MultiPolygon) {
+						marker = L.marker(itemShape.getLatLngs()[0][0]);
+					} else if (itemShape instanceof L.Polygon) {
+						marker = L.marker(itemShape.getLatLngs()[0]);
+					} else if (itemShape instanceof L.Polyline) {
+						marker = L.marker(itemShape.getLatLngs()[0]);
+					} else {
+						marker = L.marker(itemShape.getLatLng());
+					}
+
+					state.markers.addLayer(marker);
+					state.items.shapes.cache.insert(itemId, itemShape);
+					state.DAG.at(itemId).marker = marker;
+					state.DAG.at(itemId).shape = itemShape;
+					map.addItemMarkerToMap(marker, itemId, "items");
 				}
-				// open a tab, that contains the element
-				var parentId = state.DAG.at(itemId).parents[0].id;
-				var index = $("#tabs a[href='#tab-" + parentId + "']").parent().index();
+			}, tools.defErrorCB);
+		},
 
-				$("#items_parent").tabs("option", "active", index);
+		getItemIds: function (regionId, itemIds) {
 
-				$('#' + shapeSrcType + "List").find('.panel-collapse').each(
-					function () {
-						if ($(this).hasClass('in')) {
-							$(this).collapse('hide');
+			for (var i in itemIds) {
+				var itemId = itemIds[i];
+				state.items.listview.promised.insert(itemId, itemId);
+			}
+
+			oscar.getItems(itemIds,
+				function (items) {
+					var node;
+					state.items.clusters.drawn.erase(regionId);
+
+					// manage items -> kill old items if there are too many of them and show clusters again
+					if (state.items.listview.drawn.size() + items.length > config.maxBufferedItems) {
+						for (var i in state.items.listview.drawn.values()) {
+							node = state.DAG.at(i);
+							for (var parent in node.parents) {
+								if (!state.items.clusters.drawn.count(node.parents[parent].id)) {
+									state.markers.addLayer(node.parents[parent].marker);
+									state.items.clusters.drawn.insert(node.parents[parent].id, node.parents[parent].marker);
+								}
+							}
+							if (node.marker) {
+								state.markers.removeLayer(node.marker);
+							}
+							node.kill();
+							delete node;
+						}
+						$('#itemsList').empty();
+						$('#tabs').empty();
+						state.items.listview.drawn.clear();
+						state.items.shapes.cache.clear();
+						state.items.shapes.markers.clear();
+					}
+
+					var tabsInitialized = $('#items_parent').data("ui-tabs");
+					var tab = "<li><a href='#tab-" + regionId + "'>" + state.DAG.at(regionId).name + "</a><span class='badge'>" + items.length + "</span></li>";
+					if (!$("a[href='#tab-" + regionId + "']").length) {
+						$('#tabs').append(tab);
+					}
+
+					if (!tabsInitialized) {
+						$('#items_parent').tabs();
+					}
+
+					var regionDiv = "<div id='tab-" + regionId + "'></div>";
+					if (!$("#tab-" + regionId).length) {
+						$('#itemsList').append(regionDiv);
+					}
+					var parentElement = $('#tab-' + regionId);
+					for (var i in items) {
+						var item = items[i];
+						var itemId = item.id();
+						if (state.items.listview.promised.count(itemId)) {
+							if (!state.DAG.count(itemId)) {
+								state.DAG.insert(itemId, state.DAG.at(regionId).addChild(itemId));
+							} else {
+								//TODO: check whether regionId already contains this itemId as child
+								state.DAG.at(regionId).children.push(state.DAG.at(itemId));
+								state.DAG.at(itemId).parents.push(state.DAG.at(regionId));
+							}
+							state.DAG.at(itemId).name = item.name();
+							map.appendToItemsList(item, parentElement);
+							state.items.listview.promised.erase(itemId);
 						}
 					}
-				);
-				$(itemDetailsId).collapse('show');
-				state.items.activeItem = itemId;
-				//var container = $('#'+ shapeSrcType +'_parent');
-				var container = $(".sidebar-content");
-				var itemPanelRootDiv = $(itemPanelRootId);
-				if (itemPanelRootDiv === undefined) {
-					console.log("addItemMarkerToMap: undefined PanelRoot", marker, itemId, shapeSrcType, state);
-				}
-				else {
-					var scrollPos = itemPanelRootDiv.offset().top - container.offset().top + container.scrollTop();
-					container.animate({scrollTop: scrollPos});
-					//container.animate({scrollTop: itemPanelRootDiv.position().top + $("itemsList").position().top});
-				}
-				map.showItemRelatives();
-			});
+					map.refreshTabs();
+					map.visualizeResultListItems();
+
+					if (state.visualizationActive) {
+						tree.refresh(regionId);
+					}
+
+				},
+				tools.defErrorCB
+			);
 		},
-	   
+
+		loadSubhierarchy: function (rid, finish) {
+			state.cqr.regionChildrenInfo(rid, function (regionChildrenInfo) {
+				var children = [];
+				var regionChildrenApxItemsMap = {};
+
+				for (var i in regionChildrenInfo) {
+					var ci = regionChildrenInfo[i];
+					regionChildrenApxItemsMap[ci['id']] = ci['apxitems'];
+					children.push(ci['id']);
+				}
+
+				oscar.getItems(children, function (items) {
+						var itemId, item, node, parentNode, marker;
+						parentNode = state.DAG.at(rid);
+
+						for (var i in items) {
+							item = items[i];
+							itemId = item.id();
+							if (!state.DAG.count(itemId)) {
+								node = parentNode.addChild(itemId);
+								marker = L.marker(item.centerPoint());
+								node.count = marker.count = regionChildrenApxItemsMap[itemId];
+								node.bbox = marker.bbox = item.bbox();
+								node.name = marker.name = item.name();
+								marker.rid = item.id();
+								map.decorateMarker(marker);
+								node.marker = marker;
+								state.DAG.insert(itemId, node);
+								map.addClusterMarker(state.DAG.at(itemId));
+							}
+						}
+
+						if ($("#onePath").is(':checked')) {
+							tree.onePath(parentNode);
+						} else {
+							tree.refresh(rid);
+						}
+
+						finish();
+					}, function () {
+					}
+				);
+			}, function(){});
+		},
 		loadWholeTree: function () {
 			function subSetHandler(subSet) {
 				state.DAG = tools.SimpleHash();
@@ -953,8 +1119,6 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		removeItemMarker: function (node) {
 			state.markers.removeLayer(node.marker);
 			state.items.shapes.markers.erase(node.id);
-			//BUG:this function should NOT erase stuff from the result list. this is a breach of encapuslation
-// 			state.items.listview.drawn.erase(node.id);
 		},
 
 		addItemMarker: function (node, buffer) {
@@ -1037,6 +1201,6 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 					}
 				}
 			};
-		},
+		}
     };
 });
