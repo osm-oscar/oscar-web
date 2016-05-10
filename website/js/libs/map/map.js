@@ -122,6 +122,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 					}
 				});
 			},
+			//BUG: this is broken
 			scrollTo: function(itemId) {
 				if (!hasItem(itemId)) {
 					return;
@@ -129,7 +130,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				var domItemHader = handler._domItemHeader();
 				var itemPanelRootDiv = $(itemPanelRootId);
 				if (itemPanelRootDiv === undefined) {
-					console.log("addItemMarkerToMap: undefined PanelRoot", marker, itemId, shapeSrcType, state);
+					console.log("ItemListHandler.scrollTo: undefined itemPanelRootDiv", marker, itemId, shapeSrcType, state);
 				}
 				else {
 					var scrollPos = itemPanelRootDiv.offset().top - container.offset().top + container.scrollTop();
@@ -242,6 +243,13 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 					handler.m_regions.at(regionId).handler.insert(item);
 				}
 			},
+			insertItems: function(regionId, items) {
+				if (handler.m_regions.count(regionId)) {
+					for(var i in items) {
+						handler.m_regions.at(regionId).handler.insert(items[i]);
+					}
+				}
+			},
 			//removes a region (and it's tab), return true, if removal was successfull
 			remove: function(regionId) {
 				if (handler.m_regions.count(regionId)) {
@@ -304,7 +312,8 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 	//base class form Leaflet layers which take care of layers of items
 	//It triggers event on itself
 	//Derived classes need to provide a function _fetchLayer(itemId, call-back)
-	var ItemLayerHandler = function() {
+	var ItemLayerHandler = function(target) {
+		this.m_target = target;
 		this.m_domRoot = $('#map');
 		this.m_layers = tools.SimpleHash(); //maps from LeafletLayer -> {layer: LeafletLayer, refCount: <int> }
 		this.m_forwardedSignals = [], //add the name of the signals you want to process here in the form ["layer signal name", "map signal name"]
@@ -339,12 +348,12 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				this.incRefCount(itemId);
 			}
 			if (this.m_layers.at(itemId).layer !== undefined) {
-				state.map.removeLayer(this.m_layers.at(itemId).layer);
+				this.m_target.removeLayer(this.m_layers.at(itemId).layer);
 				this.m_layers.at(itemId).layer = undefined;
 			}
 			if (layer !== undefined) {
 				this.m_layers.at(itemId).layer = layer;
-				state.map.addLayer(this.m_layers.at(itemId).layer);
+				this.m_target.addLayer(this.m_layers.at(itemId).layer);
 			}
 		};
 		this.add = function(itemId) {
@@ -368,7 +377,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				this.m_layers.at(itemId).refCount -= 1;
 				if (this.m_layers.at(itemId).refCount <= 0) {
 					if (this.m_layers.at(itemId).layer !== undefined) {
-						state.map.removeLayer(this.m_layers.at(itemId).layer);
+						this.m_target.removeLayer(this.m_layers.at(itemId).layer);
 					}
 					this.m_layers.erase(itemId);
 				}
@@ -385,12 +394,12 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				return;
 			}
 			var ll = this.layer(itemId);
-			state.map.fitBounds(ll.getBounds());
+			this.m_target.fitBounds(ll.getBounds());
 		};
 		this.destroy = function() {
 			for(var i in this.m_layers.values()) {
 				if (this.m_layers.at(i).layer !== undefined) {
-					state.map.removeLayer(this.m_layers.at(i).layer);
+					this.m_target.removeLayer(this.m_layers.at(i).layer);
 				}
 			}
 			this.m_layers = tools.SimpleHash();
@@ -399,8 +408,8 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 	
 	//The ShapeHandler handles the map shapes. It uses ref-counting to track the usage of shapes
 	//Style is of the form:
-	var ItemShapeHandler = function(style) {
-		var handler = new ItemLayerHandler();
+	var ItemShapeHandler = function(target, style) {
+		var handler = new ItemLayerHandler(target);
 		handler.m_style = style,
 		handler.m_forwardedSignals = [["click", "click"]];
 		//calls cb after adding if cb !== undefined
@@ -414,8 +423,8 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		return handler;
 	};
 	
-	var MarkerHandler = function() {
-		var handler = new ItemLayerHandler();
+	var MarkerHandler = function(target) {
+		var handler = new ItemLayerHandler(target);
 
 		///returns leaflet LatLng
 		handler.coords = function(itemId) {
@@ -428,8 +437,8 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		return handler;
 	};
 
-	var ItemMarkerHandler = function() {
-		var handler = MarkerHandler();
+	var ItemMarkerHandler = function(target) {
+		var handler = MarkerHandler(target);
 		handler.m_forwardedSignals = [["click", "click"]];
 		handler._fetchLayer = function(itemId, cb) {
 			oscar.getShape(itemId, function(shape) {
@@ -450,7 +459,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		return handler;
 	};
 	
-	var RegionMarkerHandler = function() {
+	var RegionMarkerHandler = function(target) {
 		var handler = MarkerHandler();
 		handler.m_forwardedSignals = [["click", "click"], ["mouseout", "mouseout"], ["mouseover", "mouseover"]];
 		handler._fetchLayer = function(itemId, cb) {
@@ -491,20 +500,28 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		relativesTab: { activeItemHandler: undefined, relativesHandler: undefined },
 		
 		//map shapes
-		itemShapes: ItemShapeHandler(config.styles.shapes.items.normal),
-		regionShapes: ItemShapeHandler(config.styles.shapes.regions.normal),
-		relativesShapes: ItemShapeHandler(config.styles.shapes.relatives.normal),
-		highlightItemShapes: ItemShapeHandler(config.styles.shapes.activeItems),
+		itemShapes: ItemShapeHandler(state.map, config.styles.shapes.items.normal),
+		regionShapes: ItemShapeHandler(state.map, config.styles.shapes.regions.normal),
+		relativesShapes: ItemShapeHandler(state.map, config.styles.shapes.relatives.normal),
+		highlightItemShapes: ItemShapeHandler(state.map, config.styles.shapes.activeItems),
 		
 		//markers
-		itemMarkers: ItemMarkerHandler(),
-		regionMarkers: RegionMarkerHandler(),
-		
+		itemMarkers: ItemMarkerHandler(state.map),
+		regionMarkers: RegionMarkerHandler(state.map),
+		clusterMarkers: undefined,
 		
 		init: function() {
 			map.resultListTabs = map.RegionItemListTabHandler($('#left_menu_parent'));
 			map.relativesTab.activeItemHandler = map.ItemListHandler($('#activeItemsList'));
 			map.relativesTab.relativesHandler = map.ItemListHandler($('#relativesList'));
+			
+			//init the cluster markers
+            var myClusterMarkerGroup = L.markerClusterGroup();
+            myClusterMarkerGroup.on('clusterclick', function (a) {
+                a.layer.zoomToBounds();
+            });
+			state.map.addLayer(myClusterMarkerGroup);
+			clusterMarkers.RegionMarkerHandler(myClusterMarkerGroup);
 			
 			//register slots
 			$(map.resultListTabs.domRoot()).on("itemDetailsOpened", map.onItemDetailsOpen);
@@ -737,8 +754,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 								$("#left_menu_parent").css("display", "block");
 
 								if (cqr.ohPath().length) {
-									state.items.listview.selectedRegionId = parentRid;
-									state.cqr.regionItemIds(state.items.listview.selectedRegionId,
+									state.cqr.regionItemIds(parentRid,
 										map.getItemIds,
 										tools.defErrorCB,
 										0 // offset
@@ -746,8 +762,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 								}
 								else {
 									if (state.DAG.at(parentRid).children.length == 0) {
-										state.items.listview.selectedRegionId = parentRid;
-										state.cqr.regionItemIds(state.items.listview.selectedRegionId,
+										state.cqr.regionItemIds(parentRid,
 											map.getItemIds,
 											tools.defErrorCB,
 											0 // offset
@@ -755,8 +770,8 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 									}
 									else {
 										for (var child in state.DAG.at(parentRid).children) {
-											state.items.listview.selectedRegionId = state.DAG.at(parentRid).children[child].id;
-											state.cqr.regionItemIds(state.items.listview.selectedRegionId,
+											var id = state.DAG.at(parentRid).children[child].id;
+											state.cqr.regionItemIds(id,
 												map.getItemIds,
 												tools.defErrorCB,
 												0 // offset
@@ -767,24 +782,18 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 							}
 						}
 						else if (context.draw) {
-							state.items.clusters.drawn.erase(parentRid);
-
 							var j;
 							var regions = [];
 							for (var i in items) {
 								j = itemMap[items[i].id()];
-
-								if (!state.items.clusters.drawn.count(j.id())) {
+								if (!map.clusterMarkers.count(j.id())) {
+									map.clusterMarkers.add(j.id());
 									regions.push(j.id());
-									marker = state.DAG.at(j.id()).marker;
-									state.items.clusters.drawn.insert(j.id(), marker);
-									state.markers.addLayer(marker);
-									state.DAG.at(marker.rid).marker = marker;
 								}
 							}
 
 							// just load regionShapes into the cache
-							oscar.getShapes(regions, function (res) {}, tools.defErrorCB);
+							oscar.fetchShapes(regions, function() {}, tools.defErrorCB);
 
 							if (state.visualizationActive) {
 								tree.refresh(parentRid);
@@ -811,62 +820,11 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			};
 		},
 
-		visualizeResultListItems: function () {
-			state.items.shapes.promised.clear();
-			var itemsToDraw = [];
-			for (var i in state.items.listview.drawn.values()) {
-				if (!state.items.shapes.cache.count(i)) {
-					state.items.shapes.promised.set(i, state.items.listview.drawn.at(i));
-					itemsToDraw.push(i);
-				}
-			}
-
-			spinner.startLoadingSpinner();
-			oscar.getShapes(itemsToDraw, function (shapes) {
-				spinner.endLoadingSpinner();
-
-				var marker;
-				for (var i in itemsToDraw) {
-					var itemId = itemsToDraw[i];
-					if (!state.items.shapes.promised.count(itemId)) {
-						continue;
-					}
-					if (shapes[itemId] === undefined || !state.items.listview.drawn.count(itemId) ||
-						state.items.shapes.cache.count(itemId))
-					{
-						state.items.shapes.promised.erase(itemId);
-						continue;
-					}
-
-					state.items.shapes.promised.erase(itemId);
-					var itemShape = oscar.leafletItemFromShape(shapes[itemId]);
-					itemShape.setStyle(config.styles.shapes.items.normal);
-
-					if (itemShape instanceof L.MultiPolygon) {
-						marker = L.marker(itemShape.getLatLngs()[0][0]);
-					} else if (itemShape instanceof L.Polygon) {
-						marker = L.marker(itemShape.getLatLngs()[0]);
-					} else if (itemShape instanceof L.Polyline) {
-						marker = L.marker(itemShape.getLatLngs()[0]);
-					} else {
-						marker = L.marker(itemShape.getLatLng());
-					}
-
-					state.markers.addLayer(marker);
-					state.items.shapes.cache.insert(itemId, itemShape);
-					state.DAG.at(itemId).marker = marker;
-					state.DAG.at(itemId).shape = itemShape;
-					map.addItemMarkerToMap(marker, itemId, "items");
-				}
-			}, tools.defErrorCB);
-		},
-
 		getItemIds: function (regionId, itemIds) {
-
-			for (var i in itemIds) {
-				var itemId = itemIds[i];
-				state.items.listview.promised.insert(itemId, itemId);
-			}
+			map.resultListTabs.addRegion(regionId);
+			map.resultListTabs.insertItems(itemIds);
+			tree.refresh(regionId);
+			
 
 			oscar.getItems(itemIds,
 				function (items) {
@@ -931,7 +889,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 					map.visualizeResultListItems();
 
 					if (state.visualizationActive) {
-						tree.refresh(regionId);
+						
 					}
 
 				},
@@ -1032,8 +990,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		},
 		
 		loadItems: function (rid) {
-			state.items.listview.selectedRegionId = rid;
-			state.cqr.regionItemIds(state.items.listview.selectedRegionId,
+			state.cqr.regionItemIds(rid,
 				map.getItemIds,
 				tools.defErrorCB,
 				0 // offset
@@ -1051,7 +1008,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			}
 		},
 		
-		drawClusters: function (node, drawn, markerBuffer) {
+		drawClusters: function (node) {
 			if (!node) {
 				return;
 			}
@@ -1061,20 +1018,15 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				for (var child in node.children) {
 					childNode = node.children[child];
 					if (tools.percentOfOverlap(state.map, childNode.bbox) >= config.overlap) {
-						map.drawClusters(childNode, drawn, markerBuffer);
+						map.drawClusters(childNode);
 					}
 					else {
 						if (childNode.count) {
 							map.addClusterMarker(childNode);
 						}
 						else if (!childNode.count) {
-							if (!drawn.count(childNode.id)) {
-								map.addItemMarker(childNode);
-								map.addDagItemToResultList(childNode);
-							}
-							else {
-								drawn.insert(childNode.id, true);
-							}
+							map.addItemMarker(childNode);
+							map.addDagItemToResultList(childNode);
 						}
 					}
 				}
@@ -1117,18 +1069,11 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		},
 
 		removeItemMarker: function (node) {
-			state.markers.removeLayer(node.marker);
-			state.items.shapes.markers.erase(node.id);
+			map.removeClusterMarker(node);
 		},
 
-		addItemMarker: function (node, buffer) {
-			state.items.shapes.markers.insert(node.id, node.shape);
-			if (buffer) {
-				buffer.push(node.marker);
-			}
-			else if (node.marker) {
-				state.markers.addLayer(node.marker);
-			}
+		addItemMarker: function (node) {
+			map.addClusterMarker(node);
 		},
 
 		removeParentsTabs: function (childNode) {
@@ -1163,10 +1108,6 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 						}
 						state.handler = function () {
 							var timer = tools.timer("draw");
-							var drawn = tools.SimpleHash();
-							var currentItemMarkers = state.items.shapes.markers.values();
-							var currentClusterMarker = state.items.clusters.drawn.values();
-							var bulkMarkerBuffer = [];
 
 							for (var item in currentItemMarkers) {
 								drawn.insert(item, false);
@@ -1178,22 +1119,20 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 
 							if (this.path && this.path.length) {
 								// start at the target region (last element of ohPath)
-								map.drawClusters(state.DAG.at(this.path[this.path.length - 1]), drawn, bulkMarkerBuffer);
+								map.drawClusters(state.DAG.at(this.path[this.path.length - 1]));
 							}
 							else {
 								// start at Node "World"
-								map.drawClusters(state.DAG.at(0xFFFFFFFF), drawn, bulkMarkerBuffer);
+								map.drawClusters(state.DAG.at(0xFFFFFFFF));
 							}
-
-							state.markers.addLayers(bulkMarkerBuffer);
 
 							// remove all markers (and tabs) that are redundant
-							for (var item in drawn.values()) {
-								if (drawn.at(item) == false) {
-									map.removeItemMarker(state.DAG.at(item));
-									map.removeParentsTabs(state.DAG.at(item));
-								}
-							}
+// 							for (var item in drawn.values()) {
+// 								if (drawn.at(item) == false) {
+// 									map.removeItemMarker(state.DAG.at(item));
+// 									map.removeParentsTabs(state.DAG.at(item));
+// 								}
+// 							}
 
 							timer.stop();
 						}.bind(this);
