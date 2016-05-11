@@ -13,21 +13,27 @@ define(["jquery", "tools"], function ($, tools) {
 						count: undefined,
 						bbox: undefined
 					}
-				};
+				},
 				m_nodes: tools.SimpleHash(), //maps from nodeId -> Node
+				size: function() {
+					return this.m_nodes.size();
+				},
 				hasNode: function(id) {
 					return this.m_nodes.count(id);
+				},
+				count: function(id) {
+					return this.hasNode(id);
 				},
 				at: function(id) {
 					return this.node(id);
 				},
 				node: function(id) {
-					return this.m_nodes.at(id).node;
+					return this.m_nodes.at(id);
 				},
 				addChild: function(parentId, childId) {
 					if (this.hasNode(parentId) && this.hasNode(childId)) {
-						pn.children.insert(childId);
-						cn.parents.insert(parentId);
+						this.node(parentId).children.insert(childId);
+						this.node(childId).parents.insert(parentId);
 					}
 					else {
 						throw new RangeError();
@@ -35,12 +41,13 @@ define(["jquery", "tools"], function ($, tools) {
 				},
 				//add a rootNode
 				addRoot: function(id) {
-					this.addNode(id);
+					return this.addNode(id);
 				},
 				addNode: function(id) {
 					if (!this.hasNode(id)) {
 						this.m_nodes.insert(id, this.Node(id));
 					}
+					return this.node(id);
 				},
 				removeNode: function(id) {
 					if (!this.hasNode(id)) {
@@ -54,6 +61,9 @@ define(["jquery", "tools"], function ($, tools) {
 						this.node(child).parents.erase(id);
 					}
 					this.m_nodes.erase(id);
+				},
+				clear: function() {
+					this.m_nodes = tools.SimpleHash();
 				}
 			};
 		}
