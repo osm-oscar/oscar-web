@@ -48,7 +48,7 @@ define(["jquery"], function ($) {
 				if (this.m_values[key] === undefined) {
 					this.m_size += 1;
 				}
-				this.m_values[key] = value;
+				this.m_values[key] = key;
 			};
 			return ss;
 		},
@@ -151,6 +151,11 @@ define(["jquery"], function ($) {
 				if (!$(uuid).length) {
 					return uuid;
 				}
+			}
+		},
+		assert: function(v) {
+			if (v !== true) {
+				throw new Error();
 			}
 		}
     };

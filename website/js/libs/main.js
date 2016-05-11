@@ -77,6 +77,9 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         state.sidebar = L.control.sidebar('sidebar').addTo(map);
         var osmAttr = '&copy; <a target="_blank" href="http://www.openstreetmap.org">OpenStreetMap</a>';
         L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: osmAttr}).addTo(state.map);
+		
+		//init map module
+		map.init();
 
         $(document).ready(function () {
             $("#tree").resizable();
@@ -129,10 +132,10 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 $("#onePath").button();
                 $("#wholeTree").button().click(function () {
                     map.loadWholeTree();
-                    tree.visualizeDAG(state.DAG.at(0xFFFFFFFF));
+                    tree.visualizeDAG(state.dag.at(0xFFFFFFFF));
                 });
-                if (state.DAG.at(0xFFFFFFFF)) {
-                    tree.visualizeDAG(state.DAG.at(0xFFFFFFFF));
+                if (state.dag.at(0xFFFFFFFF)) {
+                    tree.visualizeDAG(state.dag.at(0xFFFFFFFF));
                 }
             });
 

@@ -3,7 +3,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
     var state = {
         map: {},
         visualizationActive: false,
-        DAG: dag.dag(),
+        dag: dag.dag(),
         markers: L.markerClusterGroup(),
         sidebar: undefined,
         handler: undefined,
@@ -115,7 +115,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
                 state.map.off("zoomend dragend", state.handler);
             }
 			state.items.activeItem = undefined;
-            state.DAG = tools.SimpleHash();
+            state.dag.clear();
         },
         initMarkers: function(){
             state.markers = L.markerClusterGroup();
