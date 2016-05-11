@@ -357,7 +357,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				this.m_target.addLayer(this.m_layers.at(itemId).layer);
 			}
 		};
-		this.add = function(itemId) {
+		this.add = function(itemId, ...args) {
 			if (this.count(itemId)) {
 				this.incRefCount(itemId);
 				return;
@@ -371,7 +371,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 					me._addSignalHandlers(layer);
 					me.setLayer(itemId, layer);
 				}
-			});
+			}, ...args);
 		};
 		this.remove = function(itemId) {
 			if (this.count(itemId)) {
@@ -463,7 +463,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 	var RegionMarkerHandler = function(target) {
 		var handler = MarkerHandler();
 		handler.m_forwardedSignals = [["click", "click"], ["mouseout", "mouseout"], ["mouseover", "mouseover"]];
-		handler._fetchLayer = function(itemId, cb) {
+		handler._fetchLayer = function(itemId, cb, count) {
 			if (this.count(itemId)) {
 				this.incRefCount(itemId);
 				return;
@@ -476,6 +476,8 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				}
 				var marker = L.marker(item.centerPoint());
 				marker.name = item.name();
+				marker.bbox = item.bbox();
+				marker.count = count;
 				me.setLayer(itemId, marker);
 			}, tools.defErrorCB);
 		};
@@ -778,6 +780,8 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 							}
 						}
 						else if (context.draw) {
+							map.clusterMarkers.remove(parentRid);
+							
 							var j;
 							var regions = [];
 							for (var i in items) {
@@ -928,8 +932,8 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 	   
 		addDagItemToResultList: function (node) {
 			for (var parent in node.parents) {
-				var parentNode = node.parents[parent];
-				map.resultListTabs.addRegion(parentNode.id, state.dag.at(parentNode.id), parentNode.count);
+				var parentNode = state.dag.at(parent);
+				map.resultListTabs.addRegion(parentNode.id, parentNode.name, parentNode.count);
 				//insert
 				oscar.getItem(node.id, function (item) {
 					map.resultListTabs.insertItem(parentNode.id, item);
@@ -954,8 +958,10 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 							map.addClusterMarker(childNode);
 						}
 						else if (!childNode.count) {
-							map.addItemMarker(childNode);
-							map.addDagItemToResultList(childNode);
+							if (!map.itemMarkers.count(childNode.id)) {
+								map.addItemMarker(childNode);
+								map.addDagItemToResultList(childNode);
+							}
 						}
 					}
 				}
@@ -979,30 +985,20 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			state.shownBoundaries = [];
 		},
 
-
-		
-		removeMarker: function (marker) {
-			if (marker.shape) {
-				state.map.removeLayer(marker.shape);
-			}
-			state.markers.removeLayer(marker);
-			map.closePopups();
-		},
-
 		removeClusterMarker: function (node) {
 			map.regionMarkers.remove(node.id);
 		},
 
 		addClusterMarker: function (node) {
-			map.regionMarkers.add(node.id);
+			map.regionMarkers.add(node.id, node.count);
 		},
 
 		removeItemMarker: function (node) {
-			map.removeClusterMarker(node);
+			map.itemMarkers.remove(node.id);
 		},
 
 		addItemMarker: function (node) {
-			map.addClusterMarker(node);
+			map.itemMarkers.add(node.id);
 		},
 
 		removeParentsTabs: function (childNode) {
@@ -1037,31 +1033,37 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 						}
 						state.handler = function () {
 							var timer = tools.timer("draw");
+							var drawn = tools.SimpleHash();
+							var removedParents = tools.SimpleHash();
+							var currentItemMarkers = state.items.shapes.markers.values();
+							var currentClusterMarker = state.items.clusters.drawn.values();
+							var bulkMarkerBuffer = [];
 
 							for (var item in currentItemMarkers) {
 								drawn.insert(item, false);
 							}
 
 							for (var cluster in currentClusterMarker) {
-								map.removeClusterMarker(state.dag.at(cluster));
+								map.removeClusterMarker(state.DAG.at(cluster));
 							}
 
 							if (this.path && this.path.length) {
 								// start at the target region (last element of ohPath)
-								map.drawClusters(state.dag.at(this.path[this.path.length - 1]));
-							}
-							else {
+								map.drawClusters(state.DAG.at(this.path[this.path.length - 1]), drawn, bulkMarkerBuffer);
+							} else {
 								// start at Node "World"
-								map.drawClusters(state.dag.at(0xFFFFFFFF));
+								map.drawClusters(state.DAG.at(0xFFFFFFFF), drawn, bulkMarkerBuffer);
 							}
 
+							state.markers.addLayers(bulkMarkerBuffer);
+
 							// remove all markers (and tabs) that are redundant
-// 							for (var item in drawn.values()) {
-// 								if (drawn.at(item) == false) {
-// 									map.removeItemMarker(state.dag.at(item));
-// 									map.removeParentsTabs(state.dag.at(item));
-// 								}
-// 							}
+							for (var item in drawn.values()) {
+								if (drawn.at(item) == false) {
+									map.removeItemMarker(state.DAG.at(item));
+									map.removeParentsTabs(state.DAG.at(item), removedParents);
+								}
+							}
 
 							timer.stop();
 						}.bind(this);
