@@ -252,7 +252,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				}
 			},
 			//removes a region (and it's tab), return true, if removal was successfull
-			remove: function(regionId) {
+			removeRegion: function(regionId) {
 				if (handler.m_regions.count(regionId)) {
 					var v = handler.m_regions.at(regionId);
 					v.handler.destroy();
@@ -390,6 +390,11 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			}
 			return undefined;
 		};
+		//use this to iterate over all layers like so:
+		//for(var l in layer()) { layer = handler.layer(l); do_sth.;}
+		this.layers = function() {
+			return this.m_layers.values();
+		};
 		this.zoomTo = function(itemId) {
 			if (!this.count(itemId)) {
 				return;
@@ -397,13 +402,16 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			var ll = this.layer(itemId);
 			this.m_target.fitBounds(ll.getBounds());
 		};
-		this.destroy = function() {
+		this.clear = function() {
 			for(var i in this.m_layers.values()) {
 				if (this.m_layers.at(i).layer !== undefined) {
 					this.m_target.removeLayer(this.m_layers.at(i).layer);
 				}
 			}
 			this.m_layers = tools.SimpleHash();
+		};
+		this.destroy = function() {
+			this.clear();
 		};
 	};
 	
@@ -691,7 +699,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		},
 		onRegionMarkerMouseOut: function(e) {
 			map.closePopups();
-			map.regionShapes.remove(e.target.rid)
+			map.regionShapes.remove(e.itemId)
 		},
 		//now for some old stuff, everything below needs refactoring
 
@@ -753,7 +761,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 
 								if (cqr.ohPath().length) {
 									state.cqr.regionItemIds(parentRid,
-										map.getItemIds,
+										map.visualizeRegionItems,
 										tools.defErrorCB,
 										0 // offset
 									);
@@ -761,7 +769,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 								else {
 									if (state.dag.at(parentRid).children.length == 0) {
 										state.cqr.regionItemIds(parentRid,
-											map.getItemIds,
+											map.visualizeRegionItems,
 											tools.defErrorCB,
 											0 // offset
 										);
@@ -770,7 +778,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 										for (var child in state.dag.at(parentRid).children) {
 											var id = state.dag.at(parentRid).children[child].id;
 											state.cqr.regionItemIds(id,
-												map.getItemIds,
+												map.visualizeRegionItems,
 												tools.defErrorCB,
 												0 // offset
 											);
@@ -809,7 +817,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				);
 			}
 
-			return function (context) {
+			return function(context) {
 				spinner.startLoadingSpinner();
 				cqr.regionChildrenInfo(context.rid, function (regionChildrenInfo) {
 						spinner.endLoadingSpinner()
@@ -820,19 +828,38 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			};
 		},
 
-		getItemIds: function (regionId, itemIds) {
-			tools.assert(state.dag.hasNode(regionId));
+		visualizeRegionItems: function (regionId, itemIds) {
+			console.assert(state.dag.hasNode(regionId), regionId);
 			
+			//remove the cluster marker of this region
+			map.clusterMarkers.remove(regionId);
+
+			// manage items -> kill old items if there are too many of them and show clusters again
+			if (map.itemMarkers.size() + itemIds.length > config.maxBufferedItems) {
+				for (var itemId in map.itemmarkers.layers()) {
+					node = state.dag.at(itemId);
+					for (var parentId in node.parents) {
+						if (!map.clusterMarkers.count(parentId)) {
+							map.clusterMarkers.add(parentId, node.count);
+						}
+					}
+					map.itemMarkers.remove(node.id);
+					dag.removeNode(node.id);
+				}
+			}
+			
+			//add the appropriate tab to the result list and insert the items to the list
 			map.resultListTabs.addRegion(regionId);
 			map.resultListTabs.insertItems(itemIds);
+			
+			//add the items as children to the dag
 			for(var i in itemIds) {
 				var itemId = itemIds[i];
-				state.dag.addNode(itemId);
+				var node = state.dag.addNode(itemId);
+				node.name = "BUG_ACCESSING_INVALID_NAME";
 				state.dag.addChild(regionId, itemId);
 			}
 			tree.refresh(regionId);
-			
-			//TODO: recluster items if there are too many on the map
 		},
 
 		loadSubhierarchy: function (rid, finish) {
@@ -854,15 +881,11 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 							item = items[i];
 							itemId = item.id();
 							if (!state.dag.count(itemId)) {
-								node = parentNode.addChild(itemId);
-								marker = L.marker(item.centerPoint());
-								node.count = marker.count = regionChildrenApxItemsMap[itemId];
-								node.bbox = marker.bbox = item.bbox();
-								node.name = marker.name = item.name();
-								marker.rid = item.id();
-								map.decorateMarker(marker);
-								node.marker = marker;
-								state.dag.insert(itemId, node);
+								node = state.dag.addNode(itemId);
+								node.count = regionChildrenApxItemsMap[itemId];
+								node.bbox = item.bbox();
+								node.name = item.name();
+								state.dag.addChild(parentNode.id, itemId);
 								map.addClusterMarker(state.dag.at(itemId));
 							}
 						}
@@ -924,7 +947,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		
 		loadItems: function (rid) {
 			state.cqr.regionItemIds(rid,
-				map.getItemIds,
+				map.visualizeRegionItems,
 				tools.defErrorCB,
 				0 // offset
 			);
@@ -940,8 +963,8 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				}, tools.defErrorCB);
 			}
 		},
-		
-		drawClusters: function (node) {
+		//@param drawn: item markers that are already on the map
+		drawClusters: function (node, drawn) {
 			if (!node) {
 				return;
 			}
@@ -951,16 +974,19 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				for (var child in node.children) {
 					childNode = node.children[child];
 					if (tools.percentOfOverlap(state.map, childNode.bbox) >= config.overlap) {
-						map.drawClusters(childNode);
+						map.drawClusters(childNode, drawn);
 					}
 					else {
 						if (childNode.count) {
 							map.addClusterMarker(childNode);
 						}
 						else if (!childNode.count) {
-							if (!map.itemMarkers.count(childNode.id)) {
+							if (!drawn.count(childNode.id)) {
 								map.addItemMarker(childNode);
 								map.addDagItemToResultList(childNode);
+							}
+							else {
+								drawn.insert(childNode.id, true);
 							}
 						}
 					}
@@ -1001,9 +1027,9 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			map.itemMarkers.add(node.id);
 		},
 
-		removeParentsTabs: function (childNode) {
-			for (var parent in childNode.parents) {
-				resultListTabs.remove(childNode.parents[parent].id);
+		removeParentsTabs: function (dagChildNode) {
+			for (var parentId in dagChildNode.parents) {
+				resultListTabs.removeRegion(parentId);
 			}
 		},
 		
@@ -1035,33 +1061,26 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 							var timer = tools.timer("draw");
 							var drawn = tools.SimpleHash();
 							var removedParents = tools.SimpleHash();
-							var currentItemMarkers = state.items.shapes.markers.values();
-							var currentClusterMarker = state.items.clusters.drawn.values();
-							var bulkMarkerBuffer = [];
 
-							for (var item in currentItemMarkers) {
-								drawn.insert(item, false);
+							for (var itemId in map.itemMarkers.layers()) {
+								drawn.insert(itemId, false);
 							}
-
-							for (var cluster in currentClusterMarker) {
-								map.removeClusterMarker(state.DAG.at(cluster));
-							}
+							
+							map.clusterMarkers.clear();
 
 							if (this.path && this.path.length) {
 								// start at the target region (last element of ohPath)
-								map.drawClusters(state.DAG.at(this.path[this.path.length - 1]), drawn, bulkMarkerBuffer);
+								map.drawClusters(state.dag.at(this.path[this.path.length - 1]), drawn);
 							} else {
 								// start at Node "World"
-								map.drawClusters(state.DAG.at(0xFFFFFFFF), drawn, bulkMarkerBuffer);
+								map.drawClusters(state.dag.at(0xFFFFFFFF), drawn);
 							}
 
-							state.markers.addLayers(bulkMarkerBuffer);
-
 							// remove all markers (and tabs) that are redundant
-							for (var item in drawn.values()) {
-								if (drawn.at(item) == false) {
-									map.removeItemMarker(state.DAG.at(item));
-									map.removeParentsTabs(state.DAG.at(item), removedParents);
+							for (var itemId in drawn.values()) {
+								if (drawn.at(itemId) == false) {
+									map.removeItemMarker(state.dag.at(itemId));
+									map.removeParentsTabs(state.dag.at(itemId));
 								}
 							}
 
