@@ -1,5 +1,5 @@
 /*the config has to have a property named url defining the url to the completer*/
-define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner'], function (jQuery, sserialize, L, module, spinner) {
+define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], function (jQuery, sserialize, L, module, spinner, tools) {
 
     /** Code from http://www.artandlogic.com/blog/2013/11/jquery-ajax-blobs-and-array-buffers/
      * Register ajax transports for blob send/recieve and array buffer send/receive via XMLHttpRequest Level 2
@@ -70,6 +70,131 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner'], function (jQuer
             };
         }
     });
+	//This is a simple dat store to request indexed data from remote by ajax calls
+	//It tries to minimize the number of requests made by caching former results
+	//USAGE: derive from this and add a function _getData(callback=function(data), dataIds=[<int>]) which does the request
+	var IndexedDataStore = function() {
+		this.m_data = tools.SimpleHash(); //maps from id -> data
+		this.m_inFlight = tools.SimpleHash(); //maps from id -> remoteRequestId
+		this.m_requestCount = 0;
+		this.m_remoteRequestCount = 0;
+		this._acquireRemoteRequestId = function() {
+			var ret = this.m_remoteRequestCount;
+			this.m_remoteRequestCount += 1;
+			return ret;
+		};
+		this._releaseRemoteRequestId = function() {
+			;
+		};
+		this._acquireRequestId = function() {
+			var ret = this.m_requestCount;
+			this.m_requestCount += 1;
+			return ret;
+		};
+		this._releaseRequestId = function() {
+			;
+		};
+		
+		//maps from requestId -> { cb: callback-function, dataIds: [<int>], inFlightDeps: tools.SimpleSet()} 
+		this.m_requests = tools.SimpleHash(); 
+		this.m_remoteRequests = tools.SimpleHash(); //maps from remoteRequestId -> [requestId]
+
+		this._requestFromStore = function(cb, dataIds) {
+			res = [];
+			for(var i in dataIds) {
+				res.push(this.m_data.at(dataIds[i]));
+			}
+			cb(res);
+		};
+		this._handleReturnedRemoteRequest = function(remoteRequestId, dataIds, data) {
+			//insert the data and remove it from in-flight cache
+			for(var i in dataIds) {
+				this.m_data.insert(dataIds[i], data[i]);
+				this.m_inFlight.erase(dataIds[i]);
+			}
+			//take care of all requests that depend on this remote request
+			var myRequestsIds = this.m_remoteRequests.at(remoteRequestId);
+			for(var i in myRequestsIds) {
+				var requestId = myRequestsIds[i];
+				var myRequest = this.m_requests.at(requestId);
+				myRequest.inFlightDeps.erase(remoteRequestId);
+				if (!myRequest.inFlightDeps.size()) {
+					this._requestFromStore(myRequest.cb, myRequest.dataIds);
+					this.m_remoteRequests.erase(requestId);
+					this._releaseRequestId(requestId);
+				}
+			}
+			
+			//remove this remote request
+			this.m_remoteRequests.erase(remoteRequestId);
+			this._releaseRemoteRequestId(remoteRequestId);
+		};
+		this.request = function(cb, dataIds) {
+			//frist check if we already have the requested data available
+			var missingIds = [];
+			for(var i in dataIds) {
+				if (!this.count(dataIds[i])) {
+					missingIds.push(dataIds[i]);
+				}
+			}
+			if (!missingIds.length) {
+				this._requestFromStore(cb, dataIds);
+				return;
+			}
+			
+			var me = this;
+			var myRequest = {
+				cb: cb,
+				requestId: this._acquireRequestId(),
+				dataIds: dataIds,
+				inFlightDeps: tools.SimpleSet()
+			};
+			
+			//now check if any of the missing ids are in flight
+			var stillMissingIds = [];
+			for(var i in missingIds) {
+				if (this.m_inFlight.count(missingIds[i])) {
+					myRequest.inFlightDeps.insert(this.m_inFlight.at(missingIds[i]));
+				}
+				else {
+					stillMissingIds.push(missingIds[i]);
+				}
+			}
+			
+			//check if we need to issue our own remote request
+			var myRemoteRequestId = undefined;
+			if (stillMissingIds.length) {
+				myRemoteRequestId = this._acquireRemoteRequestId();
+				
+				//put requested dataIds into inflight cache
+				for(var i in stillMissingIds) {
+					this.m_inFlight.insert(stillMissingIds[i], myRemoteRequestId);
+				}
+				
+				myRequest.inFlightDeps.insert(myRemoteRequestId);
+				this.m_remoteRequests.insert(myRemoteRequestId, []);
+			}
+			
+			//put request into request store
+			this.m_requests.insert(myRequest.requestId, myRequest);
+			
+			//add request to remoteRequests
+			for(var i in myRequest.inFlightDeps.values()) {
+				var rrId = myRequest.inFlightDeps.at(i);
+				this.m_remoteRequests.at(rrId).push(myRequest.requestId);
+			}
+			
+			//now issue our own request
+			if (stillMissingIds.length) {
+				this._getData(function(data) {
+					me._handleReturnedRemoteRequest(myRemoteRequestId, stillMissingIds, data);
+				}, stillMissingIds);
+			}
+		};
+		this.count = function(dataId) {
+			return this.m_data.count(dataId);
+		};
+	};
 
     return {
 
