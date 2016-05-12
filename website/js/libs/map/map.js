@@ -318,18 +318,26 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		this.m_target = target;
 		this.m_domRoot = $('#map');
 		this.m_layers = tools.SimpleHash(); //maps from LeafletLayer -> {layer: LeafletLayer, refCount: <int> }
-		this.m_forwardedSignals = [], //add the name of the signals you want to process here in the form ["layer signal name", "map signal name"]
+		this.m_forwardedSignals = {}, //add the name of the signals you want to process here in the form ["layer signal name", "map signal name"]
+		this._handleEvent = function(e, itemId) {
+			var targetSignals = this.m_forwardedSignals[e.type];
+			if (targetSignals === undefined) {
+				return;
+			}
+			for(var i in targetSignals) {
+				var myE = $.Event(targetSignals[i]);
+				myE.itemId = itemId;
+				$(this).triggerHandler(myE);
+			}
+		};
 		this._addSignalHandlers = function(layer, itemId) {
 			var me = this;
 			for(var i in this.m_forwardedSignals) {
-				var srcTgtSignal = this.m_forwardedSignals[i];
-				layer.on(srcTgtSignal[0], function(e) {
-					var e = $.Event(srcTgtSignal[1]);
-					e.itemId = itemId;
-					$(me).triggerHandler(e);
+				layer.on(i, function(e) {
+					me._handleEvent(e, itemId);
 				});
 			}
-		},
+		};
 		this.domRoot = function() {
 			return this.m_domRoot;
 		};
@@ -432,11 +440,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	//Style is of the form:
 	var ItemShapeHandler = function(target, style) {
 		var handler = new ItemLayerHandler(target);
-		handler.m_style = style,
-		handler.m_forwardedSignals = [["click", "click"]];
-		var me = this;
+		handler.m_style = style;
+		handler.m_forwardedSignals = {"click": ["click"]};
 		//calls cb after adding if cb !== undefined
 		handler._fetchLayer = function(cb, itemId) {
+			var me = this;
 			oscar.getShape(itemId, function(shape) {
 				var lfs = oscar.leafletItemFromShape(shape);
 				lfs.setStyle(me.m_style);
@@ -463,7 +471,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 
 	var ItemMarkerHandler = function(target) {
 		var handler = MarkerHandler(target);
-		handler.m_forwardedSignals = [["click", "click"]];
+		handler.m_forwardedSignals = {"click": ["click"]};
 		handler._fetchLayer = function(cb, itemId) {
 			oscar.getShape(itemId, function(shape) {
 				var lfs = oscar.leafletItemFromShape(shape);
@@ -485,7 +493,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	
 	var RegionMarkerHandler = function(target) {
 		var handler = MarkerHandler(target);
-		handler.m_forwardedSignals = [["click", "click"], ["mouseout", "mouseout"], ["mouseover", "mouseover"]];
+		handler.m_forwardedSignals = {"click" : ["click"], "mouseover": ["mouseover"], "mouseout": ["mouseout"]};
 		handler._fetchLayer = function(cb, itemId, count) {
 			console.assert(count !== undefined, count);
 			oscar.getItem(itemId, function(item) {
@@ -503,7 +511,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	
 	var SpatialQueryGeoObjectHandler = function() {
 		var handler = MarkerHandler();
-		handler.m_forwardedSignals = [["click", "click"]];
+		handler.m_forwardedSignals = {"click": ["click"]};
 		handler._fetchLayer = function(itemId, cb) {
 			//fetched by internal id
 			cb( state.spatialObjects.store.at(itemId).mapshape );
