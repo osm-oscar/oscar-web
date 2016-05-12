@@ -48,7 +48,20 @@ requirejs.config({
 });
 
 requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf", "menu", "tokenfield", "switch", "state", "map", "tree", "prototype", "query", "tools", "search"],
-    function (L, jQuery, mustache, jqueryui, sidebar, mustacheLoader, config, menu, tokenfield, switchButton, state, map, tree) {
+    function () {
+        var L = require("leaflet");
+		var jQuery = require("jquery");
+		var mustache = require("mustache");
+		var jqueryui = require("jqueryui");
+		var sidebar = require("sidebar");
+		var mustacheLoader = require("mustacheLoader");
+		var config = require("conf");
+		var menu = require("menu");
+		var tokenfield = require("tokenfield");
+		var switchButton = require("switch");
+		var state = require("state");
+		var map = require("map");
+		var tree = require("tree");
         var query = require("query");
 		var tools = require("tools");
         var search = require("search");
@@ -68,18 +81,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         });
 
         menu.displayCategories();
-
-        // init the map and sidebar
-        state.map = L.map('map', {
-            zoomControl: true
-        }).setView([48.74568, 9.1047], 17);
-        state.map.zoomControl.setPosition('topright');
-        state.sidebar = L.control.sidebar('sidebar').addTo(map);
-        var osmAttr = '&copy; <a target="_blank" href="http://www.openstreetmap.org">OpenStreetMap</a>';
-        L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: osmAttr}).addTo(state.map);
-		
-		//init map module
-		map.init();
 
         $(document).ready(function () {
             $("#tree").resizable();

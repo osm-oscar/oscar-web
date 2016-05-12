@@ -1,4 +1,4 @@
-define(["state", "oscar", "tools", "conf", "leafletCluster"], function (state, oscar, tools, config) {
+define(["state", "oscar", "tools", "conf", "map", "leafletCluster"], function (state, oscar, tools, config, map) {
     /**
      * Extend MarkerCluster:
      * 1) show names of subregions of a cluster in a popup
@@ -7,28 +7,11 @@ define(["state", "oscar", "tools", "conf", "leafletCluster"], function (state, o
      */
     L.MarkerCluster.prototype.on("mouseover", function (e) {
         if (e.target.getChildCount() > 1 && e.target.getChildCount() <= config.maxNumSubClusters) {
-            var children = [];
-            var leafletItem, key = "";
-
-            for (var i in e.target.getAllChildMarkers()) {
-                if (e.target.getAllChildMarkers()[i].rid) {
-                    children.push(e.target.getAllChildMarkers()[i].rid);
-                    key += e.target.getAllChildMarkers()[i].rid;
-                }
-            }
-
-            if (children.length) {
-                oscar.getShapes(children, function (shapes) {
-                    for (var shape in shapes) {
-                        leafletItem = oscar.leafletItemFromShape(shapes[shape]);
-                        leafletItem.setStyle(config.styles.shapes['regions']['normal']);
-                        state.shownBoundaries.push(leafletItem);
-                        leafletItem.addTo(state.map);
-                    }
-                }, tools.defErrorCB);
-            }
-        }
-
+			var childRids = e.target.getChildClustersRegionIds();
+			for(var i in childRids) {
+				map.clusterMarkerRegionShapes.add(childRids[i]);
+			}
+		}
         var names = e.target.getChildClustersNames();
         var text = "";
         if (names.length > 0) {
@@ -50,16 +33,17 @@ define(["state", "oscar", "tools", "conf", "leafletCluster"], function (state, o
      * Extend Markercluster: close popups and remove region-boundaries of sub-clusters
      */
     L.MarkerCluster.prototype.on("mouseout", function (e) {
-        map.removeBoundaries();
+		map.clusterMarkerRegionShapes.clear();
         map.closePopups();
     });
 
     /**
      * Remove displayed region boundaries when the mouse is over a cluster-marker & the user zooms-in
+     * TODO:Shouldn't this be handled by the MarkerCluster since removing it should trigger a mouseout?
      */
     var old = L.FeatureGroup.prototype.removeLayer;
     L.FeatureGroup.prototype.removeLayer = function (e) {
-        map.removeBoundaries();
+        map.clusterMarkerRegionShapes.clear();
         old.call(this, e);
     };
 

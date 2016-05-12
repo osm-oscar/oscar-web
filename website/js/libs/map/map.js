@@ -1,6 +1,8 @@
-//This module handles most stuff associated with the map-gui. It HAS to be a singleton! Call init() after state.map is initialized
-define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner"], function (require, state, $, config, oscar, flickr, tools, tree) {
-    spinner = require("spinner");
+//This module handles most stuff associated with the map-gui. It HAS to be a singleton!
+define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner", "leaflet"],
+function (require, state, $, config, oscar, flickr, tools, tree) {
+    var spinner = require("spinner");
+	var L = require("leaflet");
 
 	//handles a single item list
 	//parent is the parent element of the Item list the handler should take care of
@@ -215,7 +217,6 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			},
 			//adds a new region, returns an ItemListHandler
 			addRegion: function(regionId, regionName, itemCount) {
-				var regionId = region.id();
 				if (handler.m_regions.count(regionId)) {
 					return handler.m_regions.at(regionId).handler;
 				}
@@ -318,20 +319,23 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		this.m_domRoot = $('#map');
 		this.m_layers = tools.SimpleHash(); //maps from LeafletLayer -> {layer: LeafletLayer, refCount: <int> }
 		this.m_forwardedSignals = [], //add the name of the signals you want to process here in the form ["layer signal name", "map signal name"]
-		this._addSignalHandlers = function(layer) {
+		this._addSignalHandlers = function(layer, itemId) {
 			var me = this;
 			for(var i in this.m_forwardedSignals) {
 				var srcTgtSignal = this.m_forwardedSignals[i];
 				layer.on(srcTgtSignal[0], function(e) {
 					var e = $.Event(srcTgtSignal[1]);
-					e.itemId = e.target.itemId;
+					e.itemId = itemId;
 					$(me).triggerHandler(e);
 				});
 			}
 		},
 		this.domRoot = function() {
 			return this.m_domRoot;
-		}
+		};
+		this.size = function() {
+			return this.m_layers.size();
+		};
 		this.count = function(itemId) {
 			if (this.m_layers.count(itemId)) {
 				return this.m_layers.at(itemId).refCount;
@@ -357,7 +361,8 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 				this.m_target.addLayer(this.m_layers.at(itemId).layer);
 			}
 		};
-		this.add = function(itemId, ...args) {
+		this.add = function(itemId, extraArguments) {
+			console.log("ItemLayerHandler.add(itemId=" + itemId + ", extraArguments=", extraArguments);
 			if (this.count(itemId)) {
 				this.incRefCount(itemId);
 				return;
@@ -365,13 +370,21 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			this.incRefCount(itemId);
 			var me = this;
 			//call super class
-			this._fetchLayer(itemId, function(layer) {
+			console.log("ItemLayerHandler.add: calling super", this);
+			var cb = function(layer) {
+				console.log("ItemLayerHandler.add: returning from super");
 				if (me.count(itemId) && me.layer(itemId) === undefined) {
 					layer.itemId = itemId;
-					me._addSignalHandlers(layer);
+					me._addSignalHandlers(layer, itemId);
 					me.setLayer(itemId, layer);
-				}
-			}, ...args);
+				};
+			};
+			if (extraArguments !== undefined) {
+				this._fetchLayer(cb, itemId, extraArguments);
+			}
+			else {
+				this._fetchLayer(cb, itemId);
+			}
 		};
 		this.remove = function(itemId) {
 			if (this.count(itemId)) {
@@ -386,7 +399,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		};
 		this.layer = function(itemId) {
 			if (this.count(itemId)) {
-				this.m_layers.at(itemId).layer;
+				return this.m_layers.at(itemId).layer;
 			}
 			return undefined;
 		};
@@ -421,8 +434,9 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		var handler = new ItemLayerHandler(target);
 		handler.m_style = style,
 		handler.m_forwardedSignals = [["click", "click"]];
+		var me = this;
 		//calls cb after adding if cb !== undefined
-		handler._fetchLayer = function(itemId, cb) {
+		handler._fetchLayer = function(cb, itemId) {
 			oscar.getShape(itemId, function(shape) {
 				var lfs = oscar.leafletItemFromShape(shape);
 				lfs.setStyle(me.m_style);
@@ -440,7 +454,8 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			if (!this.count(itemId)) {
 				throw new RangeError();
 			}
-			return this.layer(itemId).getLatLng();
+			var l = this.layer(itemId);
+			return l.getLatLng();
 		};
 		
 		return handler;
@@ -449,7 +464,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 	var ItemMarkerHandler = function(target) {
 		var handler = MarkerHandler(target);
 		handler.m_forwardedSignals = [["click", "click"]];
-		handler._fetchLayer = function(itemId, cb) {
+		handler._fetchLayer = function(cb, itemId) {
 			oscar.getShape(itemId, function(shape) {
 				var lfs = oscar.leafletItemFromShape(shape);
 				if (itemShape instanceof L.MultiPolygon) {
@@ -469,24 +484,18 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 	};
 	
 	var RegionMarkerHandler = function(target) {
-		var handler = MarkerHandler();
+		var handler = MarkerHandler(target);
 		handler.m_forwardedSignals = [["click", "click"], ["mouseout", "mouseout"], ["mouseover", "mouseover"]];
-		handler._fetchLayer = function(itemId, cb, count) {
-			if (this.count(itemId)) {
-				this.incRefCount(itemId);
-				return;
-			}
-			this.incRefCount(itemId);
-			var me = handler;
+		handler._fetchLayer = function(cb, itemId, count) {
+			console.assert(count !== undefined, count);
 			oscar.getItem(itemId, function(item) {
-				if (!me.count(itemId)) {
-					return;
-				}
 				var marker = L.marker(item.centerPoint());
 				marker.name = item.name();
 				marker.bbox = item.bbox();
 				marker.count = count;
-				me.setLayer(itemId, marker);
+				//needed by prototype.js and cluster-marker.js
+				marker.rid = itemId;
+				cb(marker);
 			}, tools.defErrorCB);
 		};
 		return handler;
@@ -513,10 +522,11 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 		relativesTab: { activeItemHandler: undefined, relativesHandler: undefined },
 		
 		//map shapes
-		itemShapes: ItemShapeHandler(state.map, config.styles.shapes.items.normal),
-		regionShapes: ItemShapeHandler(state.map, config.styles.shapes.regions.normal),
-		relativesShapes: ItemShapeHandler(state.map, config.styles.shapes.relatives.normal),
-		highlightItemShapes: ItemShapeHandler(state.map, config.styles.shapes.activeItems),
+		itemShapes: undefined,
+		regionShapes: undefined,
+		relativesShapes: undefined,
+		highlightItemShapes: undefined,
+		clusterMarkerRegionShapes: undefined,
 		
 		//markers
 		itemMarkers: ItemMarkerHandler(state.map),
@@ -528,6 +538,17 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			map.resultListTabs = map.RegionItemListTabHandler($('#left_menu_parent'));
 			map.relativesTab.activeItemHandler = map.ItemListHandler($('#activeItemsList'));
 			map.relativesTab.relativesHandler = map.ItemListHandler($('#relativesList'));
+			
+			//init the map layers
+			map.itemShapes = map.ItemShapeHandler(state.map, config.styles.shapes.items.normal);
+			map.regionShapes = map.ItemShapeHandler(state.map, config.styles.shapes.regions.normal);
+			map.relativesShapes = map.ItemShapeHandler(state.map, config.styles.shapes.relatives.normal);
+			map.highlightItemShapes = map.ItemShapeHandler(state.map, config.styles.shapes.activeItems);
+			map.clusterMarkerRegionShapes = map.ItemShapeHandler(state.map, config.styles.shapes.regions.highlight);
+			
+			map.itemMarkers = map.ItemMarkerHandler(state.map);
+			map.regionMarkers = map.RegionMarkerHandler(state.map);
+
 			
 			//init the cluster markers
             var myClusterMarkerGroup = L.markerClusterGroup();
@@ -767,7 +788,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 									);
 								}
 								else {
-									if (state.dag.at(parentRid).children.length == 0) {
+									if (state.dag.at(parentRid).children.size() == 0) {
 										state.cqr.regionItemIds(parentRid,
 											map.visualizeRegionItems,
 											tools.defErrorCB,
@@ -795,7 +816,7 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 							for (var i in items) {
 								j = itemMap[items[i].id()];
 								if (!map.clusterMarkers.count(j.id())) {
-									map.clusterMarkers.add(j.id());
+									map.clusterMarkers.add(j.id(), state.dag.at(j.id()).count);
 									regions.push(j.id());
 								}
 							}
@@ -970,9 +991,9 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			}
 
 			var childNode;
-			if (node.children.length) {
-				for (var child in node.children) {
-					childNode = node.children[child];
+			if (node.children.size()) {
+				for (var childId in node.children.values()) {
+					childNode = state.dag.at(childId);
 					if (tools.percentOfOverlap(state.map, childNode.bbox) >= config.overlap) {
 						map.drawClusters(childNode, drawn);
 					}
@@ -1004,12 +1025,12 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			}
 		},
 
-		removeBoundaries: function () {
-			for (var boundary in state.shownBoundaries) {
-				state.map.removeLayer(state.shownBoundaries[boundary]);
-			}
-			state.shownBoundaries = [];
-		},
+// 		removeBoundaries: function () {
+// 			for (var boundary in state.shownBoundaries) {
+// 				state.map.removeLayer(state.shownBoundaries[boundary]);
+// 			}
+// 			state.shownBoundaries = [];
+// 		},
 
 		removeClusterMarker: function (node) {
 			map.regionMarkers.remove(node.id);
@@ -1092,5 +1113,18 @@ define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree"
 			};
 		}
     };
+	console.assert(state.map === undefined, state.map);
+	// init the map and sidebar
+	state.map = L.map('map', {
+		zoomControl: true
+	}).setView([48.74568, 9.1047], 17);
+	state.map.zoomControl.setPosition('topright');
+	state.sidebar = L.control.sidebar('sidebar').addTo(state.map);
+	var osmAttr = '&copy; <a target="_blank" href="http://www.openstreetmap.org">OpenStreetMap</a>';
+	L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: osmAttr}).addTo(state.map);
+	
+	//init map module
+	map.init();
+
 	return map;
 });
