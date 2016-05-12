@@ -124,7 +124,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 				var myRequest = this.m_requests.at(requestId);
 				myRequest.inFlightDeps.erase(remoteRequestId);
 				if (!myRequest.inFlightDeps.size()) {
-					this._requestFromStore(myRequest.cb, myRequest.dataIds);
+					myRequest.cb();
 					this.m_remoteRequests.erase(requestId);
 					this._releaseRequestId(requestId);
 				}
@@ -134,7 +134,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 			this.m_remoteRequests.erase(remoteRequestId);
 			this._releaseRemoteRequestId(remoteRequestId);
 		};
-		this.request = function(cb, dataIds) {
+		//calls cb if all data entries were fetched
+		this.fetch = function(cb, dataIds) {
 			//first check if we already have the requested data available
 			var missingIds = [];
 			for(var i in dataIds) {
@@ -151,7 +152,6 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 			var myRequest = {
 				cb: cb,
 				requestId: this._acquireRequestId(),
-				dataIds: dataIds,
 				inFlightDeps: tools.SimpleSet()
 			};
 			
@@ -166,18 +166,26 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 				}
 			}
 			
-			//check if we need to issue our own remote request
-			var myRemoteRequestId = undefined;
+			//check if we need to issue our own remote requests
+			//we have to split these into this.maxSingleRemoteRequestSize
+			var myRemoteRequests = tools.SimpleHash();
 			if (stillMissingIds.length) {
-				myRemoteRequestId = this._acquireRemoteRequestId();
-				
-				//put requested dataIds into inflight cache
-				for(var i in stillMissingIds) {
-					this.m_inFlight.insert(stillMissingIds[i], myRemoteRequestId);
+				while(stillMissingIds.length) {
+					myRemoteRequestId = this._acquireRemoteRequestId();
+					
+					var reqSize = Math.min(this.maxSingleRemoteRequestSize, stillMissingIds.length);
+					var myMissingIds = stillMissingIds.splice(-reqSize, reqSize);
+					
+					//put requested dataIds into inflight cache
+					for(var i in myMissingIds) {
+						this.m_inFlight.insert(myMissingIds[i], myRemoteRequestId);
+					}
+					
+					myRemoteRequests.insert(myRemoteRequestId, myMissingIds);
+					
+					myRequest.inFlightDeps.insert(myRemoteRequestId);
+					this.m_remoteRequests.insert(myRemoteRequestId, []);
 				}
-				
-				myRequest.inFlightDeps.insert(myRemoteRequestId);
-				this.m_remoteRequests.insert(myRemoteRequestId, []);
 			}
 			
 			//put request into request store
@@ -189,15 +197,20 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 				this.m_remoteRequests.at(rrId).push(myRequest.requestId);
 			}
 			
-			//now issue our own request
-			if (stillMissingIds.length) {
-				this._getData(function(data) {
-					me._handleReturnedRemoteRequest(myRemoteRequestId, stillMissingIds, data);
-				}, stillMissingIds);
+			//now issue our own requests
+			if (myRemoteRequests.size()) {
+				for(var myRemoteRequestId in myRemoteRequests) {
+					this._getData(function(data) {
+						me._handleReturnedRemoteRequest(myRemoteRequestId, myRemoteRequests[myRemoteRequestId], data);
+					}, myRemoteRequests[myRemoteRequestId]);
+				};
 			}
 		};
-		this.fetch = function(dataIds) {
-			this.request(function() {}, cb);
+		this.request = function(cb, dataIds) {
+			var me = this;
+			this.fetch(function() {
+				me._requestFromStore(cb, dataIds);
+			}, dataIds);
 		};
 		this.at = function(dataId) {
 			return this.m_data.at(dataId);
