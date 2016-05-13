@@ -72,7 +72,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
     });
 	//This is a simple data store to request indexed data from remote by ajax calls
 	//It tries to minimize the number of requests made by caching former results
-	//USAGE: derive from this and add a function _getData(callback=function(data), dataIds=[<int>]) which does the request
+	//USAGE: derive from this and add a function _getData(callback=function(data, remoteRequestId), remoteRequestId) which does the request
 	//where data is of the form {dataId: dataEntry}
 	var IndexedDataStore = function() {
 		this.m_data = tools.SimpleHash(); //maps from id -> data
@@ -100,8 +100,14 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 		
 		//maps from requestId -> { cb: callback-function, dataIds: [<int>], inFlightDeps: tools.SimpleSet()} 
 		this.m_requests = tools.SimpleHash(); 
-		this.m_remoteRequests = tools.SimpleHash(); //maps from remoteRequestId -> [requestId]
-
+		this.m_remoteRequests = tools.SimpleHash(); //maps from remoteRequestId -> {id : remoteRequestId, deps: [requestId], dataIds: [<int>]}
+		
+		this._remoteRequestDataIds = function(remoteRequestId) {
+			if (this.m_remoteRequests.count(remoteRequestId)) {
+				return this.m_remoteRequests.at(remoteRequestId).dataIds;
+			}
+			return [];
+		};
 		this._requestFromStore = function(cb, dataIds) {
 			res = [];
 			for(var i in dataIds) {
@@ -110,7 +116,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 			cb(res);
 		};
 		//data is of the form {dataId: dataEntry}
-		this._handleReturnedRemoteRequest = function(remoteRequestId, dataIds, data) {
+		this._handleReturnedRemoteRequest = function(remoteRequestId, data) {
+			var myRemoteRequest = this.m_remoteRequests.at(remoteRequestId);
+			var dataIds = myRemoteRequest.dataIds;
 			//insert the data and remove it from in-flight cache
 			for(var i in dataIds) {
 				var dataId = dataIds[i];
@@ -118,14 +126,14 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 				this.m_inFlight.erase(dataId);
 			}
 			//take care of all requests that depend on this remote request
-			var myRequestsIds = this.m_remoteRequests.at(remoteRequestId);
+			var myRequestsIds = myRemoteRequest.deps;
 			for(var i in myRequestsIds) {
 				var requestId = myRequestsIds[i];
 				var myRequest = this.m_requests.at(requestId);
 				myRequest.inFlightDeps.erase(remoteRequestId);
 				if (!myRequest.inFlightDeps.size()) {
 					myRequest.cb();
-					this.m_remoteRequests.erase(requestId);
+					this.m_requests.erase(requestId);
 					this._releaseRequestId(requestId);
 				}
 			}
@@ -168,7 +176,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 			
 			//check if we need to issue our own remote requests
 			//we have to split these into this.maxSingleRemoteRequestSize
-			var myRemoteRequests = tools.SimpleHash();
+			var myRemoteRequests = [];
 			if (stillMissingIds.length) {
 				while(stillMissingIds.length) {
 					myRemoteRequestId = this._acquireRemoteRequestId();
@@ -181,10 +189,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 						this.m_inFlight.insert(myMissingIds[i], myRemoteRequestId);
 					}
 					
-					myRemoteRequests.insert(myRemoteRequestId, myMissingIds);
+					myRemoteRequests.push(myRemoteRequestId);
 					
 					myRequest.inFlightDeps.insert(myRemoteRequestId);
-					this.m_remoteRequests.insert(myRemoteRequestId, []);
+					this.m_remoteRequests.insert(myRemoteRequestId, {'id': myRemoteRequestId, 'dataIds': myMissingIds, 'deps' : []});
 				}
 			}
 			
@@ -194,15 +202,15 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 			//add request to remoteRequests
 			for(var i in myRequest.inFlightDeps.values()) {
 				var rrId = myRequest.inFlightDeps.at(i);
-				this.m_remoteRequests.at(rrId).push(myRequest.requestId);
+				this.m_remoteRequests.at(rrId).deps.push(myRequest.requestId);
 			}
 			
 			//now issue our own requests
-			if (myRemoteRequests.size()) {
-				for(var myRemoteRequestId in myRemoteRequests) {
-					this._getData(function(data) {
-						me._handleReturnedRemoteRequest(myRemoteRequestId, myRemoteRequests[myRemoteRequestId], data);
-					}, myRemoteRequests[myRemoteRequestId]);
+			if (myRemoteRequests.length) {
+				for(var i in myRemoteRequests) {
+					this._getData(function(data, remoteRequestId) {
+						me._handleReturnedRemoteRequest(remoteRequestId, data);
+					}, myRemoteRequests[i]);
 				};
 			}
 		};
@@ -228,7 +236,13 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 	var JsonIndexedDataStore = function(url) {
 		var handler = new IndexedDataStore();
 		handler.url = url;
-		handler._getData = function(cb, dataIds) {
+		//function that processes the json data and returns the processed data to bring int othe correct form
+		handler._processJson = function(json) {
+			return json;
+		};
+		handler._getData = function(cb, remoteRequestId) {
+			var me = handler;
+			var dataIds = handler._remoteRequestDataIds(remoteRequestId);
 			var params = {};
 			if (handler.extraParams !== undefined) {
 				for(var i in handler.extraParams) {
@@ -249,7 +263,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 						tools.defErrorCB("Parsing Json Failed", err);
 						return;
 					}
-					cb(json);
+					cb(me._processJson(json), remoteRequestId);
 				},
 				error: function (jqXHR, textStatus, errorThrown) {
 					tools.defErrorCB(textStatus, errorThrown);
@@ -263,16 +277,25 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 		return JsonIndexedDataStore(completerBaseUrl + "/itemdb/multipleshapes");
 	};
 	
+	//before usage you have to add a function _itemFromJson(json) -> Item
 	var ItemCache = function(completerBaseUrl) {
 		var handler = JsonIndexedDataStore(completerBaseUrl + "/itemdb/multiple");
 		handler.extraParams = {'shape' : 'false'};
+		handler._processJson = function(json) {
+			var myMap = {};
+			for(var i in json) {
+				myMap[json[i].id] = handler._itemFromJson(json[i]);
+			}
+			return myMap;
+		};
 		return handler;
 	};
 
 	var ItemIndexCache = function(completerBaseUrl) {
 		var handler = new IndexedDataStore();
 		handler.url = completerBaseUrl + "/indexdb/multiple";
-		handler._getData = function(cb, dataIds) {
+		handler._getData = function(cb, remoteRequestId) {
+			var dataIds = handler._remoteRequestDataIds(remoteRequestId);
 			jQuery.ajax({
 				type: "POST",
 				url: handler.url,
@@ -286,7 +309,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 						var idx = idcs[i];
 						idxMap[idxId] = idx;
 					}
-					cb(idxMap);
+					cb(idxMap, remoteRequestId);
 				},
 				error: function (jqXHR, textStatus, errorThrown) {
 					tools.defErrorCB(textStatus, errorThrown);
@@ -299,7 +322,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 	var CellIndexIdCache = function(completerBaseUrl) {
 		var handler = new IndexedDataStore();
 		handler.url = completerBaseUrl + "/indexdb/cellindexids";
-		handler._getData = function(cb, dataIds) {
+		handler._getData = function(cb, remoteRequestId) {
+			var dataIds = handler._remoteRequestDataIds(remoteRequestId);
 			jQuery.ajax({
 				type: "POST",
 				url: handler.url,
@@ -312,7 +336,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 					for (i = 0; i < tmp.length; ++i) {
 						myMap[dataIds[i]] = tmp[i];
 					}
-					cb(myMap);
+					cb(myMap, remoteRequestId);
 				},
 				error: function (jqXHR, textStatus, errorThrown) {
 					tools.defErrorCB(textStatus, errorThrown);
@@ -322,7 +346,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 		return handler;
 	};
 	
-    return {
+    var oscarObject = {
 
         completerBaseUrl: module.config().url,
         maxFetchItems: 100,
@@ -354,8 +378,15 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
             '!': '!'
         }, //*(|.^$)[]-+?{}=!,
         cqrEscapesRegExp: new RegExp("^[\*\(\|\.\^\$\)\[\]\-\+\?\{\}\=\!\,]$"),
+	   
+		_init: function() {
+			var me = this;
+			this.itemCache._itemFromJson = function(json) {
+				return me.Item(json, me);
+			};
+		},
 
-        Item: function (d) {
+        Item: function (d, parent) {
 
             if (d.shape.t === 4) {
                 for (i in d.shape.v.outer) {
@@ -368,11 +399,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
                 }
             }
 
-            var myPtr = this;
-
             return {
                 data: d,
-                p: myPtr,
+                p: parent,
 
                 id: function () {
                     return this.data.id;
@@ -1139,8 +1168,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
         }
 
     };
-    /*end of returned object*/
-
+	oscarObject._init();
+	return oscarObject;
 });
 /*end of define and function*/
 
