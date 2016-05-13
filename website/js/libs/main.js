@@ -65,6 +65,9 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         var query = require("query");
 		var tools = require("tools");
         var search = require("search");
+		
+		//set the map handler
+		state.mapHandler = map;
 
         // mustache-template-loader needs this
         window.Mustache = mustache;

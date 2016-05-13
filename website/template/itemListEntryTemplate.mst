@@ -3,7 +3,7 @@
         <div class="panel-heading results-panel-title" role="tab">
             <div class="panel-title">
                 <h5>
-                    <a class="accordion-toggle {{{matchingTagClass}}}" href="#" aria-expanded="true">
+                    <a data-item-id="{{{itemId}}}" class="accordion-toggle {{{matchingTagClass}}}" href="#" aria-expanded="true">
                         <b>{{itemName}}</b>{{#street}}, {{postcode}} {{city}} {{street}} {{housenumber}}{{/street}}
                     </a>
                 </h5>

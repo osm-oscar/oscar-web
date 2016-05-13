@@ -212,6 +212,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 				me._requestFromStore(cb, dataIds);
 			}, dataIds);
 		};
+		this.get = function(cb, dataIds) {
+			this.request(cb, dataIds);
+		};
 		this.at = function(dataId) {
 			return this.m_data.at(dataId);
 		};
@@ -253,6 +256,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 				}
 			});
 		};
+		return handler;
 	};
 	
 	var ShapeCache = function(completerBaseUrl) {
@@ -264,8 +268,60 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 		handler.extraParams = {'shape' : 'false'};
 		return handler;
 	};
-	
 
+	var ItemIndexCache = function(completerBaseUrl) {
+		var handler = new IndexedDataStore();
+		handler.url = completerBaseUrl + "/indexdb/multiple";
+		handler._getData = function(cb, dataIds) {
+			jQuery.ajax({
+				type: "POST",
+				url: handler.url,
+				data: {'which' : JSON.stringify(dataIds)},
+				dataType: 'arraybuffer',
+				mimeType: 'application/octet-stream',
+				success: function (data) {
+					idcs = sserialize.itemIndexSetFromRaw(data);
+					idxMap = {};
+					for (i = 0; i < idcs.length; ++i) {
+						var idx = idcs[i];
+						idxMap[idxId] = idx;
+					}
+					cb(idxMap);
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					tools.defErrorCB(textStatus, errorThrown);
+				}
+			});
+		};
+		return handler;
+	};
+	
+	var CellIndexIdCache = function(completerBaseUrl) {
+		var handler = new IndexedDataStore();
+		handler.url = completerBaseUrl + "/indexdb/cellindexids";
+		handler._getData = function(cb, dataIds) {
+			jQuery.ajax({
+				type: "POST",
+				url: handler.url,
+				data: {'which' : JSON.stringify(dataIds) },
+				dataType: 'arraybuffer',
+				mimeType: 'application/octet-stream',
+				success: function (data) {
+					tmp = sserialize.asArray(data, 'uint32');
+					myMap = {};
+					for (i = 0; i < tmp.length; ++i) {
+						myMap[dataIds[i]] = tmp[i];
+					}
+					cb(myMap);
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					tools.defErrorCB(textStatus, errorThrown);
+				}
+			});
+		};
+		return handler;
+	};
+	
     return {
 
         completerBaseUrl: module.config().url,
@@ -273,10 +329,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
         maxFetchShapes: 100,
         maxFetchIdx: 100,
         cqrCounter: 0,
-        itemCache: {},
-        shapeCache: {},
-        idxCache: {},
-        cellIdxIdCache: {},
+        itemCache: ItemCache(module.config().url),
+        shapeCache: ShapeCache(module.config().url),
+        idxCache: ItemIndexCache(module.config().url),
+        cellIdxIdCache: CellIndexIdCache(module.config().url),
         cqrOps: {'(': '(', ')': ')', '+': '+', '-': '-', '/': '/', '^': '^'},
         cqrParseSkip : {' ' : ' ', '!' : '!', '#' : '#'},
         cqrRegExpEscapes: {
@@ -357,9 +413,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
                     }
                 },
                 asLeafletItem: function (successCB, errorCB) {
-                    if (this.p.shapeCache[this.id()] !== undefined) {
+                    if (!this.p.shapeCache.count(this.id())) {
                         try {
-                            successCB(this.p.leafletItemFromShape(this.p.shapeCache[this.id()]));
+                            successCB(this.p.leafletItemFromShape(this.p.shapeCache.at(this.id())));
                         }
                         catch (e) {
                             errorCB("", e);
@@ -621,80 +677,19 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
 
 ///Fetches the items in arrayOfItemIds and puts them into the cache. notifies successCB
         fetchItems: function (arrayOfItemIds, successCB, errorCB) {
-            var fetchItems = [];
-            var remainingFetchItems = [];
-            for (i = 0; i < arrayOfItemIds.length; ++i) {
-                if (this.itemCache[arrayOfItemIds[i]] === undefined) {
-                    if (fetchItems.length < this.maxFetchItems) {
-                        fetchItems.push(arrayOfItemIds[i]);
-                    }
-                    else {
-                        remainingFetchItems.push(arrayOfItemIds[i]);
-                    }
-                }
-            }
-            if (!fetchItems.length) {
-                successCB();
-                return;
-            }
-            var params = {};
-            params['which'] = JSON.stringify(fetchItems);
-            params['shape'] = "false";
-            var qpath = this.completerBaseUrl + "/itemdb/multiple";
-            var myPtr = this;
-            jQuery.ajax({
-                type: "POST",
-                url: qpath,
-                data: params,
-                mimeType: 'text/plain',
-                success: function (plain) {
-                    try {
-                        json = JSON.parse(plain);
-                    }
-                    catch (err) {
-                        errorCB("Parsing the fetched items failed with the following parameters: " + JSON.stringify(params), err);
-                        return;
-                    }
-                    for (var itemD in json) {
-                        var item = myPtr.Item(json[itemD]);
-                        myPtr.itemCache[item.id()] = item;
-                    }
-                    if (json.length > 0 && json.length < fetchItems.length) {
-                        remainingFetchItems.splice(remainingFetchItems.length, 0, fetchItems);
-                    }
-                    if (remainingFetchItems.length) {
-                        myPtr.fetchItems(remainingFetchItems, function () {
-                            successCB();
-                        }, errorCB);
-                    }
-                    else {
-                        successCB();
-                    }
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    errorCB(textStatus, errorThrown);
-                }
-            });
+			this.itemCache.fetch(successCB, arrayOfItemIds);
         },
         /*
          on success: successCB is called with a single Item instance
          on error: errorCB is called with (textStatus, errorThrown)
          */
         getItem: function (itemId, successCB, errorCB) {
-            var myPtr = this;
-            this.fetchItems([itemId],
-                function () {
-                    var item = myPtr.itemCache[itemId];
-                    if (item === undefined) {
-                        errorCB("Fetching items failed", "");
-                        return;
-                    }
-                    successCB(item);
-                },
-                function (jqXHR, textStatus, errorThrown) {
-                    errorCB(textStatus, errorThrown);
-                }
-            );
+			var me = this;
+			this.itemCache.fetch(function() {
+				if (me.itemCache.count(itemId)) {
+					successCB(me.itemCache.at(itemId));
+				}
+			}, [itemId]);
         },
 
         /*
@@ -702,271 +697,51 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
          on error: errorCB is called with (textStatus, errorThrown)
          */
         getItems: function (arrayOfItemIds, successCB, errorCB) {
-            var myPtr = this;
-            this.fetchItems(arrayOfItemIds,
-                function () {
-                    var res = [];
-                    for (var i = 0; i < arrayOfItemIds.length; ++i) {
-                        var item = myPtr.itemCache[arrayOfItemIds[i]];
-                        if (item === undefined) {
-                            errorCB("Fetching items failed", "Item with id " + arrayOfItemIds[i] + " is undefined");
-                            return;
-                        }
-                        res.push(item);
-                    }
-                    successCB(res);
-
-                },
-                function (textStatus, errorThrown) {
-                    errorCB(textStatus, errorThrown);
-                }
-            );
+			this.itemCache.get(successCB, arrayOfItemIds)
         },
 
         fetchShapes: function (arrayOfItemIds, successCB, errorCB) {
-            var fetchShapes = [];
-            var remainingFetchShapes = [];
-            for (i = 0; i < arrayOfItemIds.length; ++i) {
-                var tmpItemId = parseInt(arrayOfItemIds[i]);
-                if (this.shapeCache[tmpItemId] === undefined) {
-                    if (fetchShapes.length < this.maxFetchShapes) {
-                        fetchShapes.push(tmpItemId);
-                    }
-                    else {
-                        remainingFetchShapes.push(tmpItemId);
-                    }
-                }
-            }
-            if (!fetchShapes.length) {
-                successCB();
-                return;
-            }
-            var params = {};
-            params['which'] = JSON.stringify(fetchShapes);
-            var qpath = this.completerBaseUrl + "/itemdb/multipleshapes";
-            var myPtr = this;
-            jQuery.ajax({
-                type: "POST",
-                url: qpath,
-                data: params,
-                mimeType: 'text/plain',
-                success: function (plain) {
-                    try {
-                        json = JSON.parse(plain);
-                    }
-                    catch (err) {
-                        errorCB("Parsing the fetched shapes failed with the following parameters: " + JSON.stringify(params), err);
-                        return;
-                    }
-                    for (var shapeD in json) {
-                        myPtr.shapeCache[shapeD] = json[shapeD];
-                    }
-                    if (json.length > 0 && json.length < fetchShapes.length) {
-                        remainingFetchShapes.splice(remainingFetchShapes.length, 0, fetchShapes);
-                    }
-                    if (remainingFetchShapes.length) {
-                        myPtr.fetchShapes(remainingFetchShapes, function () {
-                            successCB();
-                        }, errorCB);
-                    }
-                    else {
-                        successCB();
-                    }
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    errorCB(textStatus, errorThrown);
-                }
-            });
+			this.shapeCache.fetch(successCB, arrayOfItemIds);
         },
         /*
          on success: successCB is called with an object of shapes: { id : shape-description }
          on error: errorCB is called with (textStatus, errorThrown)
          */
         getShapes: function (arrayOfItemIds, successCB, errorCB) {
-            var myPtr = this;
-            this.fetchShapes(arrayOfItemIds,
-                function () {
-                    var res = {};
-                    for (var i = 0; i < arrayOfItemIds.length; ++i) {
-                        var sid = arrayOfItemIds[i];
-                        var shape = myPtr.shapeCache[sid];
-                        if (shape === undefined) {
-                            errorCB("Fetching shapes failed", "Shape with id " + sid + " is undefined");
-                            return;
-                        }
-                        res[sid] = shape;
-                    }
-                    successCB(res);
-
-                },
-                function (textStatus, errorThrown) {
-                    errorCB(textStatus, errorThrown);
-                }
-            );
+			this.shapeCache.get(successCB, arrayOfItemIds);
         },
         /*
          on success: successCB is called with a single Item instance
          on error: errorCB is called with (textStatus, errorThrown)
          */
         getShape: function (itemId, successCB, errorCB) {
-            var myPtr = this;
-            this.fetchShapes([itemId],
-                function () {
-                    var shape = myPtr.shapeCache[itemId];
-                    if (shape === undefined) {
-                        errorCB("Fetching shape failed", "");
-                        return;
-                    }
-                    successCB(shape);
-                },
-                function (jqXHR, textStatus, errorThrown) {
-                    errorCB(textStatus, errorThrown);
-                }
-            );
-        },
-
-        isShapeInCache: function(itemId){
-            return this.shapeCache[itemId] !== undefined;
+			var me = this;
+			this.shapeCache.fetch(function() {
+				if (me.shapeCache.count(itemId)) {
+					successCB(me.shapeCache.at(itemId));
+				}
+			}, [itemId]);
         },
 
         fetchIndexes: function (arrayOfIndexIds, successCB, errorCB) {
-            var idcsToFetch = [];
-            var remainingIdcsToFetch = [];
-            for (i in arrayOfIndexIds) {
-                if (this.idxCache[arrayOfIndexIds[i]] === undefined) {
-                    if (idcsToFetch.length < this.maxFetchIdx) {
-                        idcsToFetch.push(arrayOfIndexIds[i]);
-                    }
-                    else {
-                        remainingIdcsToFetch.push(arrayOfIndexIds[i]);
-                    }
-                }
-            }
-            if (!idcsToFetch.length) {
-                successCB();
-                return;
-            }
-            var params = {};
-            params['which'] = JSON.stringify(idcsToFetch);
-            var qpath = this.completerBaseUrl + "/indexdb/multiple";
-            var myPtr = this;
-            jQuery.ajax({
-                type: "POST",
-                url: qpath,
-                data: params,
-                dataType: 'arraybuffer',
-                mimeType: 'application/octet-stream',
-                success: function (data) {
-                    idcs = sserialize.itemIndexSetFromRaw(data);
-                    for (i = 0; i < idcs.length; ++i) {
-                        var idx = idcs[i];
-                        myPtr.idxCache[idx.id] = idx;
-                    }
-                    if (idcs.length > 0 && idcs.length < idcsToFetch.length) {
-                        //some indeces are still missing, try again
-                        remainingIdcsToFetch.splice(remainingIdcsToFetch.length, 0, idcsToFetch);
-                    }
-                    if (remainingIdcsToFetch.length) {
-                        myPtr.fetchIndexes(remainingIdcsToFetch, function () {
-                            successCB();
-                        }, errorCB);
-                    }
-                    else {
-                        successCB();
-                    }
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    errorCB(textStatus, errorThrown);
-                }
-            });
+			this.idxCache.fetch(successCB, arrayOfIndexIds);
         },
-        /*
-         on success: successCB is called with an sserialize::ItemIndex
-         on error: errorCB is called with (textStatus, errorThrown)
-         */
         getIndex: function (indexId, successCB, errorCB) {
-            var myPtr = this;
-            this.fetchIndexes([indexId],
-                function () {
-                    successCB(myPtr.idxCache[indexId]);
-                },
-                function (jqXHR, textStatus, errorThrown) {
-                    errorCB(textStatus, errorThrown);
-                }
-            );
+			var me = this;
+			this.idxCache.fetch(function() {
+				if (me.idx.count(indexId)) {
+					successCB(me.idx.at(indexId));
+				}
+			}, [indexId]);
         },
-        /*
-         on success: successCB is called with a sserialize::ItemIndexSet
-         on error: errorCB is called with (textStatus, errorThrown)
-         */
         getIndexes: function (arrayOfIndexIds, successCB, errorCB) {
-            var myPtr = this;
-            this.fetchIndexes(arrayOfIndexIds,
-                function () {
-                    var res = [];
-                    for (i = 0; i < arrayOfIndexIds.length; ++i) {
-                        res[i] = myPtr.idxCache[arrayOfIndexIds[i]];
-                    }
-                    successCB(res);
-                },
-                function (jqXHR, textStatus, errorThrown) {
-                    errorCB(textStatus, errorThrown);
-                }
-            );
+			this.idxCache.get(successCB, arrayOfIndexIds);
         },
         fetchCellsItemIndexIds: function (arrayOfCellIds, successCB, errorCB) {
-            var cellsIdxIdsToFetch = [];
-            for (i in arrayOfCellIds) {
-                if (this.cellIdxIdCache[arrayOfCellIds[i]] === undefined) {
-                    cellsIdxIdsToFetch.push(arrayOfCellIds[i]);
-                }
-            }
-            if (!cellsIdxIdsToFetch.length) {
-                successCB();
-                return;
-            }
-            var params = {};
-            params['which'] = JSON.stringify(cellsIdxIdsToFetch);
-            var qpath = this.completerBaseUrl + "/indexdb/cellindexids";
-            var myPtr = this;
-            jQuery.ajax({
-                type: "POST",
-                url: qpath,
-                data: params,
-                dataType: 'arraybuffer',
-                mimeType: 'application/octet-stream',
-                success: function (data) {
-                    tmp = sserialize.asArray(data, 'uint32');
-                    for (i = 0; i < tmp.length; ++i) {
-                        myPtr.cellIdxIdCache[cellsIdxIdsToFetch[i]] = tmp[i];
-                    }
-                    if (tmp.length > 0 && tmp.length < cellsIdxIdsToFetch.length) {
-                        myPtr.fetchCellsItemIndexIds(cellsIdxIdsToFetch, function () {
-                            successCB();
-                        }, errorCB);
-                    }
-                    else {
-                        successCB();
-                    }
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    errorCB(textStatus, errorThrown);
-                }
-            });
+			this.cellIdxIdCache.fetch(successCB, arrayOfCellIds);
         },
-
         getCellsItemIndexIds: function (arrayOfCellIds, successCB, errorCB) {
-            var myPtr = this;
-            this.fetchCellsItemIndexIds(arrayOfCellIds,
-                function () {
-                    var res = [];
-                    for (i in arrayOfCellIds) {
-                        res[i] = myPtr.cellIdxIdCache[arrayOfCellIds[i]];
-                    }
-                    successCB(res);
-                },
-                errorCB
-            );
+			this.cellIdxIdCache.get(successCB, arrayOfCellIds);
         },
         getItemParentIds: function (itemId, successCB, errorCB) {
             var qpath = this.completerBaseUrl + "/itemdb/itemparents/" + itemId;

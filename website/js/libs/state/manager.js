@@ -2,6 +2,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
 	var dag = require("dag");
     var state = {
         map: undefined,
+		mapHandler: undefined,
         visualizationActive: false,
         dag: dag.dag(),
         markers: L.markerClusterGroup(),
