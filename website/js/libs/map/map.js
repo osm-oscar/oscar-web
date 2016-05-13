@@ -887,6 +887,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//But this is necessary for large result regions
 		visualizeRegionItems: function (regionId, itemIds) {
 			console.assert(state.dag.hasNode(regionId), regionId);
+			//cache items
+			oscar.fetchItems(itemIds, function() {});
 			
 			//remove the cluster marker of this region
 			map.clusterMarkers.remove(regionId);
@@ -907,18 +909,23 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			//add the appropriate tab to the result list and insert the items to the list
 			map.resultListTabs.addRegion(regionId, state.dag.at(regionId).name, state.dag.at(regionId).count);
-			map.resultListTabs.insertItems(itemIds);
 			
-			//add the items as children to the dag
-			for(var i in itemIds) {
-				var itemId = itemIds[i];
-				var node = state.dag.addNode(itemId);
-				node.name = "BUG_ACCESSING_INVALID_NAME";
-				state.dag.addChild(regionId, itemId);
-			}
-			if (state.visualizationActive) {
-				tree.refresh(regionId);
-			}
+			//insertItems expects items
+			oscar.getItems(itemIds, function(items) {
+				map.resultListTabs.insertItems(regionId, items);
+			
+				//add the items as children to the dag
+				for(var i in items) {
+					var item = items[i];
+					var itemId = item.id();
+					var node = state.dag.addNode(itemId);
+					node.name = item.name();
+					state.dag.addChild(regionId, itemId);
+				}
+				if (state.visualizationActive) {
+					tree.refresh(regionId);
+				}
+			});
 		},
 
 		loadSubhierarchy: function (rid, finish) {
