@@ -8,10 +8,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	//parent is the parent element of the Item list the handler should take care of
 	//It adds a panel div with class panel-group as parent for the list
 	//This triggers itemDetailsOpened and itemDetailsClosed with the respective itemId on the parent element
-	var ItemListHandler = function(parent) {
-		
+	var ItemListHandler = function(parent, scrollContainer) {
+		if (scrollContainer === undefined) {
+			scrollContainer = parent;
+		}
 		var handler = {
 			m_domRoot : undefined,
+			m_scrollContainer: scrollContainer,
 			//signals emited on the root dom-element
 	   
 			emit_itemDetailsOpened: function(itemId) {
@@ -63,6 +66,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$(".item-detail-key", element).click(itemDetailQuery);
 				$(".item-detail-value", element).click(itemDetailQuery);
 				$(".item-detail-id", element).click(itemIdQuery);
+			},
+			_domItemRoot: function(itemId) {
+				return $("div[class~='panel'][data-item-id~='" + itemId + "']", handler.m_domRoot);
 			},
 			_domItemHeader: function(itemId) {
 				return $("div[class~='panel'][data-item-id~='" + itemId + "'] div[class~='panel-heading']", handler.m_domRoot);
@@ -127,21 +133,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 				});
 			},
-			//BUG: this is broken
 			scrollTo: function(itemId) {
-				if (!hasItem(itemId)) {
+				if (!handler.hasItem(itemId)) {
 					return;
 				}
-				var domItemHader = handler._domItemHeader();
-				var itemPanelRootDiv = $(itemPanelRootId);
-				if (itemPanelRootDiv === undefined) {
-					console.log("ItemListHandler.scrollTo: undefined itemPanelRootDiv", marker, itemId, shapeSrcType, state);
-				}
-				else {
-					var scrollPos = itemPanelRootDiv.offset().top - container.offset().top + container.scrollTop();
-					container.animate({scrollTop: scrollPos});
-					//container.animate({scrollTop: itemPanelRootDiv.position().top + $("itemsList").position().top});
-				}
+				var itemPanelRootDiv = handler._domItemRoot(itemId);
+				var scrollPos = itemPanelRootDiv.offset().top - handler.m_scrollContainer.offset().top + handler.m_scrollContainer.scrollTop();
+				handler.m_scrollContainer.animate({scrollTop: scrollPos});
+				//container.animate({scrollTop: itemPanelRootDiv.position().top + $("itemsList").position().top});
 			},
 			//returns jquery object of the inserted dom item element
 			appendItem: function(item) {
@@ -194,15 +193,19 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	
 	//handles item lists of multiple regions as tab groups
 	//emits multiple signals on it self:
-	var RegionItemListTabHandler = function(parent) {
+	var RegionItemListTabHandler = function(parent, scrollContainer) {
+		if (scrollContainer === undefined) {
+			scrollContainer = parent;
+		}
 		var handler = {
 			m_domRoot : undefined,
 			m_domTabRoot : undefined,
+			m_scrollContainer: $(scrollContainer),
 			m_regions : tools.SimpleHash(), //maps from regionId=<int> -> { handler : ItemListHandler, tabContentId: <string>, tabHeadId: <string>}
 			
 			//signals
 			emit_itemDetailsOpened: function(itemId) {
-				$(handler).triggerHandler({type:"itemDetailsClosed", itemId : itemId});
+				$(handler).triggerHandler({type:"itemDetailsOpened", itemId : itemId});
 			},
 			emit_itemDetailsClosed: function(itemId) {
 				$(handler).triggerHandler({type:"itemDetailsClosed", itemId : itemId});
@@ -237,11 +240,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				//add a new tab
 				var tabHeadId = tools.generateDocumentUniqueId();
 				var tabContentId = tools.generateDocumentUniqueId();
-				var tabHeadHtml = '<li id="' + tabHeadId + ' regionId="' + regionId + '"><a href="#' + tabContentId + '">' + regionName + '</a><span class="badge">' + itemCount + '</span></li>';
+				var tabHeadHtml = '<li id="' + tabHeadId + '" regionid="' + regionId + '"><a href="#' + tabContentId + '">' + regionName + '</a><span class="badge">' + itemCount + '</span></li>';
 				var tabContentHtml = '<div id="' + tabContentId + '"></div>';
-				var tabHead = $(handler.m_domTabRoot).append(tabHeadHtml);
-				var tabContent = $(handler.m_domRoot).append(tabContentHtml);
-				var itemListHandler = ItemListHandler(tabContent);
+				$(handler.m_domTabRoot).append(tabHeadHtml);
+				$(handler.m_domRoot).append(tabContentHtml);
+				var tabContent = $('#' + tabContentId, handler.m_domRoot);
+				var itemListHandler = ItemListHandler(tabContent, handler.m_scrollContainer);
 				handler.m_regions.insert(regionId, {
 					handler : itemListHandler,
 					tabHeadId : tabHeadId,
@@ -279,17 +283,17 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			
 			openTab: function(regionId) {
-				if (!hasRegion(regionId)) {
+				if (!handler.hasRegion(regionId)) {
 					return;
 				}
-				var index = $("#" + handler.m_regions.at(i).tabHeadId).index();
+				var index = $("#" + handler.m_regions.at(regionId).tabHeadId).index();
 				handler.m_domRoot.tabs("option", "active", index);
 			},
 			
 			openItem: function(itemId) {
-				for(var i in handler.m_regions) {
+				for(var i in handler.m_regions.values()) {
 					if (handler.m_regions.at(i).handler.hasItem(itemId)) {
-						openTab(i);
+						handler.openTab(i);
 						handler.m_regions.at(i).handler.open(itemId);
 						break;
 					}
@@ -299,7 +303,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			activeTab: function() {
 				var index = handler.m_domRoot.tabs("option", "active");
 				var li = handler.m_domTabRoot.children().eq(index);
-				var regionId = parseInt(li.attr["regionId"]);
+				var regionIdStr = li.attr("regionid");
+				var regionId = parseInt(regionIdStr);
 				return handler.m_regions.at(regionId).handler;
 			},
 			
@@ -315,7 +320,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					$('#' + info.tabContentId).destroy();
 					$('#' + info.tabHeadId).destroy();
 				}
-				this.refresh();
+				handler.refresh();
 			},
 
 			destroy: function () {
@@ -561,7 +566,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		//this has to be called prior usage
 		init: function() {
-			map.resultListTabs = map.RegionItemListTabHandler($('#left_menu_parent'));
+			map.resultListTabs = map.RegionItemListTabHandler('#left_menu_parent', '#sidebar-content');
 			map.relativesTab.activeItemHandler = map.ItemListHandler($('#activeItemsList'));
 			map.relativesTab.relativesHandler = map.ItemListHandler($('#relativesList'));
 			
@@ -586,7 +591,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			//register slots
 			$(map.resultListTabs).on("itemLinkClicked", map.onItemLinkClicked);
-			$(map.resultListTabs).on("itemDetailsOpened", map.onItemDetailsOpen);
+			$(map.resultListTabs).on("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).on("itemDetailsClosed", map.onItemDetailsClosed);
 			
 			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
@@ -718,7 +723,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		//panel event handlers
-		onItemDetailsOpen: function(e) {
+		onItemDetailsOpened: function(e) {
+			var itemId = e.itemId;
 			map.highlightItemShapes.add(itemId, function() {
 				if (state.items.activeItem == itemId) {
 					map.highlightItemShapes.zoomTo(itemId);
