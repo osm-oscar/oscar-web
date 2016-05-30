@@ -100,7 +100,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					if (me.hasClass("collapse") ) {
 						me.removeClass("collapse");
 						me.addClass("in");
-						handler.emit_itemDetailsClosed(itemId);
+						handler.emit_itemDetailsOpened(itemId);
 					}
 				});
 			},
@@ -710,7 +710,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			if (map.itemMarkers.count(itemId)) {
 				var geopos = map.itemMarkers.coords(itemId);
-				var text = map.itemMarkers.layer(itemId).name;
+				var text = "";
+				if (oscar.itemCache.count(itemId)) {
+					text = oscar.itemCache.at(itemId).name();
+				}
 				
 				L.popup({offset: new L.Point(0, -25)})
 					.setLatLng(geopos)
@@ -1094,7 +1097,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 
 		removeParentsTabs: function (dagChildNode) {
-			for (var parentId in dagChildNode.parents) {
+			for (var parentId in dagChildNode.parents.values()) {
 				map.resultListTabs.removeRegion(parentId);
 			}
 		},
