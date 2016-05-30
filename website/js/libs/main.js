@@ -1,7 +1,7 @@
 requirejs.config({
     baseUrl: "js/libs",
     config: {
-        'oscar': {url: "http://oscardev.fmi.uni-stuttgart.de/oscar"}
+        'oscar': {url: "http://localoscar/oscar"}
     },
     paths: {
         "jquery": "jquery/jquery.min",
