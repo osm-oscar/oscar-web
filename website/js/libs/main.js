@@ -1,7 +1,7 @@
 requirejs.config({
     baseUrl: "js/libs",
     config: {
-        'oscar': {url: "http://localhost:8080"}
+        'oscar': {url: "http://localoscar/oscar"}
     },
     paths: {
         "jquery": "jquery/jquery.min",
