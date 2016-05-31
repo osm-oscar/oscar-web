@@ -39,7 +39,9 @@ define(["state", "oscar", "tools", "conf", "map", "leafletCluster"], function (s
 
     /**
      * Remove displayed region boundaries when the mouse is over a cluster-marker & the user zooms-in
-     * TODO:Shouldn't this be handled by the MarkerCluster since removing it should trigger a mouseout?
+     * TODO: Shouldn't this be handled by the MarkerCluster since removing it should trigger a mouseout?
+     * Not yet, since the MarkerCluster is a special marker that does not interface with map.js yet
+     * It is created by the MarkerCluster library
      */
     var old = L.FeatureGroup.prototype.removeLayer;
     L.FeatureGroup.prototype.removeLayer = function (e) {

@@ -599,6 +599,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.regionMarkers).on("click", map.onRegionMarkerClicked);
 			$(map.regionMarkers).on("mouseover", map.onRegionMarkerMouseOver);
 			$(map.regionMarkers).on("mouseout", map.onRegionMarkerMouseOut);
+			
+			$(map.clusterMarkers).on("click", map.onClusterMarkerClicked);
+			$(map.clusterMarkers).on("mouseover", map.onClusterMarkerMouseOver);
+			$(map.clusterMarkers).on("mouseout", map.onClusterMarkerMouseOut);
 		},
 		
 		displayCqr: function (cqr) {
@@ -764,6 +768,23 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		onRegionMarkerMouseOut: function(e) {
 			map.closePopups();
 			map.regionShapes.remove(e.itemId)
+		},
+		onClusterMarkerClicked: function(e) {
+			map.closePopups();
+			map.clusterMarkers.remove(e.itemId);
+			state.regionHandler({rid: e.itemId, draw: true, dynamic: true});
+		},
+		onClusterMarkerMouseOver: function(e) {
+			map.clusterMarkerRegionShapes.add(e.itemId);
+			var coords = map.clusterMarkers.coords(e.itemId);
+			var marker = map.clusterMarkers.layer(e.itemId);
+			L.popup({offset: new L.Point(0, -10)})
+				.setLatLng(coords)
+				.setContent(marker.name).openOn(state.map);
+		},
+		onClusterMarkerMouseOut: function(e) {
+			map.closePopups();
+			map.clusterMarkerRegionShapes.remove(e.itemId)
 		},
 		//now for some old stuff, everything below needs refactoring
 
@@ -1085,6 +1106,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 
 		addClusterMarker: function (node) {
+			if (node.count === 1006) {
+				console.log("BOOM");
+			}
 			map.clusterMarkers.add(node.id, node.count);
 		},
 
