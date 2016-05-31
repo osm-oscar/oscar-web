@@ -845,28 +845,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 								$("#left_menu_parent").css("display", "block");
 
 								if (cqr.ohPath().length) {
-									state.cqr.regionItemIds(parentRid,
-										map.visualizeRegionItems,
-										tools.defErrorCB,
-										0 // offset
-									);
+									map.visualizeRegionItems(parentRid);
 								}
 								else {
 									if (state.dag.at(parentRid).children.size() == 0) {
-										state.cqr.regionItemIds(parentRid,
-											map.visualizeRegionItems,
-											tools.defErrorCB,
-											0 // offset
-										);
+										map.visualizeRegionItems(parentRid);
 									}
 									else {
 										for (var child in state.dag.at(parentRid).children) {
 											var id = state.dag.at(parentRid).children[child].id;
-											state.cqr.regionItemIds(id,
-												map.visualizeRegionItems,
-												tools.defErrorCB,
-												0 // offset
-											);
+											map.visualizeRegionItems(parentRid);
 										}
 									}
 								}
@@ -915,47 +903,55 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		//TODO: improve this; its currently no possible to load more items into the result list
 		//But this is necessary for large result regions
-		visualizeRegionItems: function (regionId, itemIds) {
-			console.assert(state.dag.hasNode(regionId), regionId);
-			//cache items
-			oscar.fetchItems(itemIds, function() {});
-			
-			//remove the cluster marker of this region
-			map.clusterMarkers.remove(regionId);
-
-			// manage items -> kill old items if there are too many of them and show clusters again
-			if (map.itemMarkers.size() + itemIds.length > config.maxBufferedItems) {
-				for (var itemId in map.itemmarkers.layers()) {
-					node = state.dag.at(itemId);
-					for (var parentId in node.parents.values()) {
-						if (!map.clusterMarkers.count(parentId)) {
-							map.clusterMarkers.add(parentId, node.count);
+		visualizeRegionItems: function (rId, offset=0) {
+			function myOp(regionId, itemIds) {
+				console.assert(state.dag.hasNode(regionId), regionId);
+				//cache items
+				oscar.fetchItems(itemIds, function() {});
+				
+				// manage items -> kill old items if there are too many of them and show clusters again
+				if (map.itemMarkers.size() + itemIds.length > config.maxBufferedItems) {
+					for (var itemId in map.itemmarkers.layers()) {
+						node = state.dag.at(itemId);
+						for (var parentId in node.parents.values()) {
+							if (!map.clusterMarkers.count(parentId)) {
+								map.clusterMarkers.add(parentId, node.count);
+							}
 						}
+						map.removeItemMarker(node.id);
+						dag.removeNode(node.id);
 					}
-					map.itemMarkers.remove(node.id);
-					dag.removeNode(node.id);
 				}
-			}
+				
+				//insertItems expects items
+				oscar.getItems(itemIds, function(items) {
+					map.resultListTabs.insertItems(regionId, items);
+				
+					//add the items as children to the dag
+					for(var i in items) {
+						var item = items[i];
+						var itemId = item.id();
+						var node = state.dag.addNode(itemId);
+						node.name = item.name();
+						state.dag.addChild(regionId, itemId);
+					}
+					if (state.visualizationActive) {
+						tree.refresh(regionId);
+					}
+				});
+			};
 			
 			//add the appropriate tab to the result list and insert the items to the list
 			map.resultListTabs.addRegion(regionId, state.dag.at(regionId).name, state.dag.at(regionId).count);
-			
-			//insertItems expects items
-			oscar.getItems(itemIds, function(items) {
-				map.resultListTabs.insertItems(regionId, items);
-			
-				//add the items as children to the dag
-				for(var i in items) {
-					var item = items[i];
-					var itemId = item.id();
-					var node = state.dag.addNode(itemId);
-					node.name = item.name();
-					state.dag.addChild(regionId, itemId);
-				}
-				if (state.visualizationActive) {
-					tree.refresh(regionId);
-				}
-			});
+
+			//remove the cluster marker of this region
+			map.clusterMarkers.remove(regionId);
+
+			state.cqr.regionItemIds(rId,
+				myOp,
+				tools.defErrorCB,
+				offset
+			);
 		},
 
 		loadSubhierarchy: function (rid, finish) {
@@ -1042,14 +1038,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			state.cqr.getDag(subSetHandler, tools.defErrorCB);
 		},
 		
-		loadItems: function (rid) {
-			state.cqr.regionItemIds(rid,
-				map.visualizeRegionItems,
-				tools.defErrorCB,
-				0 // offset
-			);
-		},
-	   
 		addDagItemToResultList: function (node) {
 			for (var parent in node.parents.values()) {
 				var parentNode = state.dag.at(parent);
@@ -1083,7 +1071,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						if (childNode.count) {
 							map.addClusterMarker(childNode);
 						}
-						else if (!childNode.count) {
+						else if (!childNode.count) { //this is an item
 							if (!drawn.count(childNode.id)) {
 								map.addItemMarker(childNode);
 								map.addDagItemToResultList(childNode);

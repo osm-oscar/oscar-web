@@ -86,7 +86,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
             $(".treeNodeItems").each(function (key, value) {
                 $(value).on("click", function () {
                     var id = $(this).attr("id");
-                    state.mapHandler.loadItems(id);
+                    state.mapHandler.visualizeRegionItems(id);
                 });
             });
         },
