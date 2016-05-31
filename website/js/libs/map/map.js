@@ -1159,6 +1159,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 								drawn.insert(itemId, false);
 							}
 							
+							map.closePopups();
 							map.clusterMarkers.clear();
 
 							if (this.path && this.path.length) {
