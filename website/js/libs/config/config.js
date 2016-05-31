@@ -92,7 +92,11 @@ define([], function() {
                 select : 10000
             }
         },
-		overlap: 0.40, // threshold for overlap of a bbox with viewport
+		clusters: {
+			bboxOverlap: 0.4, // threshold for overlap of a bbox with viewport
+			shapeOverlap: 0.1 // threshold for overlap of a bbox with viewport if the shape is within the viewport
+		},
+		
 		maxBufferedItems: 350, // buffered locations
 		maxNumSubClusters: 10,
 		spinnerOpts: {

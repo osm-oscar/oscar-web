@@ -1070,7 +1070,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			if (node.children.size()) {
 				for (var childId in node.children.values()) {
 					childNode = state.dag.at(childId);
-					if (tools.percentOfOverlap(state.map, childNode.bbox) >= config.overlap) {
+					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
+					
+					if (
+						(myOverlap >= config.clusters.bboxOverlap) ||
+						(myOverlap > config.clusters.shapeOverlap && oscar.shapeCache.count(childNode.id) && oscar.intersect(state.map.getBounds(), oscar.shapeCache.at(childNode.id)))
+					   )
+					{
 						map.drawClusters(childNode, drawn);
 					}
 					else {
@@ -1089,6 +1095,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 				}
 			}
+			//fetch children/items
 			else if (node.count) {
 				state.regionHandler({rid: node.id, draw: true, dynamic: true});
 			}

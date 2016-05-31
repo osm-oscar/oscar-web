@@ -703,6 +703,36 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], functi
                     return null;
             }
         },
+        //shape is a shape from the shapeCache and bbox has to provide a funtion contains(coords)
+        intersect: function(bbox, shape) {
+			if (shape === undefined || bbox === undefined) {
+				return false;
+			}
+			function containsPts(arrayOfPts) {
+				for(var i in arrayOfPts) {
+					if (bbox.contains(arrayOfPts[i])) {
+						return true;
+					}
+				}
+				return false;
+			};
+            switch (shape.t) {
+                case 1://GeoPoint
+                    return bbox.contains(shape.v);
+                case 2://GeoWay
+                case 3://GeoPolygon
+                    return containsPts(shape.v);
+				case 4://GeoMultiPolygon
+					for(var i in shape.v.outer) {
+						if (containsPts(shape.v.outer[i])) {
+							return true;
+						}
+					}
+					return false;
+                default:
+					return false;
+            }
+		},
 
 ///Fetches the items in arrayOfItemIds and puts them into the cache. notifies successCB
         fetchItems: function (arrayOfItemIds, successCB, errorCB) {
