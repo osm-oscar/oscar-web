@@ -72,9 +72,12 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
 			
             if ($('#searchModi input').is(":checked")) {
                 //TODO: wrong placement of markers if clustering is active. Cause: region midpoint is outside of search rectangle
-                myRealQuery =  "(" + myRealQuery + ") $geo:" + state.map.getBounds().getSouthWest().lng
-                    + "," + state.map.getBounds().getSouthWest().lat + ","
-                    + state.map.getBounds().getNorthEast().lng + "," + state.map.getBounds().getNorthEast().lat;
+				
+				var minLat = Math.max(state.map.getBounds().getSouthWest().lat, -90);
+				var maxLat = Math.min(state.map.getBounds().getNorthEast().lat, 90);
+				var minLng = Math.max(state.map.getBounds().getSouthWest().lng, -180);
+				var maxLng = Math.min(state.map.getBounds().getNorthEast().lng, 180);
+				myRealQuery = "(" + myRealQuery + ") $geo:" + minLng + "," + minLat + "," + maxLng + "," + maxLat;
             }
 
             //push our query as history state

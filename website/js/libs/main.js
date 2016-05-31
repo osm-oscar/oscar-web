@@ -214,6 +214,11 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                     var maxLat = Math.max(state.spatialquery.coords[0].lat, state.spatialquery.coords[1].lat);
                     var minLng = Math.min(state.spatialquery.coords[0].lng, state.spatialquery.coords[1].lng);
                     var maxLng = Math.max(state.spatialquery.coords[0].lng, state.spatialquery.coords[1].lng);
+					//now clip
+					var minLat = Math.max(minLat, -90);
+					var maxLat = Math.min(maxLat, 90);
+					var minLng = Math.max(minLng, -180);
+					var maxLng = Math.min(maxLng, 180);
                     qStr = "$geo:" + minLng + "," + minLat + "," + maxLng + "," + maxLat;
                 }
                 else if (state.spatialquery.type === "path") {
