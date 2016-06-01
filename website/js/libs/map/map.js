@@ -874,7 +874,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 							}
 
 							// just load regionShapes into the cache
-							oscar.fetchShapes(regions, function() {}, tools.defErrorCB);
+							oscar.fetchShapes(regions, function() {});
 
 							if (state.visualizationActive) {
 								tree.refresh(parentRid);
@@ -885,8 +885,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 							context.pathProcessor.process();
 						}
 
-					},
-					tools.defErrorCB
+					}
 				);
 			}
 
@@ -997,7 +996,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		loadWholeTree: function () {
 			function subSetHandler(subSet) {
-				state.dag = tools.SimpleHash();
+				state.dag.clear();
 				var regions = [];
 				for (var region in subSet.regions) {
 					regions.push(region);
