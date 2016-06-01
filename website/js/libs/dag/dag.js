@@ -1,5 +1,12 @@
 define(["jquery", "tools"], function ($, tools) {
-    return {
+    return d = {
+		DisplayState: {
+			None: 0,
+			InTabLIst: 1,
+			InItemList: 2,
+			InClusterMarkers: 4,
+			InItemMarkers: 8
+		},
 		dag: function() {
 			return {
 				Node: function(id) {
@@ -8,6 +15,7 @@ define(["jquery", "tools"], function ($, tools) {
 						parents: tools.SimpleSet(),
 						children: tools.SimpleSet(),
 						id: id,
+						displayState: d.DisplayState.None,
 						//these are public, mutable
 						name: undefined,
 						count: undefined,
@@ -61,6 +69,14 @@ define(["jquery", "tools"], function ($, tools) {
 						this.node(child).parents.erase(id);
 					}
 					this.m_nodes.erase(id);
+				},
+				setDisplayState: function(state) {
+					for(var i in this.m_nodes.values()) {
+						this.at(i).displayState = state;
+					}
+				},
+				resetDisplayState: function() {
+					this.setDisplayState(d.DisplayState.None);
 				},
 				clear: function() {
 					this.m_nodes = tools.SimpleHash();
