@@ -72,6 +72,12 @@ define(["jquery", "tools"], function ($, tools) {
 					}
 					this.m_nodes.erase(id);
 				},
+				//calls cb for each node
+				each: function(cb) {
+					for(var i in this.m_nodes.values()) {
+						cb(this.at(i));
+					}
+				},
 				setDisplayState: function(state) {
 					for(var i in this.m_nodes.values()) {
 						this.at(i).displayState = state;
