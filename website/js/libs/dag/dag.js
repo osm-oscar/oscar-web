@@ -9,12 +9,14 @@ define(["jquery", "tools"], function ($, tools) {
 		},
 		dag: function() {
 			return {
-				Node: function(id) {
+				//type should be either "region" or "item"
+				Node: function(id, type) {
 					return node = {
 						//public, but const!
 						parents: tools.SimpleSet(),
 						children: tools.SimpleSet(),
 						id: id,
+						type: type,
 						displayState: d.DisplayState.None,
 						//these are public, mutable
 						name: undefined,
@@ -49,11 +51,11 @@ define(["jquery", "tools"], function ($, tools) {
 				},
 				//add a rootNode
 				addRoot: function(id) {
-					return this.addNode(id);
+					return this.addNode(id, "region");
 				},
-				addNode: function(id) {
+				addNode: function(id, type) {
 					if (!this.hasNode(id)) {
-						this.m_nodes.insert(id, this.Node(id));
+						this.m_nodes.insert(id, this.Node(id, type));
 					}
 					return this.node(id);
 				},
