@@ -10,7 +10,6 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
         handler: undefined,
         loadingtasks: 0,
         cqr: {},
-        regionHandler: undefined,
         cqrRegExp: undefined,
         queries: {
             activeCqrId: -1,
