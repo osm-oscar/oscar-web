@@ -5,7 +5,6 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
 		mapHandler: undefined,
         visualizationActive: false,
         dag: dag.dag(),
-        markers: L.markerClusterGroup(),
         sidebar: undefined,
         handler: undefined,
         loadingtasks: 0,
@@ -116,12 +115,6 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
             }
 			state.items.activeItem = undefined;
             state.dag.clear();
-        },
-        initMarkers: function(){
-            state.markers = L.markerClusterGroup();
-            state.markers.on('clusterclick', function (a) {
-                a.layer.zoomToBounds();
-            });
         }
     };
 
