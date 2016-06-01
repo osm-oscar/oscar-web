@@ -815,7 +815,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 								itemMap[itemId] = item;
 								if (!cqr.ohPath().length || ($.inArray(itemId, cqr.ohPath()) != -1 || (parentRid == cqr.ohPath()[cqr.ohPath().length - 1] && parentCount > oscar.maxFetchItems))) {
 									if (!state.dag.count(itemId)) {
-										var node = state.dag.addNode(itemId);
+										var node = state.dag.addNode(itemId, "region");
 										node.count = regionChildrenApxItemsMap[itemId];
 										node.bbox = item.bbox();
 										node.name = item.name();
@@ -830,7 +830,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 								itemId = item.id();
 								itemMap[itemId] = item;
 								if (!state.dag.count(itemId)) {
-									node = state.dag.addNode(itemId);
+									node = state.dag.addNode(itemId, "region");
 									node.count = regionChildrenApxItemsMap[itemId];
 									node.bbox = item.bbox();
 									node.name = item.name();
@@ -930,7 +930,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					for(var i in items) {
 						var item = items[i];
 						var itemId = item.id();
-						var node = state.dag.addNode(itemId);
+						var node = state.dag.addNode(itemId, "item");
 						node.name = item.name();
 						state.dag.addChild(regionId, itemId);
 					}
@@ -942,6 +942,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			//add the appropriate tab to the result list and insert the items to the list
 			map.resultListTabs.addRegion(regionId, state.dag.at(regionId).name, state.dag.at(regionId).count);
+			state.dag.at(regionId).displayState |= dag.DisplayState.InTabList;
 
 			//remove the cluster marker of this region
 			map.clusterMarkers.remove(regionId);
@@ -972,7 +973,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 							item = items[i];
 							itemId = item.id();
 							if (!state.dag.count(itemId)) {
-								node = state.dag.addNode(itemId);
+								node = state.dag.addNode(itemId, "region");
 								node.count = regionChildrenApxItemsMap[itemId];
 								node.bbox = item.bbox();
 								node.name = item.name();
@@ -1005,28 +1006,26 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				//fetch the items
 				oscar.getItems(regions,
 					function (items) {
-						var marker;
 						for (var i in items) {
 							var item = items[i];
 							var itemId = item.id();
 							var regionInSubSet = subSet.regions[itemId];
 							
-							state.dag.insert(itemId);
-							var node = state.dag.at(itemId);
+							var node = state.dag.addNode(itemId, "region");
 							node.name = item.name();
 							node.count = regionInSubSet.apxitems;
 							node.bbox = item.bbox();
 
 							for (var i in regionInSubSet.children) {
 								var childId = regionInSubSet.children[i];
-								state.dag.addNode(childId);
+								state.dag.addNode(childId, "region");
 								state.dag.addChild(itemId, childId);
 							}
 						}
 
 						for (var j in subSet.rootchildren) {
 							var childId = subSet.rootchildren[j];
-							state.dag.addNode(childId);
+							state.dag.addNode(childId, "region");
 							state.dag.addChild(0xFFFFFFFF, childId);
 						}
 					},
@@ -1041,6 +1040,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			for (var parent in node.parents.values()) {
 				var parentNode = state.dag.at(parent);
 				map.resultListTabs.addRegion(parentNode.id, parentNode.name, parentNode.count);
+				parentNode.displayState |= dag.DisplayState.InTabList;
 				//insert
 				oscar.getItem(node.id, function (item) {
 					map.resultListTabs.insertItem(parentNode.id, item);
@@ -1113,7 +1113,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		addItemMarker: function (node) {
 			map.itemMarkers.add(node.id);
 		},
-
+		
+		//TODO:remove this! dag now has display state (which is bad)
 		removeParentsTabs: function (dagChildNode) {
 			for (var parentId in dagChildNode.parents.values()) {
 				map.resultListTabs.removeRegion(parentId);
@@ -1146,32 +1147,47 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						}
 						state.handler = function () {
 							var timer = tools.timer("draw");
-							var drawn = tools.SimpleHash();
-							var removedParents = tools.SimpleHash();
-
-							for (var itemId in map.itemMarkers.layers()) {
-								drawn.insert(itemId, false);
-							}
 							
+							state.dag.resetDisplayState();
 							map.closePopups();
 							map.clusterMarkers.clear();
 
 							if (this.path && this.path.length) {
 								// start at the target region (last element of ohPath)
-								map.drawClusters(state.dag.at(this.path[this.path.length - 1]), drawn);
+								map.drawClusters(state.dag.at(this.path[this.path.length - 1]));
 							} else {
 								// start at Node "World"
-								map.drawClusters(state.dag.at(0xFFFFFFFF), drawn);
+								map.drawClusters(state.dag.at(0xFFFFFFFF));
 							}
-
-							// remove all markers (and tabs) that are redundant
-							for (var itemId in drawn.values()) {
-								if (drawn.at(itemId) == false) {
-									map.removeItemMarker(state.dag.at(itemId));
-									map.removeParentsTabs(state.dag.at(itemId));
+							
+							//remove markers/tabs/items that are no longer drawn
+							removedRegions = [];
+							removedItems = [];
+							state.dag.each(function(node) {
+								if (node.displayState === dag.DisplayState.None) {
+									console.assert(node.type === "region" || node.type === "item", node);
+									if (node.type === "region") {
+										removedRegions.push(node.id);
+									}
+									else (node.type === "item") {
+										removedItems.push(node.id);
+									}
 								}
+							});
+							
+							//first remove items from the dag and their ItemMarkers
+							for(var i in removedItems) {
+								var itemId = removedItems[i];
+								state.dag.removeNode(itemId);
+								map.removeItemMarker(itemId);
 							}
-
+							
+							//now remove the regions from the tablist, this also kills items from the result list
+							for(var i in removedRegions) {
+								var regionId = removedRegions[i];
+								map.resultListTabs.removeRegion(regionId);
+							}
+							
 							timer.stop();
 						}.bind(this);
 						state.map.on("zoomend dragend", state.handler);

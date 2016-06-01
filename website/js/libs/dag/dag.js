@@ -2,7 +2,7 @@ define(["jquery", "tools"], function ($, tools) {
     return d = {
 		DisplayState: {
 			None: 0,
-			InTabLIst: 1,
+			InTabList: 1,
 			InItemList: 2,
 			InClusterMarkers: 4,
 			InItemMarkers: 8
@@ -59,6 +59,7 @@ define(["jquery", "tools"], function ($, tools) {
 					}
 					return this.node(id);
 				},
+				//BUG: does not remove children though they may be unlinked
 				removeNode: function(id) {
 					if (!this.hasNode(id)) {
 						return;
