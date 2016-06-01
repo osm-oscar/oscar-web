@@ -1,5 +1,5 @@
 /*the config has to have a property named url defining the url to the completer*/
-define(['jquery', 'sserialize', 'leaflet', 'module', 'spinner', 'tools'], function (jQuery, sserialize, L, module, spinner, tools) {
+define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery, sserialize, L, module, tools) {
 
     /** Code from http://www.artandlogic.com/blog/2013/11/jquery-ajax-blobs-and-array-buffers/
      * Register ajax transports for blob send/recieve and array buffer send/receive via XMLHttpRequest Level 2
