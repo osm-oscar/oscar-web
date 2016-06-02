@@ -757,7 +757,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		onRegionMarkerClicked: function(e) {
 			map.closePopups();
 			map.regionMarkers.remove(e.itemId);
-			state.regionHandler({rid: e.itemId, draw: true, visualizeItems: true});
+			if (state.dag.node(e.itemId).isLeaf) {
+				map.expandDagItems(e.itemId, function() {
+					map.mapViewChanged();
+				});
+			}
+			else {
+				map.expandDag(e.itemId, function() {
+					map.mapViewChanged();
+				});
+			}
 		},
 		onRegionMarkerMouseOver: function(e) {
 			map.regionShapes.add(e.itemId);
@@ -774,7 +783,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		onClusterMarkerClicked: function(e) {
 			map.closePopups();
 			map.clusterMarkers.remove(e.itemId);
-			state.regionHandler({rid: e.itemId, draw: true, visualizeItems: true});
+			if (state.dag.node(e.itemId).isLeaf) {
+				map.expandDagItems(e.itemId, function() {
+					map.mapViewChanged();
+				});
+			}
+			else {
+				map.expandDag(e.itemId, function() {
+					map.mapViewChanged();
+				});
+			}
 		},
 		onClusterMarkerMouseOver: function(e) {
 			map.clusterMarkerRegionShapes.add(e.itemId);
@@ -882,6 +900,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}, tools.defErrorCB);
 			}
 		},
+		
+		zoomTo: function(regionId) {
+			
+		}
 		
 		//if cb is called, all relevant items should be in the cache
 		expandDagItems: function(parentId, cb, offset=0) {
@@ -1037,7 +1059,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		//starts the clustering by expanding the view to the ohPath
-		//It then calls regionHandler to handle the remainder
+		//it then hand everything off to mapViewChanged
 		startClustering: function() {
 			var cqr = state.cqr;
 			var processedChildCount = 0;
@@ -1056,7 +1078,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				else {
 					state.map.fitWorld();
 				}
-				map.regionHandler({rid: rid});
+				mapViewChanged(rid);
 			};
 			
 			function processChildren(regionChildrenInfo, parentId) {
