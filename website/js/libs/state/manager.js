@@ -110,9 +110,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
         },
 
         clearViews: function () {
-            if (state.handler !== undefined) {
-                state.map.off("zoomend dragend", state.handler);
-            }
+            state.mapHandler.clear();
 			state.items.activeItem = undefined;
             state.dag.clear();
         }

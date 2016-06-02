@@ -609,6 +609,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.clusterMarkers).on("mouseout", map.onClusterMarkerMouseOut);
 		},
 		
+		clear: function() {
+			state.map.off("zoomend dragend", map.viewChanged);
+		}
+		
 		displayCqr: function (cqr) {
 			state.regionHandler = map.flatCqrTreeDataSource(cqr);
 			var process = map.pathProcessor(cqr);
@@ -821,7 +825,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 								//add node either if no ohPath is given or the node is in our ohPath. If it's the last but there are too many items in the node
 								if (!cqr.ohPath().length || ($.inArray(itemId, cqr.ohPath()) != -1 || (parentRid === cqr.ohPath()[cqr.ohPath().length - 1] && parentCount > oscar.maxFetchItems))) {
 									if (!state.dag.count(itemId)) {
-										var node = state.dag.addNode(itemId, "region");
+										var node = state.dag.addNode(itemId, dag.NodeTypes.Region);
 										node.count = regionChildrenApxItemsMap[itemId];
 										node.bbox = item.bbox();
 										node.name = item.name();
@@ -836,7 +840,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 								itemId = item.id();
 								itemMap[itemId] = item;
 								if (!state.dag.count(itemId)) {
-									node = state.dag.addNode(itemId, "region");
+									node = state.dag.addNode(itemId, dag.NodeTypes.Region);
 									node.count = regionChildrenApxItemsMap[itemId];
 									node.bbox = item.bbox();
 									node.name = item.name();
@@ -936,7 +940,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					for(var i in items) {
 						var item = items[i];
 						var itemId = item.id();
-						var node = state.dag.addNode(itemId, "item");
+						var node = state.dag.addNode(itemId, dag.NodeTypes.Item);
 						node.name = item.name();
 						node.bbox = item.bbox();
 						state.dag.addChild(regionId, itemId);
@@ -979,7 +983,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 							item = items[i];
 							itemId = item.id();
 							if (!state.dag.count(itemId)) {
-								node = state.dag.addNode(itemId, "region");
+								node = state.dag.addNode(itemId, dag.NodeTypes.Region);
 								node.count = regionChildrenApxItemsMap[itemId];
 								node.bbox = item.bbox();
 								node.name = item.name();
@@ -1017,21 +1021,21 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 							var itemId = item.id();
 							var regionInSubSet = subSet.regions[itemId];
 							
-							var node = state.dag.addNode(itemId, "region");
+							var node = state.dag.addNode(itemId, dag.NodeTypes.Region);
 							node.name = item.name();
 							node.count = regionInSubSet.apxitems;
 							node.bbox = item.bbox();
 
 							for (var i in regionInSubSet.children) {
 								var childId = regionInSubSet.children[i];
-								state.dag.addNode(childId, "region");
+								state.dag.addNode(childId, dag.NodeTypes.Region);
 								state.dag.addChild(itemId, childId);
 							}
 						}
 
 						for (var j in subSet.rootchildren) {
 							var childId = subSet.rootchildren[j];
-							state.dag.addNode(childId, "region");
+							state.dag.addNode(childId, dag.NodeTypes.Region);
 							state.dag.addChild(0xFFFFFFFF, childId);
 						}
 					},
@@ -1058,10 +1062,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				return;
 			}
 
-			var childNode;
 			if (node.children.size()) {
 				for (var childId in node.children.values()) {
-					childNode = state.dag.at(childId);
+					var childNode = state.dag.at(childId);
 					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
 					
 					if (
@@ -1072,11 +1075,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						map.drawClusters(childNode, drawn);
 					}
 					else {
-						if (childNode.type === "region") {
+						if (childNode.type === dag.NodeTypes.Region) {
 							map.addClusterMarker(childNode);
 							drawn.insert(childNode.id);
 						}
-						else if (childNode.type === "item") { //this is an item
+						else if (childNode.type === dag.NodeTypes.Item) { //this is an item
 							map.addItemMarker(childNode);
 							map.addDagItemToResultList(childNode);
 							drawn.insert(childNode.id);
@@ -1087,6 +1090,193 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//fetch children/items
 			else if (node.count) {
 				state.regionHandler({rid: node.id, draw: true, visualizeItems: true});
+			}
+		},
+		
+		expandDagItems: function(parentId) {
+			
+		}
+		
+		expandDag: function(parentId, cb) {
+			function processChildren(regionChildrenInfo) {
+				if (!regionChildrenInfo.length) { //parent is a leaf node
+					state.dag.node(parentId).isLeaf = true;
+					cb();
+					return;
+				}
+				
+				var regionChildrenApxItemsMap = {};
+				var childIds = [];
+				var parentNode = state.dag.at(parentRid);
+				var parentCount = parentNode.count;
+
+				for (var i in regionChildrenInfo) {
+					var childInfo = regionChildrenInfo[i];
+					var childId = childInfo['id'];
+					if (!state.dag.hasNode(childId)) {
+						var node = state.dag.addNode(childId, dag.NodeTypes.Region);
+						node.count = ci['apxitems'];
+						state.dag.addChild(parentId, childId);
+					}
+					childIds.push(childId);
+				}
+				//now get the item info for the name and the bbox
+				oscar.getItems(childIds,
+					function (items) {
+						for (var i in items) {
+							var item = items[i];
+							var node = state.dag.at(item.id());
+							node.bbox = item.bbox();
+							node.name = item.name();
+						}
+						cb();
+					}
+				);
+			};
+			spinner.startLoadingSpinner();
+			state.cqr.regionChildrenInfo(parentId, function(regionChildrenInfo) {
+				spinner.endLoadingSpinner()
+				processChildren(regionChildrenInfo);
+			},
+			tools.defErrorCB
+			);
+		},
+		
+		updateDag: function(node) {
+			if (!node) {
+				return;
+			}
+
+			if (node.children.size()) {
+				for (var childId in node.children.values()) {
+					var childNode = state.dag.at(childId);
+					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
+					
+					if (
+						(myOverlap >= config.clusters.bboxOverlap) ||
+						(myOverlap > config.clusters.shapeOverlap && oscar.shapeCache.count(childNode.id) && oscar.intersect(state.map.getBounds(), oscar.shapeCache.at(childNode.id)))
+					   )
+					{
+						map.updateDag(childNode);
+					}
+					else {
+						childNode.displayState = dag.DisplayStates.DoDraw;
+					}
+				}
+			}
+			else if (node.isLeaf) {
+				if (!node.items.size()) {
+					map.expandDagItems(node.id, function() {
+						map.mapViewChanged();
+					});
+				}
+				else {
+					for(var childId in node.items.values()) {
+						state.dag.at(childId).displayState |= dag.DisplayStates.DoDraw;
+					}
+				}
+			}
+			else {//fetch children
+				map.expandDag(node.id, function() {
+					map.mapViewChanged();
+				});
+			}
+		},
+		
+		mapViewChanged: function(startNode = 0xFFFFFFFF) {
+			var timer = tools.timer("mapViewChanged");
+
+			state.dag.clearDisplayState();
+			map.closePopups();
+
+			map.updateDag(state.dag.at(0xFFFFFFFF));
+			
+			var removedItems = tools.SimpleSet();
+			state.dag.each(function(node) {
+				if (!drawn.count(node.id)) {
+					if (node.type === dag.NodeTypes.Item) {
+						removedRegions.push(node.id);
+					}
+					else (node.type === "item") {
+						removedItems.push(node.id);
+					}
+				}
+			});
+			
+			//now remove the regions from the tablist, this also kills items from the result list
+			for(var i in removedRegions) {
+				var regionId = removedRegions[i];
+				map.resultListTabs.removeRegion(regionId);
+			}
+			
+			timer.stop();
+		},
+		
+		//starts the clustering by expanding the view to the ohPath
+		//It then calls regionHandler to handle the remainder
+		startClustering: function() {
+			var cqr = state.cqr;
+			var processedChildCount = 0;
+			
+			function childProcessed() {
+				processedChildCount += 1;
+				if (processedChildCount < cqr.ohPath().length) {
+					return;
+				}
+				//everything is there
+				var rid = cqr.ohPath()[cqr.ohPath().length - 1];
+				// fit the viewport to the target region
+				if (this.path.length) {
+					state.map.fitBounds(state.dag.at(rid).bbox);
+				}
+				else {
+					state.map.fitWorld();
+				}
+				map.regionHandler({rid: rid});
+			};
+			
+			function processChildren(regionChildrenInfo, parentId) {
+				var regionChildrenApxItemsMap = {};
+				var childIds = [];
+				var parentNode = state.dag.at(parentRid);
+				var parentCount = parentNode.count;
+
+				for (var i in regionChildrenInfo) {
+					var childInfo = regionChildrenInfo[i];
+					var childId = childInfo['id'];
+					if (!state.dag.hasNode(childId)) {
+						var node = state.dag.addNode(childId, dag.NodeTypes.Region);
+						node.count = ci['apxitems'];
+						state.dag.addChild(parentId, childId);
+					}
+					childIds.push(childId);
+				}
+				//now get the item info for the name and the bbox
+				oscar.getItems(childIds,
+					function (items) {
+						for (var i in items) {
+							var item = items[i];
+							var node = state.dag.at(item.id());
+							node.bbox = item.bbox();
+							node.name = item.name();
+						}
+						childProcessed();
+					}
+				);
+			};
+			function getRegionChildrenInfo(parentId) {
+				spinner.startLoadingSpinner();
+				cqr.regionChildrenInfo(parentId, function(regionChildrenInfo) {
+						spinner.endLoadingSpinner()
+						processChildren(regionChildrenInfo, parentId);
+					},
+					tools.defErrorCB
+				);
+			};
+			var parentId = 0xFFFFFFFF;
+			for(var i in cqr.ohPath()) {
+				getRegionChildrenInfo(parentId);
+				parentId = cqr.ohPath()[i];
 			}
 		},
 	   

@@ -681,6 +681,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 ohPath: function () {
                     return this.d.ohPath;
                 },
+				inOhPath: function(id) {
+					return jQuery.inArray(id, this.ohPath()) != -1;
+				},
 				//get the dag for this query, this fetches the whole dag
 				getDag: function(successCB, errorCB) {
 					this.p.getDag(this.d.query, successCB, errorCB, this.d.regionFilter);

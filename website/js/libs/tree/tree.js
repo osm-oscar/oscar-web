@@ -141,12 +141,12 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
          * @returns {*} attributes for the node
          */
         _nodeAttr: function (node) {
-            if (node.count) {
+            if (node.type === dag.NodeTypes.Region) {
                 return {
                     labelType: "html",
                     label: tree._nodeLabel(node)
                 };
-            } else {
+            } else { //TODO: this path should never be chosen?
                 return {
                     labelType: "html",
                     label: tree._leafLabel(node)
