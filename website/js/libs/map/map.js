@@ -1,8 +1,9 @@
 //This module handles most stuff associated with the map-gui. It HAS to be a singleton!
-define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner", "leaflet"],
+define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner", "leaflet", "dag"],
 function (require, state, $, config, oscar, flickr, tools, tree) {
     var spinner = require("spinner");
 	var L = require("leaflet");
+	var dag = require("dag");
 
 	//handles a single item list
 	//parent is the parent element of the Item list the handler should take care of
@@ -15,6 +16,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		var handler = {
 			m_domRoot : undefined,
 			m_scrollContainer: scrollContainer,
+			m_itemIds: tools.SimpleSet(),
 			//signals emited on the root dom-element
 	   
 			emit_itemDetailsOpened: function(itemId) {
@@ -67,6 +69,19 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$(".item-detail-value", element).click(itemDetailQuery);
 				$(".item-detail-id", element).click(itemIdQuery);
 			},
+			//returns jquery object of the inserted dom item element
+			_appendItem: function(item) {
+				var itemTemplateData = state.resultListTemplateDataFromItem(item);
+				var rendered = $.Mustache.render('itemListEntryHtmlTemplate', itemTemplateData);
+				var inserted = $($(rendered).appendTo(this.m_domRoot));
+				handler._addKeyValueQuery(inserted);
+				$("a[class~='accordion-toggle']", inserted).on("click", function(e) {
+					var me = $(this);
+					var itemIdStr = me.attr("data-item-id");
+					var itemId = parseInt(itemIdStr);
+					handler._slot_itemLinkClicked(itemId);
+				});
+			},
 			_domItemRoot: function(itemId) {
 				return $("div[class~='panel'][data-item-id~='" + itemId + "']", handler.m_domRoot);
 			},
@@ -88,9 +103,20 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			domRoot: function() {
 				return handler.m_domRoot;
 			},
+	   
+			
+			//returns a reference to tools.SimpleSet()
+			itemIds: function() {
+				return handler.m_itemIds;
+			},
+			
+			//the same as itemIds()
+			values: function() {
+				return handler.itemIds();
+			},
 			
 			hasItem: function(itemId) {
-				return handler._domItemHeader(itemId).length;
+				return handler.itemIds().count(itemId);
 			},
 	   
 			open: function(itemId) {
@@ -142,32 +168,18 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				handler.m_scrollContainer.animate({scrollTop: scrollPos});
 				//container.animate({scrollTop: itemPanelRootDiv.position().top + $("itemsList").position().top});
 			},
-			//returns jquery object of the inserted dom item element
-			appendItem: function(item) {
-				var itemTemplateData = state.resultListTemplateDataFromItem(item);
-				var rendered = $.Mustache.render('itemListEntryHtmlTemplate', itemTemplateData);
-				var inserted = $($(rendered).appendTo(this.m_domRoot));
-				handler._addKeyValueQuery(inserted);
-				$("a[class~='accordion-toggle']", inserted).on("click", function(e) {
-					var me = $(this);
-					var itemIdStr = me.attr("data-item-id");
-					var itemId = parseInt(itemIdStr);
-					handler._slot_itemLinkClicked(itemId);
-				});
+			insert: function(item) {
+				
 			},
 			insertItem: function(item) {
-				if (handler.hasItem(item.id()) {
-					handler.appendItem(item);
+				if (handler.hasItem(item.id())) {
+					handler._appendItem(item);
+					handler.itemIds().insert(item.id());
 				}
 			},
 			insertItems: function(items) {
 				for(var i in items) {
 					handler.insertItem(items[i]);
-				}
-			},
-			appendItems: function(items) {
-				for(var i in items) {
-					handler.appendItem(items[i]);
 				}
 			},
 			//emits itemDetailsClosed on all open panels   
@@ -183,6 +195,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 				});
 				$(handler.m_domRoot).empty();
+				handler.itemIds().clear();
 			},
 			//destroy this list by removing the respective dom elements
 			//emits itemDetailsClosed on all open panels
@@ -218,6 +231,18 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$(handler).triggerHandler({type:"itemLinkClicked", itemId : itemId});
 			},
 			
+			emit_activeRegionChanged: function(newRegionId) {
+				$(handler).triggerHandler({
+					type: "activeRegionChanged",
+					rid: newRegionId,
+					newRegionId: newRegionId
+				});
+			},
+			
+			_slot_activeRegionChanged: function() {
+				handler.emit_activeRegionChanged(handler.activeRegion());
+			},
+			
 			_init: function (parent) {
 				var myDomRootId = tools.generateDocumentUniqueId();
 				var myDomTabRootId = tools.generateDocumentUniqueId();
@@ -228,6 +253,15 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				handler.m_domRoot.append(myDomTabRootHtml);
 				handler.m_domTabRoot = $("#" + myDomTabRootId);
 				handler.m_domRoot.tabs();
+				//register events
+				handler.m_domRoot.on("tabsactivate", function(event, ui) {
+					handler._slot_activeRegionChanged();
+				});
+			},
+			//returns the internal regionId->data mapping
+			//Do not use this except for iterating over all available regions
+			values: function() {
+				return handler.m_regions;
 			},
 			
 			domRoot: function() {
@@ -235,6 +269,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			hasRegion: function(regionId) {
 				return handler.m_regions.count(regionId);
+			},
+			count: function(regionId) {
+				return handler.hasRegion(regionId);
 			},
 			//adds a new region, returns an ItemListHandler
 			addRegion: function(regionId, regionName, itemCount) {
@@ -303,12 +340,24 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 				}
 			},
-			//return handler of the active tab
-			activeTab: function() {
+	   
+			activeRegion: function() {
+				if (!m_regions.size()) {
+					return -1;
+				}
 				var index = handler.m_domRoot.tabs("option", "active");
 				var li = handler.m_domTabRoot.children().eq(index);
 				var regionIdStr = li.attr("regionid");
 				var regionId = parseInt(regionIdStr);
+				return regionId;
+			},
+	   
+			//return handler of the active tab
+			activeTab: function() {
+				var regionId = handler.activeRegion();
+				if (regionId < 0) {
+					return undefined;
+				}
 				return handler.m_regions.at(regionId).handler;
 			},
 			
@@ -440,6 +489,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		this.layers = function() {
 			return this.m_layers.values();
 		};
+		//the same as layers()
+		this.values = function() {
+			return this.layers();
+		},
 		this.zoomTo = function(itemId) {
 			if (!this.count(itemId)) {
 				return;
@@ -597,6 +650,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.resultListTabs).on("itemLinkClicked", map.onItemLinkClicked);
 			$(map.resultListTabs).on("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).on("itemDetailsClosed", map.onItemDetailsClosed);
+			$(map.resultListTabs).on("activeRegionChanged", map.activeTabChanged);
 			
 			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
 			
@@ -611,9 +665,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		clear: function() {
 			state.map.off("zoomend dragend", map.viewChanged);
-		}
+		},
 		
 		displayCqr: function (cqr) {
+			map.clear();
 			state.dag.addRoot(0xFFFFFFFF);
 			var root = state.dag.node(0xFFFFFFFF);
 			root.count = cqr.rootRegionApxItemCount();
@@ -694,7 +749,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (itemId != state.items.activeItem) {
 					return;
 				}
-				map.relativesTab.activeItemHandler.appendItem(item);
+				map.relativesTab.activeItemHandler.insertItem(item);
 			});
 			oscar.getItemsRelativesIds(itemId, function(relativesIds) {
 				if (state.items.activeItem != itemId) {
@@ -705,7 +760,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					if (state.items.activeItem != myItemId) {
 						return;
 					}
-					map.relativesTab.relativesHandler.appendItems(relatives);
+					map.relativesTab.relativesHandler.insertItems(relatives);
 				}, tools.defErrorCB);
 			}, tools.defErrorCB);
 		},
@@ -747,6 +802,34 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			map.highlightItemShapes.remove(itemId);
 			flickr.closeFlickrBar();
+		},
+		
+		//removes old item markers and adds the new ones (if needed)
+		onActiveTabeChanged: function(e) {
+			var itemListHandler = map.resultListTabs.activeTab().handler;
+			var removedIds = tools.SimpleSet();
+			var missingIds = tools.SimpleSet();
+			for(var itemId in itemListHandler.itemIds()) {
+				if (!map.itemMarkers.count(itemId)) {
+					missingIds.insert(itemId);
+				}
+			}
+			for(var itemId in map.itemMarkers.layers()) {
+				if (!itemListHandler.hasItem(itemId)) {
+					removedIds.insert(itemId);
+				}
+			}
+			for(var itemId in removedIds) {
+				map.itemMarkers.remove(itemId);
+				state.dag.node(itemId).displayState -= dag.DisplayStates.HasItemMarker;
+			}
+			for(var itemId in missingIds) {
+				map.itemMarkers.add(itemId);
+			}
+			//mark dag nodes accordingly
+			for(var itemId in map.itemMarkers.layers()) {
+				state.dag.node(itemId).displayState |= dag.DisplayStates.HasItemMarker;
+			}
 		},
 	   
 		onItemMarkerClicked: function(e) {
@@ -890,28 +973,20 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			state.cqr.getDag(subSetHandler, tools.defErrorCB);
 		},
 		
-		addDagItemToResultList: function (node) {
-			for (var parent in node.parents.values()) {
-				var parentNode = state.dag.at(parent);
-				map.resultListTabs.addRegion(parentNode.id, parentNode.name, parentNode.count);
-				//insert
-				oscar.getItem(node.id, function (item) {
-					map.resultListTabs.insertItem(parentNode.id, item);
-				}, tools.defErrorCB);
+		zoomTo: function(regionId) {
+			if (state.dag.count(regionId)) {
+				state.map.fitBounds(state.dag.at(regionId).bbox);
 			}
 		},
 		
-		zoomTo: function(regionId) {
-			
-		}
-		
 		//if cb is called, all relevant items should be in the cache
-		expandDagItems: function(parentId, cb, offset=0) {
+		expandDagItems: function(parentId, cb, offset) {
+			if (offset === undefined) {
+				offset = 0;
+			}
 			function myOp(regionId, itemIds) {
 				console.assert(state.dag.hasNode(regionId), regionId);
-				//cache items
-				oscar.fetchItems(itemIds, function() {});
-				
+
 				oscar.getItems(itemIds, function(items) {
 					for(var i in items) {
 						var item = items[i];
@@ -935,7 +1010,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			else {
 				cb();
 			}
-		}
+		},
 		
 		expandDag: function(parentId, cb) {
 			function processChildren(regionChildrenInfo) {
@@ -955,11 +1030,15 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					var childId = childInfo['id'];
 					if (!state.dag.hasNode(childId)) {
 						var node = state.dag.addNode(childId, dag.NodeTypes.Region);
-						node.count = ci['apxitems'];
+						node.count = childInfo['apxitems'];
 						state.dag.addChild(parentId, childId);
 					}
 					childIds.push(childId);
 				}
+				
+				//cache the shapes
+				oscar.fetchShapes(childIds, function() {});
+				
 				//now get the item info for the name and the bbox
 				oscar.getItems(childIds,
 					function (items) {
@@ -982,6 +1061,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			);
 		},
 		
+		//this is recursive function, you have to clear the displayState of the dag before calling
 		updateDag: function(node) {
 			if (!node) {
 				return;
@@ -999,8 +1079,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					{
 						map.updateDag(childNode);
 					}
-					else {
-						childNode.displayState = dag.DisplayStates.DoDraw;
+					else { //overlap is smaller, only draw the cluster marker
+						childNode.displayState |= dag.DisplayStates.HasClusterMarker;
 					}
 				}
 			}
@@ -1011,9 +1091,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					});
 				}
 				else {
-					for(var childId in node.items.values()) {
-						state.dag.at(childId).displayState |= dag.DisplayStates.DoDraw;
-					}
+					node.displayState |= InResultsTab;
 				}
 			}
 			else {//fetch children
@@ -1023,7 +1101,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 		},
 		
-		mapViewChanged: function(startNode = 0xFFFFFFFF) {
+		viewChanged: function() {
+			if (state.dag.count(0xFFFFFFFF)) {
+				map.mapViewChanged(0xFFFFFFFF);
+			}
+		},
+		
+		mapViewChanged: function(startNode) {
+			if (startNode === undefined) {
+				startNode = 0xFFFFFFFF;
+			}
 			var timer = tools.timer("mapViewChanged");
 
 			state.dag.clearDisplayState();
@@ -1032,28 +1119,53 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.updateDag(state.dag.at(0xFFFFFFFF));
 			
 			//the dag now holds the state the gui should have
-			//let get them synchronized
+			//let's get them synchronized
 			//recycle as many markers, tabs etc. as possible
 			//remove disabled markers/tabs etc
 			//add new markers/tabs etc.
-			
-			var removedItems = tools.SimpleSet();
-			state.dag.each(function(node) {
-				if (!drawn.count(node.id)) {
-					if (node.type === dag.NodeTypes.Item) {
-						removedRegions.push(node.id);
-					}
-					else (node.type === "item") {
-						removedItems.push(node.id);
-					}
+			var wantTabListRegions = tools.SimpleSet();
+			var wantClusterMarkers = tools.SimpleSet();
+			state.dag.dfs(0xFFFFFFFF, function(node) {
+				if (node.displayState & dag.DisplayStates.HasClusterMarker) {
+					wantClusterMarkers.insert(node.id);
+				}
+				if(node.displayState & dag.DisplayStates.InResultsTab) {
+					wantTabListRegions.insert(node.id);
 				}
 			});
 			
-			//now remove the regions from the tablist, this also kills items from the result list
-			for(var i in removedRegions) {
-				var regionId = removedRegions[i];
-				map.resultListTabs.removeRegion(regionId);
-			}
+			//now check for missing cluster markers etc.
+			var removedClusterMarkers = tools.SimpleSet();
+			var removedTabListRegions = tools.SimpleSet();
+			var missingClusterMarkers = tools.SimpleSet();
+			var missingTabListRegions = tools.SimpleSet();
+			tools.getMissing(wantTabListRegions, map.resultListTabs, removedTabListRegions, missingTabListRegions);
+			tools.getMissing(wantClusterMarkers, map.clusterMarkers, removedClusterMarkers, missingClusterMarkers);
+			
+			removedClusterMarkers.each(function(key) {
+				map.clusterMarkers.remove(key);
+			});
+			removedTabListRegions.each(function(key) {
+				map.resultListTabs.removeRegion(key);
+			});
+			missingClusterMarkers.each(function(key) {
+				map.clusterMarkers.add(key, state.dag.node(key).count);
+			});
+			missingTabListRegions.each(function(regionId) {
+				var node = state.dag.at(regionId);
+				var ilh = map.resultListTabs(regionId, node.name, node.count);
+				var itemIds = [];
+				node.items.each(function(nodeId) {
+					itemIds.push(nodeId);
+				});
+				//this should return instantly since the items are in the cache
+				oscar.getItems(itemIds, function(items) {
+					if (!map.resultListTabs.count(regionId)) {
+						return;
+					}
+					ilh.insertItems(items);
+				});
+			});
 			
 			timer.stop();
 		},
@@ -1070,21 +1182,23 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					return;
 				}
 				//everything is there
-				var rid = cqr.ohPath()[cqr.ohPath().length - 1];
 				// fit the viewport to the target region
-				if (this.path.length) {
+				if (cqr.ohPath().length) {
+					var path = cqr.ohPath();
+					var rid = path[path.length - 1];
 					state.map.fitBounds(state.dag.at(rid).bbox);
 				}
 				else {
 					state.map.fitWorld();
 				}
-				mapViewChanged(rid);
+				map.mapViewChanged(rid);
+				state.map.on("zoomend dragend", map.viewChanged);
 			};
 			
 			function processChildren(regionChildrenInfo, parentId) {
 				var regionChildrenApxItemsMap = {};
 				var childIds = [];
-				var parentNode = state.dag.at(parentRid);
+				var parentNode = state.dag.at(parentId);
 				var parentCount = parentNode.count;
 
 				for (var i in regionChildrenInfo) {
@@ -1092,7 +1206,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					var childId = childInfo['id'];
 					if (!state.dag.hasNode(childId)) {
 						var node = state.dag.addNode(childId, dag.NodeTypes.Region);
-						node.count = ci['apxitems'];
+						node.count = childInfo['apxitems'];
 						state.dag.addChild(parentId, childId);
 					}
 					childIds.push(childId);
@@ -1119,10 +1233,15 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					tools.defErrorCB
 				);
 			};
-			var parentId = 0xFFFFFFFF;
-			for(var i in cqr.ohPath()) {
-				getRegionChildrenInfo(parentId);
-				parentId = cqr.ohPath()[i];
+			if (cqr.ohPath().length) {
+				var parentId = 0xFFFFFFFF;
+				for(var i in cqr.ohPath()) {
+					getRegionChildrenInfo(parentId);
+					parentId = cqr.ohPath()[i];
+				}
+			}
+			else {
+				childProcessed();
 			}
 		},
 	   
@@ -1144,14 +1263,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.clusterMarkers.add(node.id, node.count);
 		},
 
-		removeItemMarker: function (node) {
-			map.itemMarkers.remove(node.id);
-		},
-
-		addItemMarker: function (node) {
-			map.itemMarkers.add(node.id);
-		},
-		
 		//TODO:remove this! dag now has display state (which is bad)
 		removeParentsTabs: function (dagChildNode) {
 			for (var parentId in dagChildNode.parents.values()) {

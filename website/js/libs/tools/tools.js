@@ -30,6 +30,12 @@ define(["jquery"], function ($) {
 				at: function (key) {
 					return this.m_values[key];
 				},
+				//call cb for each (key, value) with cb(key, value)
+				each: function(cb) {
+					for(var key in this.m_values) {
+						cb(key, this.m_values[key]);
+					}
+				},
 				erase: function (key) {
 					if (this.m_values[key] !== undefined) {
 						this.m_size -= 1;
@@ -50,9 +56,36 @@ define(["jquery"], function ($) {
 				}
 				this.m_values[key] = key;
 			};
+			ss.each = function(cb) {
+				for(var key in this.m_values) {
+					cb(key);
+				}
+			};
 			return ss;
 		},
-
+		
+		
+		getMissing: function(setA, setB, missingInA, missingInB) {
+			for(var id in setA.values()) {
+				if (!setB.count(id)) {
+					missingInB.insert(id);
+				}
+			}
+			for(var id in setB.values()) {
+				if (!setA.count(id)) {
+					missingInA.insert(id);
+				}
+			}
+		},
+		
+		toIntArray: function(strArray) {
+			var tmp = [];
+			for(var i in strArray) {
+				tmp.push(parseInt("" + strArray[i]));
+			}
+			return tmp;
+		},
+	   
         /**
          * Calculates the overlap of the viewport and a bbox. Returns the percentage of overlap.
          *

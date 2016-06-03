@@ -35,6 +35,7 @@ define(["jquery", "tools"], function ($, tools) {
 					node.children = tools.SimpleSet();
 					node.items = tools.SimpleSet();
 					node.count = -1;
+					return node;
 				},
 				m_nodes: tools.SimpleHash(), //maps from nodeId -> (ItemNode | RegionNode)
 				size: function() {
@@ -111,7 +112,7 @@ define(["jquery", "tools"], function ($, tools) {
 						cb(this.at(i));
 					}
 				},
-				//calls cb for every visited node
+				//calls cb for every visited node, iff cb() returns false, then the traversal is stopped
 				bfs: function(startNode, cb) {
 					if (!this.hasNode(startNode)) {
 						return;
@@ -126,6 +127,20 @@ define(["jquery", "tools"], function ($, tools) {
 						for(var childId in node.children.values()) {
 							queue.push(childId);
 						}
+					}
+				},
+				//if cb returns false, then the descent is stopped (but not the traversal!)
+				dfs: function(startNode, cb) {
+					if (!this.hasNode(startNode)) {
+						return;
+					}
+					var node = this.at(startNode);
+					var ret = cb(node);
+					if (ret !== undefined && ret == false) {
+						return;
+					}
+					for(var childId in node.children.values()) {
+						this.dfs(childId, cb);
 					}
 				},
 				clearDisplayState: function() {

@@ -249,7 +249,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 					params[i] = handler.extraParams[i];
 				}
 			}
-			params['which'] = JSON.stringify(dataIds);
+			params['which'] = JSON.stringify(tools.toIntArray(dataIds));
 			jQuery.ajax({
 				type: "POST",
 				url: this.url,
@@ -299,7 +299,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			jQuery.ajax({
 				type: "POST",
 				url: handler.url,
-				data: {'which' : JSON.stringify(dataIds)},
+				data: {'which' : JSON.stringify(tools.toIntArray(dataIds))},
 				dataType: 'arraybuffer',
 				mimeType: 'application/octet-stream',
 				success: function (data) {
@@ -327,7 +327,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			jQuery.ajax({
 				type: "POST",
 				url: handler.url,
-				data: {'which' : JSON.stringify(dataIds) },
+				data: {'which' : JSON.stringify(tools.toIntArray(dataIds)) },
 				dataType: 'arraybuffer',
 				mimeType: 'application/octet-stream',
 				success: function (data) {
