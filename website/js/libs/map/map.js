@@ -263,6 +263,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			values: function() {
 				return handler.m_regions;
 			},
+	   
+			size: function() {
+				return handler.m_regions.size();
+			},
 			
 			domRoot: function() {
 				return handler.m_domRoot;
@@ -342,7 +346,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 	   
 			activeRegion: function() {
-				if (!m_regions.size()) {
+				if (!handler.m_regions.size()) {
 					return -1;
 				}
 				var index = handler.m_domRoot.tabs("option", "active");
@@ -1000,7 +1004,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				});
 			};
 			var parentNode = state.dag.node(parentId);
-			if (parentNode.items.size() < offset && parentNode.count > offset) { 
+			if (parentNode.count > offset && parentNode.items.size() <= offset) { 
 				state.cqr.regionItemIds(parentId,
 					myOp,
 					tools.defErrorCB,
@@ -1022,7 +1026,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				
 				var regionChildrenApxItemsMap = {};
 				var childIds = [];
-				var parentNode = state.dag.at(parentRid);
+				var parentNode = state.dag.at(parentId);
 				var parentCount = parentNode.count;
 
 				for (var i in regionChildrenInfo) {
@@ -1091,7 +1095,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					});
 				}
 				else {
-					node.displayState |= InResultsTab;
+					node.displayState |= dag.DisplayStates.InResultsTab;
 				}
 			}
 			else {//fetch children
@@ -1153,7 +1157,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			});
 			missingTabListRegions.each(function(regionId) {
 				var node = state.dag.at(regionId);
-				var ilh = map.resultListTabs(regionId, node.name, node.count);
+				var ilh = map.resultListTabs.addRegion(regionId, node.name, node.count);
 				var itemIds = [];
 				node.items.each(function(nodeId) {
 					itemIds.push(nodeId);

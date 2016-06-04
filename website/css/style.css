@@ -84,7 +84,7 @@ body {
     width: auto;
     height: 80%;
     max-height: 80%;
-    display: none;
+    display: block;
 }
 
 #options_menu_parent {
