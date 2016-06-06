@@ -252,10 +252,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					handler._slot_activeRegionChanged();
 				});
 			},
-			//returns the internal regionId->data mapping
+	   
 			//Do not use this except for iterating over all available regions
 			values: function() {
-				return handler.m_regions;
+				return handler.m_regions.values();
 			},
 	   
 			size: function() {
@@ -803,26 +803,17 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		//removes old item markers and adds the new ones (if needed)
 		onActiveTabChanged: function(e) {
-			var itemListHandler = map.resultListTabs.activeTab();
+			var ilh = map.resultListTabs.activeTab();
 			var removedIds = tools.SimpleSet();
 			var missingIds = tools.SimpleSet();
-			for(var itemId in itemListHandler.values()) {
-				if (!map.itemMarkers.count(itemId)) {
-					missingIds.insert(itemId);
-				}
-			}
-			for(var itemId in map.itemMarkers.values()) {
-				if (!itemListHandler.hasItem(itemId)) {
-					removedIds.insert(itemId);
-				}
-			}
-			for(var itemId in removedIds.values()) {
+			tools.getMissing(ilh, map.itemMarkers, removedIds, missingIds);
+			removedIds.each(function(itemId) {
 				map.itemMarkers.remove(itemId);
 				state.dag.node(itemId).displayState -= dag.DisplayStates.HasItemMarker;
-			}
-			for(var itemId in missingIds.values()) {
+			});
+			missingIds.each(function(itemId) {
 				map.itemMarkers.add(itemId);
-			}
+			});
 			//mark dag nodes accordingly
 			var tmp = map.itemMarkers.values();
 			for(var itemId in tmp) {
@@ -1162,6 +1153,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						return;
 					}
 					ilh.insertItems(items);
+					//check if theres only one tab, if so,
+					//then trigger onActiveTabChanged in order to populate the map with markers
+					if (map.resultListTabs.size() === 1) {
+						map.resultListTabs.emit_activeRegionChanged(regionId);
+					}
 				});
 			});
 			
