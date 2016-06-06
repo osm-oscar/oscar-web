@@ -1,4 +1,4 @@
-define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD3, d3, $, oscar, state, tools) {
+define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function (dagreD3, d3, $, oscar, state, tools, dag) {
 	//BUG: id attribute needs to be unique, which is not the case here!
     var tree = {
         graph: undefined, // the graph

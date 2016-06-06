@@ -108,9 +108,18 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			values: function() {
 				return handler.m_itemIds.values();
 			},
+	   
+			//calls cb for each handled itemId
+			each: function(cb) {
+				handler.m_itemIds.each(cb);
+			},
 			
 			hasItem: function(itemId) {
 				return handler.m_itemIds.count(itemId);
+			},
+	   
+			count: function(itemId) {
+				return handler.hasItem(itemId);
 			},
 	   
 			open: function(itemId) {
@@ -225,6 +234,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$(handler).triggerHandler({type:"itemLinkClicked", itemId : itemId});
 			},
 			
+			//if no tab is active, then rid=-1
 			emit_activeRegionChanged: function(newRegionId) {
 				$(handler).triggerHandler({
 					type: "activeRegionChanged",
@@ -316,6 +326,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					$("#" + v.tabContentId ).remove();
 					handler.m_regions.erase(regionId);
 					handler.refresh();
+					//check if this was the last region we have,
+					//since then there will be no new active region
+					if (!handler.size()) {
+						handler.emit_activeRegionChanged(-1);
+					}
 					return true;
 				}
 				return false;
@@ -330,11 +345,19 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			
 			openItem: function(itemId) {
-				for(var i in handler.m_regions.values()) {
-					if (handler.m_regions.at(i).handler.hasItem(itemId)) {
-						handler.openTab(i);
-						handler.m_regions.at(i).handler.open(itemId);
-						break;
+				if (!handler.size()) {
+					return;
+				}
+				if (handler.activeTab().hasItem(itemId)) {
+					handler.activeTab().open(itemId);
+				}
+				else {
+					for(var i in handler.m_regions.values()) {
+						if (handler.m_regions.at(i).handler.hasItem(itemId)) {
+							handler.openTab(i);
+							handler.m_regions.at(i).handler.open(itemId);
+							break;
+						}
 					}
 				}
 			},
@@ -802,11 +825,18 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		//removes old item markers and adds the new ones (if needed)
+		//Note: there may be no active region present!
 		onActiveTabChanged: function(e) {
-			var ilh = map.resultListTabs.activeTab();
+			var wantItemMarkers;
+			if (!map.resultListTabs.size()) {
+				wantItemMarkers = tools.SimpleSet();
+			}
+			else {
+				wantItemMarkers = map.resultListTabs.activeTab();
+			}
 			var removedIds = tools.SimpleSet();
 			var missingIds = tools.SimpleSet();
-			tools.getMissing(ilh, map.itemMarkers, removedIds, missingIds);
+			tools.getMissing(wantItemMarkers, map.itemMarkers, removedIds, missingIds);
 			removedIds.each(function(itemId) {
 				map.itemMarkers.remove(itemId);
 				state.dag.node(itemId).displayState -= dag.DisplayStates.HasItemMarker;
