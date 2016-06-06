@@ -203,18 +203,13 @@ void CQRCompleter::items() {
 	
 	//params
 	std::string cqs = request().get("q");
-	uint32_t regionId = sserialize::Static::spatial::GeoHierarchy::npos;
 	uint32_t numItems = 0;
 	uint32_t skipItems = 0;
 	uint32_t cqrSize = 0;
 
 	
 	{
-		std::string tmpStr = request().get("r");
-		if (!tmpStr.empty()) {
-			regionId = std::min<int64_t>(atoi(tmpStr.c_str()), gh.regionSize());
-		}
-		tmpStr = request().get("k");
+		std::string tmpStr = request().get("k");
 		if (!tmpStr.empty()) {
 			numItems = std::min<uint32_t>(m_dataPtr->maxItemDBReq, atoi(tmpStr.c_str()));
 		}
@@ -224,9 +219,6 @@ void CQRCompleter::items() {
 		}
 	}
 	
-	if (regionId != sserialize::Static::spatial::GeoHierarchy::npos) {
-		cqs = sserialize::toString("$region:", regionId, " (", cqs, ")");
-	}
 	
 	sserialize::CellQueryResult cqr(m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR));
 	sserialize::ItemIndex idx(cqr.topK(numItems+skipItems));

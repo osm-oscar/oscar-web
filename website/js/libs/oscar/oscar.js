@@ -639,12 +639,12 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                     return this.d.query;
                 },
                 regionItemIds: function (regionId, successCB, errorCB, resultListOffset) {
-                    this.p.simpleCqrItems(this.d.query,
+                    this.p.simpleCqrItems("$region:" + regionId + " (" + this.d.query + ")",
                         function (itemIds) {
                             successCB(regionId, itemIds);
                         },
                         errorCB,
-                        this.p.maxFetchItems, regionId, resultListOffset);
+                        this.p.maxFetchItems, resultListOffset);
                 },
                 rootRegionChildrenInfo: function () {
                     return this.d.regionInfo[0xFFFFFFFF];
@@ -990,7 +990,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 }
             });
         },
-        simpleCqrItems: function (query, successCB, errorCB, numItems, selectedRegion, resultListOffset) {
+        simpleCqrItems: function (query, successCB, errorCB, numItems, resultListOffset) {
             var params = {};
             params['q'] = query;
             if (numItems !== undefined) {
@@ -998,9 +998,6 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
             }
             if (resultListOffset !== undefined) {
                 params['o'] = resultListOffset;
-            }
-            if (selectedRegion !== undefined) {
-                params['r'] = selectedRegion;
             }
             var qpath = this.completerBaseUrl + "/cqr/clustered/items";
             jQuery.ajax({
