@@ -646,6 +646,14 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                         errorCB,
                         this.p.maxFetchItems, resultListOffset);
                 },
+                regionExclusiveItemIds: function (regionId, successCB, errorCB, resultListOffset) {
+                    this.p.simpleCqrItems("$rec:" + regionId + " (" + this.d.query + ")",
+                        function (itemIds) {
+                            successCB(regionId, itemIds);
+                        },
+                        errorCB,
+                        this.p.maxFetchItems, resultListOffset);
+                },
                 rootRegionChildrenInfo: function () {
                     return this.d.regionInfo[0xFFFFFFFF];
                 },
@@ -1210,4 +1218,3 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 	return oscarObject;
 });
 /*end of define and function*/
-
