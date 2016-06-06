@@ -379,6 +379,14 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
         }, //*(|.^$)[]-+?{}=!,
         cqrEscapesRegExp: new RegExp("^[\*\(\|\.\^\$\)\[\]\-\+\?\{\}\=\!\,]$"),
 	   
+		ShapeTypes: {
+			None: -1,
+			Point: 1,
+			Way: 2,
+			Polygon: 3,
+			MultiPolygon: 4
+		},
+	   
 		_init: function() {
 			var me = this;
 			this.itemCache._itemFromJson = function(json) {
@@ -388,7 +396,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 
         Item: function (d, parent) {
 
-            if (d.shape.t === 4) {
+            if (d.shape.t === parent.ShapeTypes.MultiPolygon) {
                 for (i in d.shape.v.outer) {
                     for (j in d.shape.v.outer[i]) {
                         if (d.shape.v.outer[i][j].length !== 2) {

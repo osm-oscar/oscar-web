@@ -104,19 +104,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				return handler.m_domRoot;
 			},
 	   
-			
-			//returns a reference to tools.SimpleSet()
-			itemIds: function() {
-				return handler.m_itemIds;
-			},
-			
-			//the same as itemIds()
+			//use this to iterate over itemIds
 			values: function() {
-				return handler.itemIds();
+				return handler.m_itemIds.values();
 			},
 			
 			hasItem: function(itemId) {
-				return handler.itemIds().count(itemId);
+				return handler.m_itemIds.count(itemId);
 			},
 	   
 			open: function(itemId) {
@@ -169,12 +163,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				//container.animate({scrollTop: itemPanelRootDiv.position().top + $("itemsList").position().top});
 			},
 			insert: function(item) {
-				
+				handler.insertItem(item);
 			},
 			insertItem: function(item) {
-				if (handler.hasItem(item.id())) {
+				if (!handler.hasItem(item.id())) {
 					handler._appendItem(item);
-					handler.itemIds().insert(item.id());
+					handler.m_itemIds.insert(item.id());
 				}
 			},
 			insertItems: function(items) {
@@ -195,7 +189,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 				});
 				$(handler.m_domRoot).empty();
-				handler.itemIds().clear();
+				handler.m_itemIds.clear();
 			},
 			//destroy this list by removing the respective dom elements
 			//emits itemDetailsClosed on all open panels
@@ -397,7 +391,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	var ItemLayerHandler = function(target) {
 		this.m_target = target;
 		this.m_domRoot = $('#map');
-		this.m_layers = tools.SimpleHash(); //maps from LeafletLayer -> {layer: LeafletLayer, refCount: <int> }
+		this.m_layers = tools.SimpleHash(); //maps from id -> {layer: LeafletLayer, refCount: <int> }
 		this.m_forwardedSignals = {}, //add the name of the signals you want to process here in the form ["layer signal name", "map signal name"]
 		this._handleEvent = function(e, itemId) {
 			var targetSignals = this.m_forwardedSignals[e.type];
@@ -489,7 +483,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			return undefined;
 		};
 		//use this to iterate over all layers like so:
-		//for(var l in layer()) { layer = handler.layer(l); do_sth.;}
+		//for(var l in layers()) { layer = handler.layer(l); do_sth.;}
 		this.layers = function() {
 			return this.m_layers.values();
 		};
@@ -555,18 +549,17 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		handler.m_forwardedSignals = {"click": ["click"]};
 		handler._fetchLayer = function(cb, itemId) {
 			oscar.getShape(itemId, function(shape) {
-				var lfs = oscar.leafletItemFromShape(shape);
-				if (lfs instanceof L.MultiPolygon) {
-					geopos = lfs.getLatLngs()[0][0];
+				if (shape.t === oscar.ShapeTypes.MultiPolygon) {
+					geopos = shape.v.outer[0][0];
 				}
-				else if (lfs instanceof L.Polygon) {
-					geopos = lfs.getLatLngs()[0];
+				else if (shape.t === oscar.ShapeTypes.Polygon) {
+					geopos = shape.v[0];
 				}
-				else if (lfs instanceof L.Polyline) {
-					geopos = lfs.getLatLngs()[0];
+				else if (shape.t === oscar.ShapeTypes.Way) {
+					geopos = shape.v[0];
 				}
 				else {
-					geopos = lfs.getLatLng();
+					geopos = shape.v;
 				}
 				var marker = L.marker(geopos);
 				cb(marker);
@@ -654,7 +647,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.resultListTabs).on("itemLinkClicked", map.onItemLinkClicked);
 			$(map.resultListTabs).on("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).on("itemDetailsClosed", map.onItemDetailsClosed);
-			$(map.resultListTabs).on("activeRegionChanged", map.activeTabChanged);
+			$(map.resultListTabs).on("activeRegionChanged", map.onActiveTabChanged);
 			
 			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
 			
@@ -809,29 +802,30 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		//removes old item markers and adds the new ones (if needed)
-		onActiveTabeChanged: function(e) {
-			var itemListHandler = map.resultListTabs.activeTab().handler;
+		onActiveTabChanged: function(e) {
+			var itemListHandler = map.resultListTabs.activeTab();
 			var removedIds = tools.SimpleSet();
 			var missingIds = tools.SimpleSet();
-			for(var itemId in itemListHandler.itemIds()) {
+			for(var itemId in itemListHandler.values()) {
 				if (!map.itemMarkers.count(itemId)) {
 					missingIds.insert(itemId);
 				}
 			}
-			for(var itemId in map.itemMarkers.layers()) {
+			for(var itemId in map.itemMarkers.values()) {
 				if (!itemListHandler.hasItem(itemId)) {
 					removedIds.insert(itemId);
 				}
 			}
-			for(var itemId in removedIds) {
+			for(var itemId in removedIds.values()) {
 				map.itemMarkers.remove(itemId);
 				state.dag.node(itemId).displayState -= dag.DisplayStates.HasItemMarker;
 			}
-			for(var itemId in missingIds) {
+			for(var itemId in missingIds.values()) {
 				map.itemMarkers.add(itemId);
 			}
 			//mark dag nodes accordingly
-			for(var itemId in map.itemMarkers.layers()) {
+			var tmp = map.itemMarkers.values();
+			for(var itemId in tmp) {
 				state.dag.node(itemId).displayState |= dag.DisplayStates.HasItemMarker;
 			}
 		},
@@ -1238,6 +1232,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				);
 			};
 			if (cqr.ohPath().length) {
+				oscar.fetchShapes(cqr.ohPath(), function() {});
 				var parentId = 0xFFFFFFFF;
 				for(var i in cqr.ohPath()) {
 					getRegionChildrenInfo(parentId);
