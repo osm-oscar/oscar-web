@@ -685,6 +685,22 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		clear: function() {
 			state.map.off("zoomend dragend", map.viewChanged);
+			
+			state.dag.clear();
+			
+			map.resultListTabs.clear();
+			map.relativesTab.activeItemHandler.clear();
+			map.relativesTab.relativesHandler.clear();
+			
+			map.itemShapes.clear();
+			map.regionShapes.clear();
+			map.relativesShapes.clear();
+			map.highlightItemShapes.clear();
+			map.clusterMarkerRegionShapes.clear();
+			
+			map.itemMarkers.clear();
+			map.regionMarkers.clear();
+			map.clusterMarkers.clear();
 		},
 		
 		displayCqr: function (cqr) {
