@@ -885,6 +885,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		onClusterMarkerClicked: function(e) {
 			map.closePopups();
 			map.clusterMarkers.remove(e.itemId);
+			map.zoomTo(e.itemId);
 			if (state.dag.node(e.itemId).isLeaf) {
 				map.expandDagItems(e.itemId, function() {
 					map.mapViewChanged();
