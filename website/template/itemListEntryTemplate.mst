@@ -1,15 +1,15 @@
 <script id="itemListEntryHtmlTemplate" type="text/x-tmpl-mustache">
-    <div class="panel panel-default" id="{{{shapeSrcType}}}PanelRoot{{{itemId}}}">
+    <div class="panel panel-default" data-item-id="{{{itemId}}}">
         <div class="panel-heading results-panel-title" role="tab">
-            <div class="panel-title" id="{{{shapeSrcType}}}PanelTitle{{{itemId}}}">
+            <div class="panel-title">
                 <h5>
-                    <a class="accordion-toggle {{{matchingTagClass}}}" data-toggle="collapse" data-parent="#{{{shapeSrcType}}}List" href="#{{{shapeSrcType}}}Details{{{itemId}}}" id="{{{shapeSrcType}}}NameLink{{{itemId}}}" aria-expanded="true">
+                    <a data-item-id="{{{itemId}}}" class="accordion-toggle {{{matchingTagClass}}}" href="#" aria-expanded="true">
                         <b>{{itemName}}</b>{{#street}}, {{postcode}} {{city}} {{street}} {{housenumber}}{{/street}}
                     </a>
                 </h5>
             </div>
         </div>
-        <div class="panel-collapse collapse" role="tabpanel" id="{{{shapeSrcType}}}Details{{{itemId}}}" data-item-id="{{{itemId}}}" aria-expanded="true">
+        <div class="panel-collapse collapse" role="tabpanel" data-item-id="{{{itemId}}}" aria-expanded="true">
             <div class="panel-body">
                 <table class="table table-hover table-bordered table-condensed">
                     <thead>
@@ -24,7 +24,7 @@
                                 <span>id</span>
                             </td>
                             <td>
-                                <a href='#' class="item-detail-id" data-query='{{itemId}}'>{{itemId}}</a>
+                                <a href='#' class="item-detail-id" data-item-id='{{itemId}}'>{{itemId}}</a>
                             </td>
                         </tr>
                         <tr>
@@ -57,7 +57,7 @@
                         <tr>
                             <td>
                                 <span title='Add key to query'>
-                                    <a href='#{{{shapeSrcType}}}Details{{{itemId}}}' class='item-detail-key {{kc}}' data-query-key='{{k}}'>{{k}}</a>
+                                    <a href='#{{{shapeSrcType}}}Details{{{itemId}}}' class='item-detail-key {{kc}}' data-item-id="{{{itemId}}}" data-query-key='{{k}}'>{{k}}</a>
                                 </span>
                             </td>
                             <td>
@@ -68,7 +68,7 @@
                                 {{/link}}
                                 {{^link}}
                                     <span title='Add key:value to query'>
-                                        <a href='#{{{shapeSrcType}}}Details{{{itemId}}}' class='item-detail-value {{vc}}' data-query-key='{{k}}' data-query-value='{{v}}'>{{v}}</a>
+                                        <a href='#{{{shapeSrcType}}}Details{{{itemId}}}' class='item-detail-value {{vc}}' data-item-id="{{{itemId}}}" data-query-key='{{k}}' data-query-value='{{v}}'>{{v}}</a>
                                     </span>
                                 {{/link}}
                             </td>

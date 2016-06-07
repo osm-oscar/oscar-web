@@ -34,7 +34,8 @@ requirejs.config({
         "prototype": "prototype/prototype",
         "state": "state/manager",
         "query": "query/query",
-        "search": "search/search"
+        "search": "search/search",
+		"dag": "dag/dag"
     },
     shim: {
         'bootstrap': {deps: ['jquery']},
@@ -47,10 +48,26 @@ requirejs.config({
 });
 
 requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf", "menu", "tokenfield", "switch", "state", "map", "tree", "prototype", "query", "tools", "search"],
-    function (L, jQuery, mustache, jqueryui, sidebar, mustacheLoader, config, menu, tokenfield, switchButton, state, map, tree) {
+    function () {
+        var L = require("leaflet");
+		var jQuery = require("jquery");
+		var mustache = require("mustache");
+		var jqueryui = require("jqueryui");
+		var sidebar = require("sidebar");
+		var mustacheLoader = require("mustacheLoader");
+		var config = require("conf");
+		var menu = require("menu");
+		var tokenfield = require("tokenfield");
+		var switchButton = require("switch");
+		var state = require("state");
+		var map = require("map");
+		var tree = require("tree");
         var query = require("query");
 		var tools = require("tools");
         var search = require("search");
+		
+		//set the map handler
+		state.mapHandler = map;
 
         // mustache-template-loader needs this
         window.Mustache = mustache;
@@ -67,15 +84,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         });
 
         menu.displayCategories();
-
-        // init the map and sidebar
-        state.map = L.map('map', {
-            zoomControl: true
-        }).setView([48.74568, 9.1047], 17);
-        state.map.zoomControl.setPosition('topright');
-        state.sidebar = L.control.sidebar('sidebar').addTo(map);
-        var osmAttr = '&copy; <a target="_blank" href="http://www.openstreetmap.org">OpenStreetMap</a>';
-        L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: osmAttr}).addTo(state.map);
 
         $(document).ready(function () {
             $("#tree").resizable();
@@ -128,10 +136,10 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 $("#onePath").button();
                 $("#wholeTree").button().click(function () {
                     map.loadWholeTree();
-                    tree.visualizeDAG(state.DAG.at(0xFFFFFFFF));
+                    tree.visualizeDAG(state.dag.at(0xFFFFFFFF));
                 });
-                if (state.DAG.at(0xFFFFFFFF)) {
-                    tree.visualizeDAG(state.DAG.at(0xFFFFFFFF));
+                if (state.dag.at(0xFFFFFFFF)) {
+                    tree.visualizeDAG(state.dag.at(0xFFFFFFFF));
                 }
             });
 
@@ -163,32 +171,12 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             });
 			
 			state.sidebar.on('tab-closed', function(e) {
-				if (e.id !== "item_relatives") {
-					return;
-				}
-				map.clearHighlightedShapes("relatives");
-				map.clearHighlightedShapes("activeItems");
 			});
 			
 			state.sidebar.on('tab-opened', function(e) {
 				if (e.id !== "item_relatives") {
 					return;
 				}
-				//check if the active item is opened, if so add its shape to the map
-				var activeItemsList = $('#activeItemsList');
-				var activeItems = activeItemsList.find("[class~='collapse'][class~='in']");
-				if (activeItems.length) {
-					var activeItem = activeItems.first();
-					var itemId = parseInt(activeItem.attr("data-item-id"));
-					map.highlightShape(itemId, "activeItems");
-				}
-				//do the same for the relatives
-				var relativesList = $('#relativesList');
-				var activeRelatives = relativesList.find("[class~='collapse'][class~='in']");
-				activeRelatives.each(function() {
-					var itemId = parseInt($(this).attr("data-item-id"));
-					map.highlightShape(itemId, "relatives");
-				});
 			});
 
             $('#spatialquery_selectbutton').click(function() {

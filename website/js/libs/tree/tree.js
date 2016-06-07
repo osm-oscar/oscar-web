@@ -1,4 +1,5 @@
-define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD3, d3, $, oscar, state, tools) {
+define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function (dagreD3, d3, $, oscar, state, tools, dag) {
+	//BUG: id attribute needs to be unique, which is not the case here!
     var tree = {
         graph: undefined, // the graph
         renderer: new dagreD3.render(),
@@ -70,11 +71,8 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
             $(".treeNodeSub").each(function (key, value) {
                 $(value).on("click", function () {
                     var id = $(this).attr("id");
-                    var node = state.DAG.at(id);
-                    var marker = node.marker;
-                    state.markers.removeLayer(marker);
-                    state.items.clusters.drawn.erase(id);
-                    map.loadSubhierarchy(id, function () {
+					state.mapHandler.clusterMarkers.remove(id);
+                    state.mapHandler.loadSubhierarchy(id, function () {
                         //state.map.off("zoomend dragend", state.handler);
                         //state.map.fitBounds(node.bbox);
                         //state.map.on("zoomend dragend", state.handler);
@@ -88,7 +86,10 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
             $(".treeNodeItems").each(function (key, value) {
                 $(value).on("click", function () {
                     var id = $(this).attr("id");
-                    map.loadItems(id);
+					state.mapHandler.zoomTo(id);
+					state.mapHandler.expandDagItems(id, function() {
+						state.mapHandler.mapViewChanged();
+					});
                 });
             });
         },
@@ -96,14 +97,15 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
         _recursiveAddToGraph: function (node, graph) {
             if (node.name) {
                 this.graph.setNode(node.id, tree._nodeAttr(node));
-                for (var child in node.children) {
-                    if (node.children[child].count) {
-                        this.graph.setNode(node.children[child].id);
-                        this.graph.setEdge(node.id, node.children[child].id, {
+                for (var childId in node.children.values()) {
+					var child = state.dag.at(childId);
+                    if (child.count) {
+                        this.graph.setNode(child.id);
+                        this.graph.setEdge(node.id, child.id, {
                             lineInterpolate: 'basis',
                             class: "origin-" + node.id
                         });
-                        this._recursiveAddToGraph(node.children[child], graph);
+                        this._recursiveAddToGraph(child, graph);
                     }
                 }
             }
@@ -142,12 +144,12 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
          * @returns {*} attributes for the node
          */
         _nodeAttr: function (node) {
-            if (node.count) {
+            if (node.type === dag.NodeTypes.Region) {
                 return {
                     labelType: "html",
                     label: tree._nodeLabel(node)
                 };
-            } else {
+            } else { //TODO: this path should never be chosen?
                 return {
                     labelType: "html",
                     label: tree._leafLabel(node)
@@ -199,7 +201,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
             var parents = this.graph.inEdges(id);
             this.graph.removeNode(id);
             //d3.select("svg").select("g").call(this.renderer, this.graph);
-            this.graph.setNode(id, {label: state.DAG.at(id).name.toString(), labelStyle: "color: white"});
+            this.graph.setNode(id, {label: state.dag.at(id).name.toString(), labelStyle: "color: white"});
             for (var i in parents) {
                 this.graph.setEdge(parents[i].v, id, {
                     lineInterpolate: 'basis',
@@ -208,7 +210,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
             }
 
             // update the subtree of the clicked node
-            this._recursiveAddToGraph(state.DAG.at(id), this.graph);
+            this._recursiveAddToGraph(state.dag.at(id), this.graph);
             this._roundedNodes();
             d3.select("svg").select("g").call(this.renderer, this.graph);
             this._addInteractions();
@@ -237,8 +239,8 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
         onePath: function (node) {
             function walker(node) {
                 var parentNode;
-                for (var parent in node.parents) {
-                    parentNode = node.parents[parent];
+                for (var parentId in node.parents.values()) {
+                    parentNode = state.dag.at(parentId);
                     if (!parentNode) {
                         continue;
                     }
@@ -261,14 +263,14 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
 
             walker(node);
 
-            var currentNode = state.DAG.at(0xFFFFFFFF); // root
+            var currentNode = state.dag.at(0xFFFFFFFF); // root
             var childNode, nextNode, mostWalkers = 0;
 
             while (currentNode.id != node.id) {
                 this.graph.setNode(currentNode.id, tree._nodeAttr(currentNode));
 
-                for (var child in currentNode.children) {
-                    childNode = currentNode.children[child];
+                for (var childId in currentNode.children.values()) {
+                    childNode = state.dag.at(childId);
                     this.graph.setNode(childNode.id, tree._nodeAttr(childNode));
                     this.graph.setEdge(currentNode.id, childNode.id, {
                         lineInterpolate: 'basis',
@@ -297,8 +299,8 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools"], function (dagreD
 
         hideChildren: function (node) {
             var childNode;
-            for (var child in node.children) {
-                childNode = node.children[child];
+            for (var childId in node.children.values()) {
+                childNode = state.dag.at(childId);
                 tree.graph.removeNode(childNode.id);
             }
         }

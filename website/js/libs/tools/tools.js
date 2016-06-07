@@ -5,80 +5,87 @@ define(["jquery"], function ($) {
          *
          * @returns {{}} hashmap-object
          */
-        SimpleHash: function () {
-            return {
-                m_size: 0,
-                m_values: {},
-                values: function () {
-                    return this.m_values;
-                },
-                size: function () {
-                    return this.m_size;
-                },
-                insert: function (key, value) {
-                    if (this.m_values[key] === undefined) {
-                        this.m_size += 1;
-                    }
-                    this.m_values[key] = value;
-                },
+		SimpleHash: function () {
+			return {
+				m_size: 0,
+				m_values: {},
+				values: function () {
+					return this.m_values;
+				},
+				size: function () {
+					return this.m_size;
+				},
+				insert: function (key, value) {
+					if (this.m_values[key] === undefined) {
+						this.m_size += 1;
+					}
+					this.m_values[key] = value;
+				},
 				set: function (key, value) {
 					this.insert(key, value);
 				},
-                count: function (key) {
-                    return this.m_values[key] !== undefined;
-                },
-                at: function (key) {
-                    return this.m_values[key];
-                },
-                erase: function (key) {
-                    if (this.m_values[key] !== undefined) {
-                        this.m_size -= 1;
-                        delete this.m_values[key];
-                    }
-                },
-                clear: function () {
-                    this.m_size = 0;
-                    this.m_values = {};
-                }
-            };
-        },
+				count: function (key) {
+					return this.m_values[key] !== undefined;
+				},
+				at: function (key) {
+					return this.m_values[key];
+				},
+				//call cb for each (key, value) with cb(key, value)
+				each: function(cb) {
+					for(var key in this.m_values) {
+						cb(key, this.m_values[key]);
+					}
+				},
+				erase: function (key) {
+					if (this.m_values[key] !== undefined) {
+						this.m_size -= 1;
+						delete this.m_values[key];
+					}
+				},
+				clear: function () {
+					this.m_size = 0;
+					this.m_values = {};
+				}
+			};
+		},
+		SimpleSet: function() {
+			var ss = tools.SimpleHash();
+			ss.insert = function(key) {
+				if (this.m_values[key] === undefined) {
+					this.m_size += 1;
+				}
+				this.m_values[key] = key;
+			};
+			ss.each = function(cb) {
+				for(var key in this.m_values) {
+					cb(key);
+				}
+			};
+			return ss;
+		},
+		
+		
+		getMissing: function(setA, setB, missingInA, missingInB) {
+			for(var id in setA.values()) {
+				if (!setB.count(id)) {
+					missingInB.insert(id);
+				}
+			}
+			for(var id in setB.values()) {
+				if (!setA.count(id)) {
+					missingInA.insert(id);
+				}
+			}
+		},
+		
+		toIntArray: function(strArray) {
+			var tmp = [];
+			for(var i in strArray) {
+				tmp.push(parseInt("" + strArray[i]));
+			}
+			return tmp;
+		},
 	   
-        /**
-         * Represents a Treenode, which can be used to model directed-acylic graphs.
-         *
-         * @param id of the node
-         * @param parent one parent of the node
-         * @returns
-         */
-        TreeNode: function (id, parent) {
-            var parents = [];
-            parents.push(parent);
-            return {
-                id: id,
-                name: undefined,
-                parents: parents,
-                children: [],
-                count: undefined,
-                marker: undefined,
-                bbox: undefined,
-                addChild: function (id) {
-                    var node = tools.TreeNode(id, this);
-                    this.children.push(node);
-                    return node;
-                },
-                kill: function () {
-                    // kill all references to this node
-                    for (var parent in parents) {
-                        for (var child in parents[parent].children) {
-                            if (parents[parent].children[child].id == this.id) {
-                                parents[parent].children.splice(child, 1);
-                            }
-                        }
-                    }
-                }
-            };
-        },
-
         /**
          * Calculates the overlap of the viewport and a bbox. Returns the percentage of overlap.
          *
@@ -162,6 +169,26 @@ define(["jquery"], function ($) {
 			console.log("xmlhttprequest error textstatus=" + textStatus + "; errorThrown="+errorThrown);
 			if (confirm("Error occured. Refresh automatically?")) {
 				location.reload();
+			}
+		},
+		//this is from https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
+		generateUUID: function() {
+			return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+				var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+				return v.toString(16);
+			});
+		},
+		generateDocumentUniqueId: function() {
+			while(true) {
+				var uuid = tools.generateUUID();
+				if (!$(uuid).length) {
+					return uuid;
+				}
+			}
+		},
+		assert: function(v) {
+			if (v !== true) {
+				throw new Error();
 			}
 		}
     };

@@ -52,7 +52,6 @@ public:
 	  * q=<searchstring>
 	  * k=<number_of_items>
 	  * o=<offset_in_items_result_list>
-	  * r=<region_id>
 	  * Return:
 	  * array<uint32_t> : [item id]
 	  */

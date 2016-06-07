@@ -1171,6 +1171,18 @@
             }
             return names;
         },
+
+        getChildClustersRegionIds: function () {
+            var rids = [];
+            var allChildClusters = this.getAllChildMarkers();
+
+            for (var i in allChildClusters) {
+                if (allChildClusters[i].rid !== undefined) {
+                    rids.push(allChildClusters[i].rid);
+                }
+            }
+            return rids;
+        },
         setChildCnt: function (cnt) {
             this._childCount = cnt;
         },

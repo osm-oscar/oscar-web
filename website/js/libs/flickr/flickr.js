@@ -44,6 +44,9 @@ define(["jquery", "jqueryui", "slimbox", "conf"], function ($, jqueryui, slimbox
         getImagesForLocation: function (name, geopos) {
             this._query(name, geopos, this._showImagesForLocation.bind(this));
         },
+		closeFlickrBar: function() {
+			$('#flickr').hide("slide", {direction: "right"}, config.styles.slide.speed);
+		},
 
         /**
          * Sets the link for a thumbnail to the "normal"-sized photo (the biggest available resolution is chosen).
@@ -93,7 +96,8 @@ define(["jquery", "jqueryui", "slimbox", "conf"], function ($, jqueryui, slimbox
                 $("a[rel^='lightbox']").slimbox({}, null, function (el) {
                     return (this == el) || ((this.rel.length > 8) && (this.rel == el.rel));
                 });
-            } else {
+            }
+            else {
                 $('#flickr').hide("slide", {direction: "right"}, config.styles.slide.speed);
             }
         }

@@ -40,7 +40,7 @@ define([], function() {
                     highlight: {color: 'green', stroke: true, fill: false, opacity: 1.0}
                 },
                 activeItems: {
-                    normal: {color: 'blue', stroke: true, fill: false, opacity: 0.8},
+                    normal: {color: 'red', stroke: true, fill: false, opacity: 0.8},
                     highlight: {color: 'red', stroke: true, fill: false, opacity: 1.0}
                 },
                 geoquery: {
@@ -92,7 +92,11 @@ define([], function() {
                 select : 10000
             }
         },
-		overlap: 0.40, // threshold for overlap of a bbox with viewport
+		clusters: {
+			bboxOverlap: 0.4, // threshold for overlap of a bbox with viewport
+			shapeOverlap: 0.1 // threshold for overlap of a bbox with viewport if the shape is within the viewport
+		},
+		
 		maxBufferedItems: 350, // buffered locations
 		maxNumSubClusters: 10,
 		spinnerOpts: {
