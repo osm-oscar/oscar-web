@@ -868,8 +868,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 	   
 		onItemMarkerClicked: function(e) {
+			state.items.activeItem = e.itemId;
 			map.resultListTabs.openItem(e.itemId);
 			map.resultListTabs.activeTab().scrollTo(e.itemId);
+			map.showItemRelatives();
 		},
 		
 		onRegionMarkerClicked: function(e) {
