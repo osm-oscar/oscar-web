@@ -1039,7 +1039,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			};
 			var parentNode = state.dag.node(parentId);
 			if (parentNode.count > offset && parentNode.items.size() <= offset) { 
-				state.cqr.regionItemIds(parentId,
+				state.cqr.regionExclusiveItemIds(parentId,
 					myOp,
 					tools.defErrorCB,
 					offset
