@@ -29,7 +29,7 @@ bool initGhFilters(cppcms::json::value ghfilter, oscar_web::CompletionFileDataPt
 		return true;
 	}
 	cppcms::json::array & filterArray = ghfilter.array();
-	std::unordered_map<std::string, sserialize::spatial::GeoHierarchySubSetCreator> & ghSubSetCreators = dataPtr->ghSubSetCreators;
+	std::unordered_map<std::string, sserialize::spatial::GeoHierarchySubGraph> & ghSubSetCreators = dataPtr->ghSubSetCreators;
 	for(const cppcms::json::value & v : filterArray) {
 		if (v.type() != cppcms::json::is_object) {
 			continue;
@@ -39,6 +39,7 @@ bool initGhFilters(cppcms::json::value ghfilter, oscar_web::CompletionFileDataPt
 		std::string name = filterDef.at("name").str();
 		
 		const auto & store = dataPtr->completer->store();
+		const auto & idxStore = dataPtr->completer->indexStore();
 		
 		//keys
 		std::unordered_set<uint32_t> keys;
@@ -82,7 +83,7 @@ bool initGhFilters(cppcms::json::value ghfilter, oscar_web::CompletionFileDataPt
 		}
 		
 		ghSubSetCreators.emplace(name,
-			sserialize::spatial::GeoHierarchySubSetCreator(gh,
+			sserialize::spatial::GeoHierarchySubGraph(gh, idxStore,
 				[&validRegions](uint32_t regionId) {
 					return validRegions.at(regionId);
 				}
