@@ -939,6 +939,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					regionChildrenApxItemsMap[ci['id']] = ci['apxitems'];
 					children.push(ci['id']);
 				}
+				
+				oscar.fetchShapes(children, function() {});
 
 				oscar.getItems(children, function (items) {
 						var itemId, item, node, parentNode, marker;
@@ -977,6 +979,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				for (var region in subSet.regions) {
 					regions.push(region);
 				}
+				//don't cache shapes here! there may be a lot of shapes!
 
 				//fetch the items
 				oscar.getItems(regions,
@@ -1254,6 +1257,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 					childIds.push(childId);
 				}
+				//fetch the shape
+				oscar.fetchShapes(childIds, function() {});
+				
 				//now get the item info for the name and the bbox
 				oscar.getItems(childIds,
 					function (items) {
