@@ -1121,10 +1121,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					var childNode = state.dag.at(childId);
 					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
 					
-					if (
-						(myOverlap >= config.clusters.bboxOverlap) ||
-						(myOverlap > config.clusters.shapeOverlap && oscar.shapeCache.count(childNode.id) && oscar.intersect(state.map.getBounds(), oscar.shapeCache.at(childNode.id)))
-					   )
+					if (myOverlap >= config.clusters.bboxOverlap) {
+						map.updateDag(childNode)
+					}
+					else if (myOverlap > config.clusters.shapeOverlap &&
+							oscar.shapeCache.count(childNode.id) &&
+							oscar.intersect(state.map.getBounds(), oscar.shapeCache.at(childNode.id)))
 					{
 						map.updateDag(childNode);
 					}
