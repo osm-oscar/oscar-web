@@ -203,6 +203,7 @@ void CQRCompleter::items() {
 	
 	//params
 	std::string cqs = request().get("q");
+	std::string regionFilter = request().get("rf");
 	uint32_t numItems = 0;
 	uint32_t skipItems = 0;
 	uint32_t cqrSize = 0;
@@ -219,8 +220,14 @@ void CQRCompleter::items() {
 		}
 	}
 	
+	sserialize::CellQueryResult cqr;
+	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+	}
+	else {
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+	}
 	
-	sserialize::CellQueryResult cqr(m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR));
 	sserialize::ItemIndex idx(cqr.topK(numItems+skipItems));
 	cqrSize = cqr.cellCount();
 	
