@@ -35,6 +35,8 @@ define(["jquery", "tools"], function ($, tools) {
 					node.children = tools.SimpleSet();
 					node.items = tools.SimpleSet();
 					node.count = -1;
+					node.isLeaf = false;
+					node.mayHaveItems = true;
 					return node;
 				},
 				m_nodes: tools.SimpleHash(), //maps from nodeId -> (ItemNode | RegionNode)
