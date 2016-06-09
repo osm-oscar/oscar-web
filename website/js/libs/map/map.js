@@ -1028,6 +1028,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			function myOp(regionId, itemIds) {
 				console.assert(state.dag.hasNode(regionId), regionId);
 
+				if (!itemIds.length) {
+					if (offset === 0) {
+						state.dag.at(regionId).mayHaveItems = false;
+					}
+					cb();
+					return;
+				}
+				
 				oscar.getItems(itemIds, function(items) {
 					for(var i in items) {
 						var item = items[i];
