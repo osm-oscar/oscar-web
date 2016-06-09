@@ -1312,22 +1312,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 		},
 
-		removeClusterMarker: function (node) {
-			map.clusterMarkers.remove(node.id);
-		},
-
 		addClusterMarker: function (node) {
-			if (node.count === 1006) {
-				console.log("BOOM");
-			}
 			map.clusterMarkers.add(node.id, node.count);
-		},
-
-		//TODO:remove this! dag now has display state (which is bad)
-		removeParentsTabs: function (dagChildNode) {
-			for (var parentId in dagChildNode.parents.values()) {
-				map.resultListTabs.removeRegion(parentId);
-			}
 		}
     };
 	console.assert(state.map === undefined, state.map);
