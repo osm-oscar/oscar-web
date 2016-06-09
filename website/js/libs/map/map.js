@@ -1062,6 +1062,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		expandDag: function(parentId, cb) {
+			var myCBCount = 0;
+			var myCB = function() {
+				myCBCount += 1;
+				if (myCBCount == 2) {
+					cb();
+				}
+			};
 			function processChildren(regionChildrenInfo) {
 				if (!regionChildrenInfo.length) { //parent is a leaf node
 					state.dag.node(parentId).isLeaf = true;
@@ -1097,7 +1104,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 							node.bbox = item.bbox();
 							node.name = item.name();
 						}
-						cb();
+						myCB();
 					}
 				);
 			};
@@ -1108,6 +1115,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			tools.defErrorCB
 			);
+			
+			map.expandDagItems(parentId, myCB);
 		},
 		
 		//this is recursive function, you have to clear the displayState of the dag before calling
@@ -1120,6 +1129,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				for (var childId in node.children.values()) {
 					var childNode = state.dag.at(childId);
 					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
+					
+					//if the region fully encloses this region, then display its region exclusive items
+					//TODO:this should take the current map bounds into account
+					if (myOverlap >= 0.95 && childNode.items.size()) {
+						childNode.displayState |= dag.DisplayStates.InResultsTab;
+					}
 					
 					if (myOverlap >= config.clusters.bboxOverlap) {
 						map.updateDag(childNode)
