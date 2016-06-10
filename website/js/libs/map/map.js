@@ -619,12 +619,189 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return handler;
 	};
 	
+	//expands the dag on demand
+	var DagExpander = function() {
+		return de = {
+			
+			m_childrenQueue: tools.SimpleHash(), //parentId -> [call-back-functions]
+			m_itemsQueue: tools.SimpleHash(), //(parentId, offset) -> [call-back-functions]
+	   
+			_insertChildredQueue: function(parentId, cb) {
+				if (!de.inChildredQueue(parentId)) {
+					de.m_childrenQueue.insert(parentId, [cb]);
+				}
+				else {
+					de.m_childrenQueue.at(parentId).push(cb);
+				}
+			},
+			_insertItemsQueue: function(parentId, offset, cb) {
+				if (!de.inItemsQueue(parentId, offset)) {
+					de.m_itemsQueue.insert(parentId + ":" + offset, [cb]);
+				}
+				else {
+					de.m_itemsQueue.at(parentId + ":" + offset).push(cb);
+				}
+			},
+			_eraseChildredQueue: function(parentId) {
+				return de.m_childrenQueue.erase(parentId);
+			},
+			_eraseItemsQueue: function(parentId, offset) {
+				return de.m_itemsQueue.erase(parentId + ":" + offset);
+			},
+			_getChildrenQueue: function(parentId) {
+				return de.m_childrenQueue.at(parentId);
+			},
+			_getItemsQueue: function(parentId, offset) {
+				return de.m_itemsQueue.at(parentId + ":" + offset);
+			},
+	   
+			inChildredQueue: function(parentId) {
+				return de.m_childrenQueue.count(parentId);
+			},
+			inItemsQueue: function(parentId, offset) {
+				return de.m_itemsQueue.count(parentId + ":" + offset);
+			},
+			
+			_flushChildrenQueue: function(parentId) {
+				var cbs = de._getChildrenQueue(parentId);
+				for(var i in cbs) {
+					cbs[i]();
+				}
+				de._eraseChildredQueue();
+			},
+			
+			_flushItemsQueue: function(parentId, offset) {
+				var cbs = de._getItemsQueue(parentId, offset);
+				for(var i in cbs) {
+					cbs[i]();
+				}
+				de._eraseItemsQueue(parentId, offset);
+			},
+			
+			//if cb is called, all relevant items should be in the cache
+			expandDagItems: function(parentId, cb, offset) {
+				if (offset === undefined) {
+					offset = 0;
+				}
+				function myOp(regionId, itemIds) {
+					console.assert(state.dag.hasNode(regionId), regionId);
+
+					if (!itemIds.length) {
+						if (offset === 0) {
+							state.dag.at(regionId).mayHaveItems = false;
+						}
+						de._flushItemsQueue(parentId, offset);
+						return;
+					}
+					
+					oscar.getItems(itemIds, function(items) {
+						for(var i in items) {
+							var item = items[i];
+							var itemId = item.id();
+							var node = state.dag.addNode(itemId, dag.NodeTypes.Item);
+							node.name = item.name();
+							node.bbox = item.bbox();
+							state.dag.addChild(regionId, itemId);
+						}
+						de._flushItemsQueue(parentId, offset);
+					});
+				};
+				var parentNode = state.dag.node(parentId);
+				if (parentNode.count >= offset && parentNode.items.size() <= offset) {
+					if (de.inItemsQueue(parentId, offset)) {
+						de._insertItemsQueue(parentId, offset, cb);
+						return;
+					}
+					else {
+						de._insertItemsQueue(parentId, offset, cb);
+					}
+					state.cqr.regionExclusiveItemIds(parentId,
+						myOp,
+						tools.defErrorCB,
+						offset
+					);
+				}
+				else {
+					cb();
+				}
+			},
+			
+			expandDag: function(parentId, cb) {
+				if (de.inChildredQueue(parentId)) {
+					de._insertChildredQueue(parentId, cb);
+					return;
+				}
+				else {
+					de._insertChildredQueue(parentId, cb);
+				}
+				
+				var myCBCount = 0;
+				var myCB = function() {
+					myCBCount += 1;
+					if (myCBCount == 2) {
+						de._flushChildrenQueue(parentId);
+					}
+				};
+				function processChildren(regionChildrenInfo) {
+					if (!regionChildrenInfo.length) { //parent is a leaf node
+						state.dag.node(parentId).isLeaf = true;
+						cb();
+						return;
+					}
+					
+					var regionChildrenApxItemsMap = {};
+					var childIds = [];
+					var parentNode = state.dag.at(parentId);
+					var parentCount = parentNode.count;
+
+					for (var i in regionChildrenInfo) {
+						var childInfo = regionChildrenInfo[i];
+						var childId = childInfo['id'];
+						if (!state.dag.hasNode(childId)) {
+							var node = state.dag.addNode(childId, dag.NodeTypes.Region);
+							node.count = childInfo['apxitems'];
+							state.dag.addChild(parentId, childId);
+						}
+						childIds.push(childId);
+					}
+					
+					//cache the shapes
+					oscar.fetchShapes(childIds, function() {});
+					
+					//now get the item info for the name and the bbox
+					oscar.getItems(childIds,
+						function (items) {
+							for (var i in items) {
+								var item = items[i];
+								var node = state.dag.at(item.id());
+								node.bbox = item.bbox();
+								node.name = item.name();
+							}
+							myCB();
+						}
+					);
+				};
+				
+				spinner.startLoadingSpinner();
+				state.cqr.regionChildrenInfo(parentId, function(regionChildrenInfo) {
+					spinner.endLoadingSpinner()
+					processChildren(regionChildrenInfo);
+				},
+				tools.defErrorCB
+				);
+				
+				de.expandDagItems(parentId, myCB);
+			}
+		};
+	};
+	
     var map = {
 		ItemListHandler: ItemListHandler,
 		RegionItemListTabHandler: RegionItemListTabHandler,
 		ItemShapeHandler: ItemShapeHandler,
 		ItemMarkerHandler: ItemMarkerHandler,
 		RegionMarkerHandler: RegionMarkerHandler,
+		DagExpander: DagExpander,
 		
 		resultListTabs: undefined,
 		relativesTab: { activeItemHandler: undefined, relativesHandler: undefined },
@@ -640,6 +817,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		itemMarkers: ItemMarkerHandler(state.map),
 		regionMarkers: RegionMarkerHandler(state.map),
 		clusterMarkers: undefined,
+		
+		//dag handling
+		dagExpander: DagExpander(),
+		
 		
 		//this has to be called prior usage
 		init: function() {
@@ -1023,105 +1204,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 		},
 		
-		//if cb is called, all relevant items should be in the cache
-		expandDagItems: function(parentId, cb, offset) {
-			if (offset === undefined) {
-				offset = 0;
-			}
-			function myOp(regionId, itemIds) {
-				console.assert(state.dag.hasNode(regionId), regionId);
-
-				if (!itemIds.length) {
-					if (offset === 0) {
-						state.dag.at(regionId).mayHaveItems = false;
-					}
-					cb();
-					return;
-				}
-				
-				oscar.getItems(itemIds, function(items) {
-					for(var i in items) {
-						var item = items[i];
-						var itemId = item.id();
-						var node = state.dag.addNode(itemId, dag.NodeTypes.Item);
-						node.name = item.name();
-						node.bbox = item.bbox();
-						state.dag.addChild(regionId, itemId);
-					}
-					cb();
-				});
-			};
-			var parentNode = state.dag.node(parentId);
-			if (parentNode.count >= offset && parentNode.items.size() <= offset) { 
-				state.cqr.regionExclusiveItemIds(parentId,
-					myOp,
-					tools.defErrorCB,
-					offset
-				);
-			}
-			else {
-				cb();
-			}
-		},
-		
-		expandDag: function(parentId, cb) {
-			var myCBCount = 0;
-			var myCB = function() {
-				myCBCount += 1;
-				if (myCBCount == 2) {
-					cb();
-				}
-			};
-			function processChildren(regionChildrenInfo) {
-				if (!regionChildrenInfo.length) { //parent is a leaf node
-					state.dag.node(parentId).isLeaf = true;
-					cb();
-					return;
-				}
-				
-				var regionChildrenApxItemsMap = {};
-				var childIds = [];
-				var parentNode = state.dag.at(parentId);
-				var parentCount = parentNode.count;
-
-				for (var i in regionChildrenInfo) {
-					var childInfo = regionChildrenInfo[i];
-					var childId = childInfo['id'];
-					if (!state.dag.hasNode(childId)) {
-						var node = state.dag.addNode(childId, dag.NodeTypes.Region);
-						node.count = childInfo['apxitems'];
-						state.dag.addChild(parentId, childId);
-					}
-					childIds.push(childId);
-				}
-				
-				//cache the shapes
-				oscar.fetchShapes(childIds, function() {});
-				
-				//now get the item info for the name and the bbox
-				oscar.getItems(childIds,
-					function (items) {
-						for (var i in items) {
-							var item = items[i];
-							var node = state.dag.at(item.id());
-							node.bbox = item.bbox();
-							node.name = item.name();
-						}
-						myCB();
-					}
-				);
-			};
-			spinner.startLoadingSpinner();
-			state.cqr.regionChildrenInfo(parentId, function(regionChildrenInfo) {
-				spinner.endLoadingSpinner()
-				processChildren(regionChildrenInfo);
-			},
-			tools.defErrorCB
-			);
-			
-			map.expandDagItems(parentId, myCB);
-		},
-		
 		//this is recursive function, you have to clear the displayState of the dag before calling
 		updateDag: function(node) {
 			if (!node) {
@@ -1155,18 +1237,23 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			else if (node.isLeaf) {
 				if (!node.items.size()) {
-					map.expandDagItems(node.id, function() {
-						map.mapViewChanged();
-					});
+					console.assert(node.mayHaveItems, node);
+					if (!map.dagExpander.inItemsQueue(node.id, 0)) {
+						map.expandDagItems(node.id, function() {
+							map.mapViewChanged();
+						});
+					}
 				}
 				else {
 					node.displayState |= dag.DisplayStates.InResultsTab;
 				}
 			}
 			else {//fetch children
-				map.expandDag(node.id, function() {
-					map.mapViewChanged();
-				});
+				if (!map.dagExpander.inChildredQueue(node.id)) {
+					map.expandDag(node.id, function() {
+						map.mapViewChanged();
+					});
+				}
 			}
 		},
 		
@@ -1174,6 +1261,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			if (state.dag.count(0xFFFFFFFF)) {
 				map.mapViewChanged(0xFFFFFFFF);
 			}
+		},
+		
+		expandDagItems: function(parentId, cb, offset) {
+			map.dagExpander.expandDagItems(parentId, cb, offset);
+		},
+		
+		expandDag: function(parentId, cb) {
+			map.dagExpander.expandDag(parentId, cb);
 		},
 		
 		mapViewChanged: function(startNode) {
