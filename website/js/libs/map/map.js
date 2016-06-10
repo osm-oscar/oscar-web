@@ -705,6 +705,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		displayCqr: function (cqr) {
 			map.clear();
+			if (!cqr.hasResults()) {
+				return;
+			}
 			state.dag.addRoot(0xFFFFFFFF);
 			var root = state.dag.node(0xFFFFFFFF);
 			root.count = cqr.rootRegionApxItemCount();
@@ -1049,7 +1052,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				});
 			};
 			var parentNode = state.dag.node(parentId);
-			if (parentNode.count > offset && parentNode.items.size() <= offset) { 
+			if (parentNode.count >= offset && parentNode.items.size() <= offset) { 
 				state.cqr.regionExclusiveItemIds(parentId,
 					myOp,
 					tools.defErrorCB,
