@@ -391,8 +391,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				for(var i in handler.m_regions.values()) {
 					var info = handler.m_regions.at(i);
 					info.handler.destroy();
-					$('#' + info.tabContentId).destroy();
-					$('#' + info.tabHeadId).destroy();
+					$('#' + info.tabContentId).remove();
+					$('#' + info.tabHeadId).remove();
 				}
 				handler.refresh();
 			},
