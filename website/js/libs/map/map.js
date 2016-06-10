@@ -1256,10 +1256,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					return;
 				}
 				//everything is there
+				var rid = 0xFFFFFFFF;
 				// fit the viewport to the target region
 				if (cqr.ohPath().length) {
 					var path = cqr.ohPath();
-					var rid = path[path.length - 1];
+					rid = path[path.length - 1];
 					state.map.fitBounds(state.dag.at(rid).bbox);
 				}
 				else {
