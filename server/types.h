@@ -39,6 +39,8 @@ struct CompletionFileData {
 	OsmCompleter completer;
 	std::shared_ptr<std::ofstream> log;
 	std::unordered_map<std::string, sserialize::spatial::GeoHierarchySubGraph> ghSubSetCreators;
+	std::vector< std::pair<double, double> > regionMidPoints;
+	std::vector< std::pair<double, double> > cellMidPoints;
 };
 
 

@@ -1,5 +1,6 @@
 #include "CQRCompleter.h"
 #include "BinaryWriter.h"
+#include "helpers.h"
 #include <cppcms/http_response.h>
 #include <cppcms/http_request.h>
 #include <cppcms/url_dispatcher.h>
@@ -27,6 +28,7 @@ m_cqrSerializer(dataPtr->completer->indexStore().indexType())
 	dispatcher().assign("/clustered/michildren", &CQRCompleter::maximumIndependentChildren, this);
 	dispatcher().assign("/clustered/items", &CQRCompleter::items, this);
 	dispatcher().assign("/clustered/dag", &CQRCompleter::dag, this);
+	dispatcher().assign("/clustered/clusterhints", &CQRCompleter::clusterHints, this);
 	mapper().assign("clustered","/clustered");
 }
 
@@ -479,5 +481,118 @@ void CQRCompleter::dag() {
 	ttm.end();
 	writeLogStats("dag", cqs, ttm, subSet.cqr().cellCount(), 0);
 }
+
+void CQRCompleter::clusterHints() {
+	sserialize::TimeMeasurer ttm;
+	ttm.begin();
+	
+	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
+	
+	response().set_content_header("text/json");
+	
+	//params
+	std::string cqs = request().post("q");
+	std::string regionFilter = request().post("rf");
+	
+	bool ok;
+	std::vector<uint32_t> rqRId( parseJsonArray<uint32_t>(request().post("which"), ok) );
+	
+	if (!ok) {
+		std::ostream & out = response().out();
+		out << "Invalid request!";
+		return;
+	}
+	
+	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
+	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+	}
+	else {
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+	}
+
+	//calcs in ghId!
+	struct Calc {
+		std::unordered_map<uint32_t, std::pair<double, double> > clusterCenters;
+		const sserialize::CellQueryResult & cqr;
+		const sserialize::Static::spatial::GeoHierarchy & gh;
+		const CompletionFileDataPtr & dataPtr;
+		Calc(const sserialize::CellQueryResult & cqr, const sserialize::Static::spatial::GeoHierarchy & gh, const CompletionFileDataPtr & dataPtr) :
+		cqr(cqr), gh(gh), dataPtr(dataPtr)
+		{}
+
+		void calc(const sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr & p) {
+			if (clusterCenters.count(p->ghId())) {
+				return;
+			}
+			if (p->size()) {
+				for(auto x : *p) {
+					calc(x);
+				}
+				std::pair<double, double> tmp(0.0, 0.0);
+				for(auto x : *p) {
+					const auto & d = clusterCenters.at(x->ghId());
+					tmp.first += d.first;
+					tmp.second += d.second;
+				}
+				tmp.first /= p->size();
+				tmp.second /= p->size();
+				clusterCenters.emplace(p->ghId(), tmp);
+			}
+			else if (p->cellPositions().size()) {//use the cells
+				std::pair<double, double> tmp(0.0, 0.0);
+				for(uint32_t cellPos : p->cellPositions()) {
+					uint32_t cellId = cqr.cellId(cellPos);
+					const auto & midPoint = dataPtr->cellMidPoints.at(cellId);
+					tmp.first += midPoint.first;
+					tmp.second += midPoint.second;
+				}
+				tmp.first /= p->cellPositions().size();
+				tmp.second /= p->cellPositions().size();
+				clusterCenters.emplace(p->ghId(), tmp);
+			}
+			else {
+				clusterCenters.emplace(p->ghId(), dataPtr->regionMidPoints.at(p->ghId()));
+			}
+		}
+	};
+	Calc calc(subSet.cqr(), gh, m_dataPtr);
+	
+	calc.calc(subSet.root());
+	
+	std::ostream & out = response().out();
+	out.precision(8);
+	
+	if (!rqRId.size()) {
+		out << "{}";
+	}
+	else {
+		out << '{';
+		auto it(rqRId.begin()), end(rqRId.end());
+		while (it != end) {
+			uint32_t ghId = gh.storeIdToGhId(*it);
+			if (calc.clusterCenters.count(ghId)) {
+				auto & tmp = calc.clusterCenters.at(ghId);
+				out << '"' << *it << "\":[" << tmp.first << ',' << tmp.second << ']';
+				++it;
+				break;
+			}
+			else {
+				++it;
+			}
+		}
+		for(; it != end; ++it) {
+			uint32_t ghId = gh.storeIdToGhId(*it);
+			if (calc.clusterCenters.count(ghId)) {
+				auto & tmp = calc.clusterCenters.at(ghId);
+				out << ",\"" << *it << "\":[" << tmp.first << ',' << tmp.second << ']';
+			}
+		}
+		out << '}';
+	}
+	ttm.end();
+	writeLogStats("clusterHints", cqs, ttm, subSet.cqr().cellCount(), 0);
+}
+
 
 }//end namespace

@@ -93,6 +93,24 @@ bool initGhFilters(cppcms::json::value ghfilter, oscar_web::CompletionFileDataPt
 	return true;
 }
 
+void initMidPoints(oscar_web::CompletionFileDataPtr dataPtr) {
+	const auto & gh = dataPtr->completer.get()->store().geoHierarchy();
+
+	auto & regionMidPoints = dataPtr->regionMidPoints;
+	regionMidPoints.reserve(gh.regionSize());
+	for(uint32_t i(0), s(gh.regionSize()); i < s; ++i) {
+		auto rect = gh.regionBoundary(i);
+		regionMidPoints.emplace_back(rect.midLat(), rect.midLon());
+	}
+
+	auto & cellMidPoints = dataPtr->cellMidPoints;
+	cellMidPoints.reserve(gh.cellSize());
+	for(uint32_t i(0), s(gh.cellSize()); i < s; ++i) {
+		auto rect = gh.cellBoundary(i);
+		cellMidPoints.emplace_back(rect.midLat(), rect.midLon());
+	}
+}
+
 int main(int argc, char **argv) {
 	cppcms::json::value dbfile;
 	cppcms::service app(argc,argv);
@@ -139,6 +157,14 @@ int main(int argc, char **argv) {
 	catch (const std::exception & e) {
 		std::cout << "Failed to initialize completer from " << data.path << ": " << e.what() << std::endl;
 		return -1;
+	}
+	
+	try {
+		      initMidPoints(completionFileDataPtr);
+	}
+	catch (std::exception & e) {
+		std::cerr << "Failed to init cell mid points:" << e.what() << std::endl;
+		return 1;
 	}
 	
 	try {

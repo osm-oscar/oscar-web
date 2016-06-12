@@ -82,6 +82,15 @@ public:
 	  * returns GeoHierarchySubSetSerializer dag-only
 	  */
 	void dag();
+	
+	/** Call with post!
+	  * returns cluster center hints for the given regions
+	  * rf=<region filter>
+	  * q=<searchstring>
+	  * which=[regionId]
+	  * returns { regionId : [lat, lon] }
+	  */
+	  void clusterHints();
 };
 
 }//end namespace
