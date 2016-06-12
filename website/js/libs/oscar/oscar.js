@@ -703,6 +703,31 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 				//get the dag for this query, this fetches the whole dag
 				getDag: function(successCB, errorCB) {
 					this.p.getDag(this.d.query, successCB, errorCB, this.d.regionFilter);
+				},
+				clusterHints: function(regions, successCB, errorCB) {
+					var missingRegions = [];
+					for(var i in regions) {
+						if (this.d.clusterHints[regions[i]] === undefined) {
+							missingRegions.push(regions[i]);
+						}
+					}
+					var me = this;
+					var myCB = function(hints) {
+						for(var i in hints) {
+							me.d.clusterHints[i] = hints[i];
+						}
+						var data = {};
+						for(var i in regions) {
+							data[regions[i]] = me.d.clusterHints[regions[i]];
+						}
+						successCB(data);
+					}
+					if (missingRegions.length) {
+						this.p.clusterHints(this.d.query, missingRegions, myCB, errorCB, this.d.regionFilter);
+					}
+					else {
+						myCB({});
+					}
 				}
             };
             return tmp;
@@ -991,6 +1016,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                     var cqr = sserialize.simpleCqrFromRaw(raw);
                     cqr.query = params['q'];
                     cqr.regionFilter = params['rf'];
+					cqr.clusterHints = {};
                     successCB(myPtr.SimpleCellQueryResult(cqr, myPtr, mySqId));
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
@@ -1080,6 +1106,34 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 mimeType: 'application/json',
                 success: function (jsondesc) {
                     successCB(jsondesc);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    errorCB(textStatus, errorThrown);
+                }
+            });
+        },
+        clusterHints: function (query, regions, successCB, errorCB, regionFilter) {
+            var params = {};
+            params['q'] = query;
+			params['which'] = JSON.stringify(regions);
+            if(regionFilter !== undefined) {
+                params['rf'] = regionFilter;
+            }
+            var qpath = this.completerBaseUrl + "/cqr/clustered/clusterhints";
+            jQuery.ajax({
+                type: "POST",
+                url: qpath,
+                data: params,
+                mimeType: 'text/plain',
+                success: function (plain) {
+					try {
+						json = JSON.parse(plain);
+					}
+					catch (err) {
+						errorCB("Parsing the clusterHints failed with the following parameters: " + JSON.stringify(params), err);
+						return;
+					}
+					successCB(json);
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     errorCB(textStatus, errorThrown);

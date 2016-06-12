@@ -597,7 +597,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		handler._fetchLayer = function(cb, itemId, count) {
 			console.assert(count !== undefined, count);
 			oscar.getItem(itemId, function(item) {
-				var marker = L.marker(item.centerPoint());
+				var markerPos;
+				if (state.dag.count(itemId) && state.dag.at(itemId).clusterHint !== undefined) {
+					markerPos = state.dag.at(itemId).clusterHint;
+				}
+				else {
+					markerPos = item.centerPoint();
+				}
+				var marker = L.marker(markerPos);
 				marker.name = item.name();
 				marker.bbox = item.bbox();
 				marker.count = count;
@@ -738,7 +745,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				var myCBCount = 0;
 				var myCB = function() {
 					myCBCount += 1;
-					if (myCBCount == 2) {
+					if (myCBCount == 3) {
 						de._flushChildrenQueue(parentId);
 					}
 				};
@@ -780,6 +787,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 							myCB();
 						}
 					);
+					
+					state.cqr.clusterHints(childIds, function(hints) {
+						for(var id in hints) {
+							state.dag.at(id).clusterHint = hints[id];
+						}
+						myCB();
+					}, tools.defErrorCB);
 				};
 				
 				spinner.startLoadingSpinner();
