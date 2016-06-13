@@ -303,6 +303,32 @@ void CQRCompleter::children() {
 	writeLogStats("children", cqs, ttm, cqrSize, 0);
 }
 
+void CQRCompleter::cells() {
+	sserialize::TimeMeasurer ttm;
+	ttm.begin();
+	
+	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
+
+	response().set_content_header("application/json");
+	
+	//params
+	std::string cqs = request().get("q");
+	
+	sserialize::CellQueryResult cqr( m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR) );
+	
+	std::ostream & out = response().out();
+	out << '[';
+	if (cqr.cellCount()) {
+		out << cqr.cellId(0);
+	}
+	for(uint32_t i(1), s(cqr.cellCount()); i < s; ++i) {
+		out << ',' << cqr.cellId(i);
+	}
+	out << ']';
+	ttm.end();
+	writeLogStats("cells", cqs, ttm, cqr.cellCount(), 0);
+}
+
 void CQRCompleter::maximumIndependentChildren() {
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();

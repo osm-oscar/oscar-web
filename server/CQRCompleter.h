@@ -64,6 +64,14 @@ public:
 	  * array<(uint32_t, uint32_t)>: [(region children|region children maxitems)]
 	  */
 	void children();
+	
+	/** return the cells for the query q:
+	  * q=<searchstring>
+	  * Return:
+	  * [cellId]
+	  */
+	void cells();
+	
 	/** return the maximum set of independet region children for the query q:
 	  * q=<searchstring>
 	  * rf=<region filter>
