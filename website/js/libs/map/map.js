@@ -1134,50 +1134,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.clusterMarkerRegionShapes.remove(e.itemId)
 		},
 
-		//TODO:what does this function do? what are the callers etc.
-		loadSubhierarchy: function (rid, finish) {
-			state.cqr.regionChildrenInfo(rid, function (regionChildrenInfo) {
-				var children = [];
-				var regionChildrenApxItemsMap = {};
-
-				for (var i in regionChildrenInfo) {
-					var ci = regionChildrenInfo[i];
-					regionChildrenApxItemsMap[ci['id']] = ci['apxitems'];
-					children.push(ci['id']);
-				}
-				
-				oscar.fetchShapes(children, function() {});
-
-				oscar.getItems(children, function (items) {
-						var itemId, item, node, parentNode, marker;
-						parentNode = state.dag.at(rid);
-
-						for (var i in items) {
-							item = items[i];
-							itemId = item.id();
-							if (!state.dag.count(itemId)) {
-								node = state.dag.addNode(itemId, dag.NodeTypes.Region);
-								node.count = regionChildrenApxItemsMap[itemId];
-								node.bbox = item.bbox();
-								node.name = item.name();
-								state.dag.addChild(parentNode.id, itemId);
-								map.addClusterMarker(state.dag.at(itemId));
-							}
-						}
-
-						if ($("#onePath").is(':checked')) {
-							tree.onePath(parentNode);
-						}
-						else if (state.visualizationActive) {
-							tree.refresh(rid);
-						}
-
-						finish();
-					}, function () {
-					}
-				);
-			}, function(){});
-		},
 		loadWholeTree: function () {
 			function subSetHandler(subSet) {
 				state.dag.clear();

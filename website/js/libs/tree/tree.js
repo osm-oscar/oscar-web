@@ -71,11 +71,14 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             $(".treeNodeSub").each(function (key, value) {
                 $(value).on("click", function () {
                     var id = $(this).attr("id");
-					state.mapHandler.clusterMarkers.remove(id);
-                    state.mapHandler.loadSubhierarchy(id, function () {
-                        //state.map.off("zoomend dragend", state.handler);
-                        //state.map.fitBounds(node.bbox);
-                        //state.map.on("zoomend dragend", state.handler);
+                    state.mapHandler.expandDag(id, function () {
+						if ($("#onePath").is(':checked')) {
+							tree.onePath(state.dag.at(id));
+						}
+						else if (state.visualizationActive) {
+							tree.refresh(id);
+						}
+						state.mapHandler.zoomTo(id);
                     });
                 });
             });
