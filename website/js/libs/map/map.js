@@ -766,7 +766,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						if (!state.dag.hasNode(childId)) {
 							var node = state.dag.addNode(childId, dag.NodeTypes.Region);
 							node.count = childInfo['apxitems'];
-							state.dag.addChild(parentId, childId);
 						}
 						childIds.push(childId);
 					}
@@ -782,6 +781,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 								var node = state.dag.at(item.id());
 								node.bbox = item.bbox();
 								node.name = item.name();
+								//add child to our node
+								state.dag.addChild(parentId, item.id());
 							}
 							myCB();
 						}
