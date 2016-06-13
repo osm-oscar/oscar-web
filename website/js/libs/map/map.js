@@ -766,7 +766,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					
 					var childIds = [];
 					var parentNode = state.dag.at(parentId);
-					var parentCount = parentNode.count;
 
 					for (var i in regionChildrenInfo) {
 						var childInfo = regionChildrenInfo[i];
