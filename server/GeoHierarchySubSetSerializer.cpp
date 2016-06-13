@@ -193,6 +193,9 @@ GeoHierarchySubSetSerializer::dagJson(std::ostream& out, const sserialize::Stati
 				typedef sserialize::TransformIterator<decltype(childToStoreIdDerfer), uint32_t, sserialize::Static::spatial::GeoHierarchy::SubSet::Node::ChildrenStorageContainer::const_iterator> ChildIdIterator;
 				printUintArray(out, ChildIdIterator(childToStoreIdDerfer, node->cbegin()), ChildIdIterator(childToStoreIdDerfer, node->cend()));
 			}
+			else {
+				out << "[]";
+			}
 			out << "}";
 			for(const sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr & child : *node) {
 				if (!writtenRegions.count(child->ghId())) {
@@ -201,6 +204,7 @@ GeoHierarchySubSetSerializer::dagJson(std::ostream& out, const sserialize::Stati
 				}
 			}
 		}
+		out << '}';
 	}
 	else {
 		out << "rootchildren\":[],\"regions\":{}";
