@@ -668,6 +668,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                     }
                     this.p.simpleCqrMaxIndependentChildren(this.d.query, successCB, errorCB, regionId, maxOverlap, this.d.regionFilter);
                 },
+				getCells: function(regionId, successCB, errorCB) {
+					var myQ = "$region:" + regionId + " ( " + this.d.query + " )";
+					this.p.cells(myQ, successCB, errorCB);
+				},
                 //returning an array in successCB with objects={id : int, apxitems : int}
                 //returns rootRegionChildrenInfo if regionId is undefined
                 regionChildrenInfo: function (regionId, successCB, errorCB) {
@@ -1106,6 +1110,30 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 mimeType: 'application/json',
                 success: function (jsondesc) {
                     successCB(jsondesc);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    errorCB(textStatus, errorThrown);
+                }
+            });
+        },
+        cells: function (query, successCB, errorCB) {
+            var params = {};
+            params['q'] = query;
+            var qpath = this.completerBaseUrl + "/cqr/clustered/cells";
+            jQuery.ajax({
+                type: "GET",
+                url: qpath,
+                data: params,
+                mimeType: 'text/plain',
+                success: function (plain) {
+					try {
+						json = JSON.parse(plain);
+					}
+					catch (err) {
+						errorCB("Parsing the cells failed with the following parameters: " + JSON.stringify(params), err);
+						return;
+					}
+					successCB(json);
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     errorCB(textStatus, errorThrown);
