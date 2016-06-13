@@ -771,9 +771,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						var childInfo = regionChildrenInfo[i];
 						var childId = childInfo['id'];
 						if (!state.dag.hasNode(childId)) {
-							var node = state.dag.addNode(childId, dag.NodeTypes.Region);
-							node.count = childInfo['apxitems'];
+							state.dag.addNode(childId, dag.NodeTypes.Region);
 						}
+						state.dag.at(childId).count = childInfo['apxitems'];
 						childIds.push(childId);
 					}
 					
