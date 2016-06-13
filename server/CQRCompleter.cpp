@@ -486,7 +486,7 @@ void CQRCompleter::dag() {
 	
 	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
 	
-	response().set_content_header("text/json");
+	response().set_content_header("application/json");
 	
 	//params
 	std::string cqs = request().get("q");
