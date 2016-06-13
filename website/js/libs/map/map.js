@@ -1226,23 +1226,24 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 
 			if (node.children.size()) {
 				for (var childId in node.children.values()) {
+					
 					var childNode = state.dag.at(childId);
 					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
-					
-					//if the region fully encloses this region, then display its region exclusive items
-					//TODO:this should take the current map bounds into account
-					if (myOverlap >= 0.95 && childNode.items.size()) {
-						childNode.displayState |= dag.DisplayStates.InResultsTab;
-					}
-					
+
 					if (myOverlap >= config.clusters.bboxOverlap) {
 						map.updateDag(childNode)
+						if (childNode.items.size()) {
+							childNode.displayState |= dag.DisplayStates.InResultsTab;
+						}
 					}
 					else if (myOverlap > config.clusters.shapeOverlap &&
 							oscar.shapeCache.count(childNode.id) &&
 							oscar.intersect(state.map.getBounds(), oscar.shapeCache.at(childNode.id)))
 					{
 						map.updateDag(childNode);
+						if (childNode.items.size()) {
+							childNode.displayState |= dag.DisplayStates.InResultsTab;
+						}
 					}
 					else { //overlap is smaller, only draw the cluster marker
 						childNode.displayState |= dag.DisplayStates.HasClusterMarker;
