@@ -1367,11 +1367,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			var cqr = state.cqr;
 			var processedChildCount = 0;
 			
-			function childProcessed() {
+			var childProcessed = function() {
 				processedChildCount += 1;
-				if (processedChildCount < cqr.ohPath().length*2) {
+				//account for the root region so this should <=
+				if (processedChildCount <= cqr.ohPath().length) {
 					return;
 				}
+				spinner.endLoadingSpinner();
 				//everything is there
 				var rid = 0xFFFFFFFF;
 				// fit the viewport to the target region
@@ -1387,60 +1389,19 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				state.map.on("zoomend dragend", map.viewChanged);
 			};
 			
-			function processChildren(regionChildrenInfo, parentId) {
-				var regionChildrenApxItemsMap = {};
-				var childIds = [];
-				var parentNode = state.dag.at(parentId);
-				var parentCount = parentNode.count;
-
-				for (var i in regionChildrenInfo) {
-					var childInfo = regionChildrenInfo[i];
-					var childId = childInfo['id'];
-					if (!state.dag.hasNode(childId)) {
-						var node = state.dag.addNode(childId, dag.NodeTypes.Region);
-						node.count = childInfo['apxitems'];
-						state.dag.addChild(parentId, childId);
-					}
-					childIds.push(childId);
-				}
-				//fetch the shape
-				oscar.fetchShapes(childIds, function() {});
-				
-				//now get the item info for the name and the bbox
-				oscar.getItems(childIds,
-					function (items) {
-						for (var i in items) {
-							var item = items[i];
-							var node = state.dag.at(item.id());
-							node.bbox = item.bbox();
-							node.name = item.name();
-						}
-						childProcessed();
-					}
-				);
-			};
-			function getRegionChildrenInfo(parentId) {
-				spinner.startLoadingSpinner();
-				cqr.regionChildrenInfo(parentId, function(regionChildrenInfo) {
-						spinner.endLoadingSpinner()
-						processChildren(regionChildrenInfo, parentId);
-					},
-					tools.defErrorCB
-				);
-			};
-			function expandDagItems(parentId) {
-				map.dagExpander.expandDagItems(parentId, function() {
-					childProcessed();
-				});
-			};
+			spinner.startLoadingSpinner();
 			if (cqr.ohPath().length) {
 				oscar.fetchShapes(cqr.ohPath(), function() {});
+				for(var i in cqr.ohPath()) {
+					var regionId = cqr.ohPath()[i];
+					state.dag.addNode(regionId, dag.NodeTypes.Region);
+				}
 				var parentId = 0xFFFFFFFF;
 				for(var i in cqr.ohPath()) {
-					getRegionChildrenInfo(parentId);
-					expandDagItems(parentId);
+					map.dagExpander.expandDag(parentId, function() { childProcessed(); });
 					parentId = cqr.ohPath()[i];
 				}
+				map.dagExpander.expandDag(parentId, function() { childProcessed(); });
 			}
 			else {
 				childProcessed();
