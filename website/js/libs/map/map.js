@@ -641,8 +641,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			m_childrenQueue: tools.SimpleHash(), //parentId -> [call-back-functions]
 			m_itemsQueue: tools.SimpleHash(), //(parentId, offset) -> [call-back-functions]
 	   
-			_insertChildredQueue: function(parentId, cb) {
-				if (!de.inChildredQueue(parentId)) {
+			_insertChildrenQueue: function(parentId, cb) {
+				if (!de.inChildrenQueue(parentId)) {
 					de.m_childrenQueue.insert(parentId, [cb]);
 				}
 				else {
@@ -657,7 +657,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					de.m_itemsQueue.at(parentId + ":" + offset).push(cb);
 				}
 			},
-			_eraseChildredQueue: function(parentId) {
+			_eraseChildrenQueue: function(parentId) {
 				return de.m_childrenQueue.erase(parentId);
 			},
 			_eraseItemsQueue: function(parentId, offset) {
@@ -670,7 +670,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				return de.m_itemsQueue.at(parentId + ":" + offset);
 			},
 	   
-			inChildredQueue: function(parentId) {
+			inChildrenQueue: function(parentId) {
 				return de.m_childrenQueue.count(parentId);
 			},
 			inItemsQueue: function(parentId, offset) {
@@ -682,7 +682,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				for(var i in cbs) {
 					cbs[i]();
 				}
-				de._eraseChildredQueue();
+				de._eraseChildrenQueue(parentId);
 			},
 			
 			_flushItemsQueue: function(parentId, offset) {
@@ -742,12 +742,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			
 			expandDag: function(parentId, cb) {
-				if (de.inChildredQueue(parentId)) {
-					de._insertChildredQueue(parentId, cb);
+				
+				if (de.inChildrenQueue(parentId)) {
+					de._insertChildrenQueue(parentId, cb);
 					return;
 				}
 				else {
-					de._insertChildredQueue(parentId, cb);
+					de._insertChildrenQueue(parentId, cb);
 				}
 				
 				var myCBCount = 0;
@@ -760,7 +761,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				function processChildren(regionChildrenInfo) {
 					if (!regionChildrenInfo.length) { //parent is a leaf node
 						state.dag.node(parentId).isLeaf = true;
-						cb();
+						de._flushChildrenQueue(parentId);
 						return;
 					}
 					
@@ -1271,7 +1272,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 			}
 			else {//fetch children
-				if (!map.dagExpander.inChildredQueue(node.id)) {
+				if (!map.dagExpander.inChildrenQueue(node.id)) {
 					map.expandDag(node.id, function() {
 						map.mapViewChanged();
 					});
