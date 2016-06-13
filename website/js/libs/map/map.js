@@ -1135,42 +1135,65 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 
 		loadWholeTree: function () {
+			//TODO: move all into DagExpander?
+			var myCBCount = 0;
+			var myCB = function() {
+				myCBCount += 1;
+				if (myCBCount < 3) {
+					return;
+				}
+				map.mapViewChanged();
+				tree.visualizeDAG(state.dag.at(0xFFFFFFFF));
+			}
+			
 			function subSetHandler(subSet) {
-				state.dag.clear();
 				var regions = [];
-				for (var region in subSet.regions) {
-					regions.push(region);
+				for (var regionId in subSet.regions) {
+					if (!state.dag.count(regionId)) {
+						regions.push(parseInt(regionId));
+						state.dag.addNode(regionId, dag.NodeTypes.Region);
+					}
 				}
 				//don't cache shapes here! there may be a lot of shapes!
-
-				//fetch the items
+				
+				//get the cluster hints
+				state.cqr.clusterHints(regions, function(hints) {
+					for(var regionId in hints) {
+						console.assert(state.dag.count(regionId));
+						state.dag.at(regionId).clusterHint = hints[regionId];
+					}
+					myCB();
+				});
+				
+				//fetch the item info
 				oscar.getItems(regions,
 					function (items) {
 						for (var i in items) {
 							var item = items[i];
-							var itemId = item.id();
-							var regionInSubSet = subSet.regions[itemId];
-							
-							var node = state.dag.addNode(itemId, dag.NodeTypes.Region);
+							var node = state.dag.at(item.id());
 							node.name = item.name();
-							node.count = regionInSubSet.apxitems;
 							node.bbox = item.bbox();
-
-							for (var i in regionInSubSet.children) {
-								var childId = regionInSubSet.children[i];
-								state.dag.addNode(childId, dag.NodeTypes.Region);
-								state.dag.addChild(itemId, childId);
-							}
 						}
-
-						for (var j in subSet.rootchildren) {
-							var childId = subSet.rootchildren[j];
-							state.dag.addNode(childId, dag.NodeTypes.Region);
-							state.dag.addChild(0xFFFFFFFF, childId);
-						}
+						myCB();
 					},
-					oscar.defErrorCB
+					function(p1, p2) {
+						tools.defErrorCB(p1, p2);
+						myCB();
+					}
 				);
+				
+				for (var regionId in subSet.regions) {
+					state.dag.at(regionId).count = subSet.regions[regionId].apxitems;
+					var children = subSet.regions[regionId].children;
+					for (var i in children) {
+						state.dag.addChild(regionId, children[i]);
+					}
+				}
+
+				for (var j in subSet.rootchildren) {
+					state.dag.addChild(0xFFFFFFFF, subSet.rootchildren[j]);
+				}
+				myCB();
 			}
 
 			state.cqr.getDag(subSetHandler, tools.defErrorCB);
