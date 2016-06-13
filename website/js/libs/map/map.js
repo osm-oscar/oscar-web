@@ -304,7 +304,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$(itemListHandler).on("itemDetailsOpened", function(e) { handler.emit_itemDetailsOpened(e.itemId); });
 				$(itemListHandler).on("itemDetailsClosed", function(e) { handler.emit_itemDetailsClosed(e.itemId); });
 				$(itemListHandler).on("itemLinkClicked", function(e) { handler.emit_itemLinkClicked(e.itemId); });
+				var myActiveRegionId = handler.activeRegion();
 				handler.refresh();
+				if (myActiveRegionId !== -1) {
+					handler.openTab(myActiveRegionId);
+				}
 				return handler.m_regions.at(regionId).handler;
 			},
 			insertItem: function(regionId, item) {
@@ -320,12 +324,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//removes a region (and it's tab), return true, if removal was successfull
 			removeRegion: function(regionId) {
 				if (handler.m_regions.count(regionId)) {
+					var myActiveRegionId = handler.activeRegion();
 					var v = handler.m_regions.at(regionId);
 					v.handler.destroy();
 					$("#" + v.tabHeadId ).remove();
 					$("#" + v.tabContentId ).remove();
 					handler.m_regions.erase(regionId);
 					handler.refresh();
+					if (regionId !== myActiveRegionId && myActiveRegionId !== -1) {
+						handler.openTab(myActiveRegionId);
+					}
 					//check if this was the last region we have,
 					//since then there will be no new active region
 					if (!handler.size()) {
