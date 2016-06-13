@@ -79,7 +79,7 @@ void CQRCompleter::fullCQR() {
 	}
 	else {
 		if (sst == "flatjson") {
-			response().set_content_header("application/json");
+			response().set_content_header("text/json");
 		}
 		else {
 			response().set_content_header("application/xml");
@@ -310,7 +310,7 @@ void CQRCompleter::cells() {
 	
 	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
 
-	response().set_content_header("application/json");
+	response().set_content_header("text/json");
 	
 	//params
 	std::string cqs = request().get("q");
@@ -486,7 +486,7 @@ void CQRCompleter::dag() {
 	
 	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
 	
-	response().set_content_header("application/json");
+	response().set_content_header("text/json");
 	
 	//params
 	std::string cqs = request().get("q");
