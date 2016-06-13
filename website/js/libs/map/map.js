@@ -1361,7 +1361,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			function childProcessed() {
 				processedChildCount += 1;
-				if (processedChildCount < cqr.ohPath().length) {
+				if (processedChildCount < cqr.ohPath().length*2) {
 					return;
 				}
 				//everything is there
@@ -1420,11 +1420,17 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					tools.defErrorCB
 				);
 			};
+			function expandDagItems(parentId) {
+				map.dagExpander.expandDagItems(parentId, function() {
+					childProcessed();
+				});
+			};
 			if (cqr.ohPath().length) {
 				oscar.fetchShapes(cqr.ohPath(), function() {});
 				var parentId = 0xFFFFFFFF;
 				for(var i in cqr.ohPath()) {
 					getRegionChildrenInfo(parentId);
+					expandDagItems(parentId);
 					parentId = cqr.ohPath()[i];
 				}
 			}
