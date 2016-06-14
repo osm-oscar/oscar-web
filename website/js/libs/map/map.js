@@ -637,7 +637,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	//expands the dag on demand
 	var DagExpander = function() {
 		return de = {
-			
+			cfg: {
+				preloadShapes : true
+			},
+	   
 			m_childrenQueue: tools.SimpleHash(), //parentId -> [call-back-functions]
 			m_itemsQueue: tools.SimpleHash(), //(parentId, offset) -> [call-back-functions]
 	   
@@ -779,7 +782,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 					
 					//cache the shapes
-					oscar.fetchShapes(childIds, function() {});
+					if (de.cfg.preloadShapes) {
+						oscar.fetchShapes(childIds, function() {});
+					}
 					
 					//now get the item info for the name and the bbox
 					oscar.getItems(childIds,
@@ -843,6 +848,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//dag handling
 		dagExpander: DagExpander(),
 		
+		//cfg
+		cfg: {
+			displayClusterShapes: true,
+			displayRegionShapes: true
+		},
 		
 		//this has to be called prior usage
 		init: function() {
@@ -904,6 +914,19 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.itemMarkers.clear();
 			map.regionMarkers.clear();
 			map.clusterMarkers.clear();
+		},
+	   
+		//some configuration functions
+		setPreloadShapes: function(bool) {
+			map.dagExpander.cfg.preloadShapes = bool;
+		},
+	   
+		setDisplayClusterShapes: function(bool) {
+			map.cfg.displayClusterShapes = bool;
+		},
+	   
+		setDisplayRegionShapes: function(bool) {
+			map.cfg.displayRegionShapes = bool;
 		},
 		
 		displayCqr: function (cqr) {
@@ -1095,7 +1118,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 		},
 		onRegionMarkerMouseOver: function(e) {
-			map.regionShapes.add(e.itemId);
+			if (map.cfg.displayClusterShapes) {
+				map.regionShapes.add(e.itemId);
+			}
 			var coords = map.regionMarkers.coords(e.itemId);
 			var marker = map.regionMarkers.layer(e.itemId);
 			L.popup({offset: new L.Point(0, -10)})
@@ -1122,7 +1147,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 		},
 		onClusterMarkerMouseOver: function(e) {
-			map.clusterMarkerRegionShapes.add(e.itemId);
+			if (map.cfg.displayClusterShapes) {
+				map.clusterMarkerRegionShapes.add(e.itemId);
+			}
 			var coords = map.clusterMarkers.coords(e.itemId);
 			var marker = map.clusterMarkers.layer(e.itemId);
 			L.popup({offset: new L.Point(0, -10)})
@@ -1371,7 +1398,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			spinner.startLoadingSpinner();
 			if (cqr.ohPath().length) {
-				oscar.fetchShapes(cqr.ohPath(), function() {});
+				if (map.dagExpander.cfg.fetchShapes) {
+					oscar.fetchShapes(cqr.ohPath(), function() {});
+				}
 				for(var i in cqr.ohPath()) {
 					var regionId = cqr.ohPath()[i];
 					state.dag.addNode(regionId, dag.NodeTypes.Region);

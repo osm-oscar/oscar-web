@@ -177,6 +177,12 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 }
             });
 			
+			$('#display_cluster_shapes_checkbox').click(function() {
+				var enabled = $(this).is(':checked');
+				map.setPreloadShapes(enabled);
+				map.setDisplayClusterShapes(enabled);
+			});
+			
 			state.sidebar.on('tab-closed', function(e) {
 			});
 			
