@@ -835,14 +835,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		//map shapes
 		itemShapes: undefined,
-		regionShapes: undefined,
 		relativesShapes: undefined,
 		highlightItemShapes: undefined,
 		clusterMarkerRegionShapes: undefined,
 		
 		//markers
 		itemMarkers: ItemMarkerHandler(state.map),
-		regionMarkers: RegionMarkerHandler(state.map),
 		clusterMarkers: undefined,
 		
 		//dag handling
@@ -862,13 +860,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			//init the map layers
 			map.itemShapes = map.ItemShapeHandler(state.map, config.styles.shapes.items.normal);
-			map.regionShapes = map.ItemShapeHandler(state.map, config.styles.shapes.regions.normal);
 			map.relativesShapes = map.ItemShapeHandler(state.map, config.styles.shapes.relatives.normal);
 			map.highlightItemShapes = map.ItemShapeHandler(state.map, config.styles.shapes.activeItems);
 			map.clusterMarkerRegionShapes = map.ItemShapeHandler(state.map, config.styles.shapes.regions.highlight);
 			
 			map.itemMarkers = map.ItemMarkerHandler(state.map);
-			map.regionMarkers = map.RegionMarkerHandler(state.map);
 
 			
 			//init the cluster markers
@@ -887,10 +883,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
 			
-			$(map.regionMarkers).on("click", map.onRegionMarkerClicked);
-			$(map.regionMarkers).on("mouseover", map.onRegionMarkerMouseOver);
-			$(map.regionMarkers).on("mouseout", map.onRegionMarkerMouseOut);
-			
 			$(map.clusterMarkers).on("click", map.onClusterMarkerClicked);
 			$(map.clusterMarkers).on("mouseover", map.onClusterMarkerMouseOver);
 			$(map.clusterMarkers).on("mouseout", map.onClusterMarkerMouseOut);
@@ -906,13 +898,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.relativesTab.relativesHandler.clear();
 			
 			map.itemShapes.clear();
-			map.regionShapes.clear();
 			map.relativesShapes.clear();
 			map.highlightItemShapes.clear();
 			map.clusterMarkerRegionShapes.clear();
 			
 			map.itemMarkers.clear();
-			map.regionMarkers.clear();
 			map.clusterMarkers.clear();
 		},
 	   
@@ -1101,35 +1091,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.resultListTabs.openItem(e.itemId);
 			map.resultListTabs.activeTab().scrollTo(e.itemId);
 			map.showItemRelatives();
-		},
-		
-		onRegionMarkerClicked: function(e) {
-			map.closePopups();
-			map.regionMarkers.remove(e.itemId);
-			if (state.dag.node(e.itemId).isLeaf) {
-				map.expandDagItems(e.itemId, function() {
-					map.mapViewChanged();
-				});
-			}
-			else {
-				map.expandDag(e.itemId, function() {
-					map.mapViewChanged();
-				});
-			}
-		},
-		onRegionMarkerMouseOver: function(e) {
-			if (map.cfg.displayClusterShapes) {
-				map.regionShapes.add(e.itemId);
-			}
-			var coords = map.regionMarkers.coords(e.itemId);
-			var marker = map.regionMarkers.layer(e.itemId);
-			L.popup({offset: new L.Point(0, -10)})
-				.setLatLng(coords)
-				.setContent(marker.name).openOn(state.map);
-		},
-		onRegionMarkerMouseOut: function(e) {
-			map.closePopups();
-			map.regionShapes.remove(e.itemId)
 		},
 		onClusterMarkerClicked: function(e) {
 			map.closePopups();
