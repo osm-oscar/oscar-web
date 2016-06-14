@@ -349,9 +349,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
     var oscarObject = {
 
         completerBaseUrl: module.config().url,
-        maxFetchItems: 100,
-        maxFetchShapes: 100,
-        maxFetchIdx: 100,
+        maxFetchItems: module.config().maxFetchItems,
+        maxFetchShapes: module.config().maxFetchShapes,
+        maxFetchIdx: module.config().maxFetchIdx,
         cqrCounter: 0,
         itemCache: ItemCache(module.config().url),
         shapeCache: ShapeCache(module.config().url),

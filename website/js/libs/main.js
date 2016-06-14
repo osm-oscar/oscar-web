@@ -1,7 +1,14 @@
 requirejs.config({
     baseUrl: "js/libs",
     config: {
-        'oscar': {url: "http://localoscar/oscar"}
+        'oscar': {
+// 			url: "http://localoscar/oscar",
+			url: "http://oscardev.fmi.uni-stuttgart.de/oscar",
+			//thw following variables have to match the ones in your server config (or should be smaller)
+			maxFetchItems: 2000,
+			maxFetchShapes: 2000,
+			maxFetchIdx: 1000
+		}
     },
     paths: {
         "jquery": "jquery/jquery.min",
