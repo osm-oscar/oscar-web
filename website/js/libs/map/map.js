@@ -848,8 +848,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		//cfg
 		cfg: {
-			displayClusterShapes: true,
-			displayRegionShapes: true
+			//call reloadShapeConfig() after changing stuff
+			clusterShapes: {
+				auto: true,
+				display: true,
+				preload: true,
+				threshold: 25 //maximum # root children to display shapes
+			}
 		},
 		
 		//this has to be called prior usage
@@ -906,24 +911,27 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.clusterMarkers.clear();
 		},
 	   
-		//some configuration functions
-		setPreloadShapes: function(bool) {
-			map.dagExpander.cfg.preloadShapes = bool;
+		//call this after changing options regarding shape handling
+		reloadShapeConfig: function() {
+			if (map.cfg.clusterShapes.auto) {
+				if (state.cqr.rootRegionChildrenInfo().length > map.cfg.clusterShapes.threshold) {
+					map.cfg.clusterShapes.preload = false;
+					map.cfg.clusterShapes.display = false;
+				}
+				else {
+					map.cfg.clusterShapes.preload = true;
+					map.cfg.clusterShapes.display = true;
+				}
+			}
+			map.dagExpander.cfg.preloadShapes = map.cfg.clusterShapes.preload;
 		},
 	   
-		setDisplayClusterShapes: function(bool) {
-			map.cfg.displayClusterShapes = bool;
-		},
-	   
-		setDisplayRegionShapes: function(bool) {
-			map.cfg.displayRegionShapes = bool;
-		},
-		
 		displayCqr: function (cqr) {
 			map.clear();
 			if (!cqr.hasResults()) {
 				return;
 			}
+			map.reloadShapeConfig();
 			state.dag.addRoot(0xFFFFFFFF);
 			var root = state.dag.node(0xFFFFFFFF);
 			root.count = cqr.rootRegionApxItemCount();
@@ -1108,7 +1116,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 		},
 		onClusterMarkerMouseOver: function(e) {
-			if (map.cfg.displayClusterShapes) {
+			if (map.cfg.clusterShapes.display) {
 				map.clusterMarkerRegionShapes.add(e.itemId);
 			}
 			var coords = map.clusterMarkers.coords(e.itemId);

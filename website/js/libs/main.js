@@ -179,8 +179,10 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 			
 			$('#display_cluster_shapes_checkbox').click(function() {
 				var enabled = $(this).is(':checked');
-				map.setPreloadShapes(enabled);
-				map.setDisplayClusterShapes(enabled);
+				map.cfg.clusterShapes.auto = false;
+				map.cfg.clusterShapes.preload = enabled;
+				map.cfg.clusterShapes.display = enabled;
+				map.reloadShapeConfig();
 			});
 			
 			state.sidebar.on('tab-closed', function(e) {
