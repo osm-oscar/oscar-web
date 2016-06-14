@@ -1229,7 +1229,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						}
 					}
 					else { //overlap is smaller, only draw the cluster marker
-						childNode.displayState |= dag.DisplayStates.HasClusterMarker;
+						if ((childNode.clusterHint !== undefined && state.map.getBounds().contains(childNode.clusterHint)) ||
+							oscar.itemCache.count(childNode.id) && state.map.getBounds().contains(oscar.itemCache.at(childNode.id).centerPoint())
+							)
+						{
+							childNode.displayState |= dag.DisplayStates.HasClusterMarker;
+						}
 					}
 				}
 			}
