@@ -2,7 +2,8 @@ define(["jquery", "tools"], function ($, tools) {
     return d = {
 		NodeTypes: {
 			Region: 0,
-			Item: 1
+			Cell: 1,
+			Item: 2
 		},
 		DisplayStates: {
 			None: 0,
@@ -15,7 +16,7 @@ define(["jquery", "tools"], function ($, tools) {
 		//this is a dag for the hierarchy
 		dag: function() {
 			return {
-				//type should be either region or item
+				//type should be either region, cell or item
 				Node: function(id, type) {
 					return node = {
 						parents: tools.SimpleSet(),
@@ -27,35 +28,53 @@ define(["jquery", "tools"], function ($, tools) {
 						bbox: undefined
 					}
 				},
-				ItemNode: function(id, type) {
-					return this.Node(id, type);
+				ItemNode: function(id) {
+					return this.Node(id, d.NodeTypes.Item);
 				},
-				RegionNode: function(id, type) {
-					var node = this.Node(id, type);
+				CellNode: function(id) {
+					return this.Node(id, d.NodeTypes.Cell);
+				},
+				RegionNode: function(id) {
+					var node = this.Node(id, d.NodeTypes.Region);
 					node.children = tools.SimpleSet();
 					node.items = tools.SimpleSet();
+					node.cells = tools.SimpleSet();
 					node.count = -1;
 					node.isLeaf = false;
 					node.mayHaveItems = true;
 					return node;
 				},
-				m_nodes: tools.SimpleHash(), //maps from nodeId -> (ItemNode | RegionNode)
-				size: function() {
-					return this.m_nodes.size();
+				m_regions: tools.SimpleHash(), //maps from nodeId -> RegionNode
+				m_cells: tools.SimpleHash(), //maps from nodeId -> CellNode
+				m_items: tools.SimpleHash(), //maps from nodeId -> ItemNode
+				regionSize: function() {
+					return this.m_regions.size();
 				},
-				hasNode: function(id) {
-					return this.m_nodes.count(id);
+				cellSize: function() {
+					return this.m_cells.size();
 				},
-				count: function(id) {
-					return this.hasNode(id);
+				itemSize: functio() {
+					return this.m_items.size();
 				},
-				at: function(id) {
-					return this.node(id);
+				hasRegion: function(id) {
+					return this.m_regions.count(id);
 				},
-				node: function(id) {
-					return this.m_nodes.at(id);
+				hasCell: function(id) {
+					return this.m_cells.count(id);
 				},
-				addChild: function(parentId, childId) {
+				hasItem: function(id) {
+					return this.m_items.count(id);
+				},
+				region: function(id) {
+					return this.m_regions.at(id);
+				},
+				cells: function(id) {
+					return this.m_cells.at(id);
+				},
+				items: function(id) {
+					return this.m_items.at(id);
+				},
+				addEdge: function(sourceNode, targetNode) {
 					if (this.hasNode(parentId) && this.hasNode(childId)) {
 						var parentNode = this.node(parentId);
 						var childNode = this.node(childId);
@@ -63,8 +82,14 @@ define(["jquery", "tools"], function ($, tools) {
 						if (childNode.type === d.NodeTypes.Item) {
 							parentNode.items.insert(childId);
 						}
-						else {
+						else if (childNode.type === d.NodeTypes.Cell) {
+							parentNode.cells.insert(childId);
+						}
+						else if (childNode.type === d.NodeTypes.Item) {
 							parentNode.children.insert(childId);
+						}
+						else {
+							console.assert(false);
 						}
 						childNode.parents.insert(parentId);
 					}
@@ -79,10 +104,13 @@ define(["jquery", "tools"], function ($, tools) {
 				addNode: function(id, type) {
 					if (!this.hasNode(id)) {
 						if (type === d.NodeTypes.Region) {
-							this.m_nodes.insert(id, this.RegionNode(id, type));
+							this.m_nodes.insert(id, this.RegionNode(id));
 						}
-						else {
-							this.m_nodes.insert(id, this.ItemNode(id, type));
+						else if (type === d.NodeTypes.Cell) {
+							this.m_nodes.insert(id, this.ItemNode(id));
+						}
+						else if (type === d.NodeTypes.Item) {
+							
 						}
 					}
 					return this.node(id);
