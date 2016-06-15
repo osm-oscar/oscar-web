@@ -340,16 +340,11 @@ text {
     height: 25px;
 }
 
-.treeNodeSub{
+.treeNodeLink {
     color: black;
     display: block;
     margin-top: 5px;
-}
 
-.treeNodeItems{
-    color: black;
-    display: block;
-    margin-top: 5px;
 }
 
 g.node > rect{

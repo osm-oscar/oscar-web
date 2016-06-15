@@ -70,8 +70,11 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
         _addClickToLoadSubHierarchy: function () {
             $(".treeNodeSub").each(function (key, value) {
                 $(value).on("click", function () {
-                    var id = $(this).attr("id");
+                    var id = $(this).attr("nodeId");
                     state.mapHandler.expandDag(id, function () {
+						if (!state.dag.count(id)) {
+							return;
+						}
 						if ($("#onePath").is(':checked')) {
 							tree.onePath(state.dag.at(id));
 						}
@@ -84,11 +87,19 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             });
         },
 
+        _addClickToShowRegion: function () {
+            $(".treeNodeShow").each(function (key, value) {
+                $(value).on("click", function () {
+                    var id = $(this).attr("nodeId");
+					state.mapHandler.zoomTo(parseInt(id));
+                });
+            });
+        },
+	   
         _addClickToLoadItems: function () {
-            $("#left_menu_parent").css("display", "block");
             $(".treeNodeItems").each(function (key, value) {
                 $(value).on("click", function () {
-                    var id = $(this).attr("id");
+                    var id = $(this).attr("nodeId");
 					state.mapHandler.zoomTo(id);
 					state.mapHandler.expandDagItems(id, function() {
 						state.mapHandler.mapViewChanged();
@@ -115,18 +126,6 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
         },
 
         /**
-         * returns the label for a leaf in the tree
-         *
-         * @param name of the node
-         * @returns {string} label-string
-         */
-        _leafLabel: function (node) {
-            return "<div class='treeNode'><div class='treeNodeName'>" + node.name.toString()
-                + "<span class='badge'>" + node.count + "</span></div><a id='"
-                + node.id + "' class='treeNodeItems' href='#'>Load Items</a></div>";
-        },
-
-        /**
          * returns the label for a node (non-leaf) in the tree
          *
          * @param name of the node
@@ -134,10 +133,15 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
          * @returns {string} label-string
          */
         _nodeLabel: function (node) {
-            return "<div class='treeNode'><div class='treeNodeName'>" + node.name.toString()
-                + "<span class='badge'>" + node.count + "</span></div><a id='" + node.id
-                + "' class='treeNodeSub' href='#'>Show Children</a><a id='" + node.id
-                + "' class='treeNodeItems' href='#'>Load Items</a></div>";
+            var label = "<div class='treeNode'>";
+			label += "<div class='treeNodeName'>" + node.name.toString() + "<span class='badge'>" + node.count + "</span></div>";
+			if (!node.isLeaf) {
+				label += "<a nodeId='" + node.id+ "' class='treeNodeSub treeNodeLink' href='#'>Show Children</a>";
+			}
+			label += "<a nodeId='" + node.id + "' class='treeNodeItems treeNodeLink' href='#'>Load Items</a>";
+			label += "<a NodeId='" + node.id + "' class='treeNodeShow treeNodeLink' href='#'>Show</a>";
+			label += "</div>";
+			return label;
         },
 
         /**
@@ -147,17 +151,10 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
          * @returns {*} attributes for the node
          */
         _nodeAttr: function (node) {
-            if (node.type === dag.NodeTypes.Region) {
-                return {
-                    labelType: "html",
-                    label: tree._nodeLabel(node)
-                };
-            } else { //TODO: this path should never be chosen?
-                return {
-                    labelType: "html",
-                    label: tree._leafLabel(node)
-                }
-            }
+			return {
+				labelType: "html",
+				label: tree._nodeLabel(node)
+			};
         },
 
         /**
@@ -233,6 +230,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             d3.selectAll(".node").on("mouseout", this._deHoverNode.bind(this));
             this._addClickToLoadSubHierarchy();
             this._addClickToLoadItems();
+			this._addClickToShowRegion();
         },
 
         /**
