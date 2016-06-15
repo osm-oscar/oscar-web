@@ -1318,11 +1318,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			removedClusterMarkers.each(function(key) {
 				map.clusterMarkers.remove(key);
 			});
-			removedTabListRegions.each(function(key) {
-				map.resultListTabs.removeRegion(key);
-			});
 			missingClusterMarkers.each(function(key) {
 				map.clusterMarkers.add(key, state.dag.node(key).count);
+			});
+			removedTabListRegions.each(function(key) {
+				map.resultListTabs.removeRegion(key);
 			});
 			missingTabListRegions.each(function(regionId) {
 				var node = state.dag.at(regionId);
