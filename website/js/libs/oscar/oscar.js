@@ -638,21 +638,27 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 query: function () {
                     return this.d.query;
                 },
-                regionItemIds: function (regionId, successCB, errorCB, resultListOffset) {
+                regionItemIds: function (regionId, successCB, errorCB, resultListOffset, count) {
+					if (count === undefined) {
+						count = this.p.maxFetchItems;
+					}
                     this.p.simpleCqrItems("$region:" + regionId + " (" + this.d.query + ")",
                         function (itemIds) {
                             successCB(regionId, itemIds);
                         },
                         errorCB,
-                        this.p.maxFetchItems, resultListOffset, this.d.regionFilter);
+                        count, resultListOffset, this.d.regionFilter);
                 },
-                regionExclusiveItemIds: function (regionId, successCB, errorCB, resultListOffset) {
+                regionExclusiveItemIds: function (regionId, successCB, errorCB, resultListOffset, count) {
+					if (count === undefined) {
+						count = this.p.maxFetchItems;
+					}
                     this.p.simpleCqrItems("$rec:" + regionId + " (" + this.d.query + ")",
                         function (itemIds) {
                             successCB(regionId, itemIds);
                         },
                         errorCB,
-                        this.p.maxFetchItems, resultListOffset, this.d.regionFilter);
+                        count, resultListOffset, this.d.regionFilter);
                 },
                 rootRegionChildrenInfo: function () {
                     return this.d.regionInfo[0xFFFFFFFF];
