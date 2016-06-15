@@ -638,7 +638,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	var DagExpander = function() {
 		return de = {
 			cfg: {
-				preloadShapes : true
+				preloadShapes : true,
+				bulkItemFetchCount: 100
 			},
 	   
 			m_childrenQueue: tools.SimpleHash(), //parentId -> [call-back-functions]
@@ -736,7 +737,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					state.cqr.regionExclusiveItemIds(parentId,
 						myOp,
 						tools.defErrorCB,
-						offset
+						offset,
+						de.cfg.bulkItemFetchCount
 					);
 				}
 				else {
@@ -854,6 +856,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				display: true,
 				preload: true,
 				threshold: 25 //maximum # root children to display shapes
+			},
+			resultList: {
+				bulkItemFetchCount: 100
 			}
 		},
 		
@@ -924,6 +929,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 			}
 			map.dagExpander.cfg.preloadShapes = map.cfg.clusterShapes.preload;
+			map.dagExpander.cfg.bulkItemFetchCount = map.cfg.resultList.bulkItemFetchCount;
 		},
 	   
 		displayCqr: function (cqr) {
