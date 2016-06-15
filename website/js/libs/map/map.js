@@ -1289,18 +1289,34 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			if (startNode === undefined) {
 				startNode = 0xFFFFFFFF;
 			}
-			var timer = tools.timer("mapViewChanged");
-
+			var timers = {
+				complete: tools.timer("mapViewChanged::complete"),
+				dagClear: tools.timer("mapViewChanged::dagClear"),
+				updateDag: tools.timer("mapViewChanged::updateDag"),
+				viewDiff: tools.timer("mapViewChanged::viewDiff"),
+				mapUpdate: tools.timer("mapViewChanged::mapUpdate"),
+				clusterUpdate: tools.timer("mapViewChanged::clusterUpdate"),
+				tabUpdate: tools.timer("mapViewChanged::tabUpdate"),
+				tabRemove: tools.timer("mapViewChanged::tabRemove"),
+				tabAdd: tools.timer("mapViewChanged::tabAdd")
+			};
+			
+			
 			state.dag.clearDisplayState();
+			timers.dagClear.stop();
+			
 			map.closePopups();
-
+			
+			timers.updateDag.start();
 			map.updateDag(state.dag.at(0xFFFFFFFF));
+			timers.updateDag.stop();
 			
 			//the dag now holds the state the gui should have
 			//let's get them synchronized
 			//recycle as many markers, tabs etc. as possible
 			//remove disabled markers/tabs etc
 			//add new markers/tabs etc.
+			timers.viewDiff.start();
 			var wantTabListRegions = tools.SimpleSet();
 			var wantClusterMarkers = tools.SimpleSet();
 			state.dag.dfs(0xFFFFFFFF, function(node) {
@@ -1319,16 +1335,35 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			var missingTabListRegions = tools.SimpleSet();
 			tools.getMissing(wantTabListRegions, map.resultListTabs, removedTabListRegions, missingTabListRegions);
 			tools.getMissing(wantClusterMarkers, map.clusterMarkers, removedClusterMarkers, missingClusterMarkers);
+			timers.viewDiff.stop();
 			
+			console.log("mapViewChanged::ClusterMarkers haveCount=" + map.clusterMarkers.size() +
+				", removeCount=" + removedClusterMarkers.size() +
+				", missingCount=" + missingClusterMarkers.size()
+			);
+			console.log("mapViewChanged::Tabs haveCount=" + map.resultListTabs.size() +
+				", removeCount=" + removedTabListRegions.size() +
+				", missingCount=" + missingTabListRegions.size()
+			);
+			
+			timers.mapUpdate.start();
+			timers.clusterUpdate.start();
 			removedClusterMarkers.each(function(key) {
 				map.clusterMarkers.remove(key);
 			});
 			missingClusterMarkers.each(function(key) {
 				map.clusterMarkers.add(key, state.dag.node(key).count);
 			});
+			timers.clusterUpdate.stop();
+			
+			
+			timers.tabUpdate.start();
+			timers.tabRemove.start();
 			removedTabListRegions.each(function(key) {
 				map.resultListTabs.removeRegion(key);
 			});
+			timers.tabRemove.stop();
+			timers.tabAdd.start();
 			missingTabListRegions.each(function(regionId) {
 				var node = state.dag.at(regionId);
 				var ilh = map.resultListTabs.addRegion(regionId, node.name, node.count);
@@ -1349,8 +1384,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 				});
 			});
-			
-			timer.stop();
+			timers.tabAdd.stop();
+			timers.tabUpdate.stop();
+			timers.mapUpdate.stop();
+			timers.complete.stop();
 		},
 		
 		//starts the clustering by expanding the view to the ohPath
