@@ -182,7 +182,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			insertItems: function(items) {
 				for(var i in items) {
-					handler.insertItem(items[i]);
+					if (!handler.hasItem(items[i].id())) {
+						handler._appendItem(items[i]);
+					}
+				}
+				for(var i in items) {
+					handler.m_itemIds.insert(items[i].id());
 				}
 			},
 			//emits itemDetailsClosed on all open panels   
