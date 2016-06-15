@@ -131,12 +131,17 @@ define(["jquery"], function ($) {
          * @returns {{stop: Function} stops the timer}
          */
         timer: function (name) {
-            var start = new Date();
             return {
+				m_start : new Date(),
+				m_end: undefined,
+				m_name: name,
+				start: function() {
+					this.m_start = new Date();
+				},
                 stop: function () {
-                    var end = new Date();
-                    var time = end.getTime() - start.getTime();
-                    console.log('Timer:', name, 'finished in', time, 'ms');
+                    this.m_end = new Date();
+                    var time = this.m_end.getTime() - this.m_start.getTime();
+                    console.log('Timer:', this.m_name, 'finished in', time, 'ms');
                 }
             }
         },
