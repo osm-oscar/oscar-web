@@ -179,7 +179,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			var myRemoteRequests = [];
 			if (stillMissingIds.length) {
 				while(stillMissingIds.length) {
-					myRemoteRequestId = this._acquireRemoteRequestId();
+					var myRemoteRequestId = this._acquireRemoteRequestId();
 					
 					var reqSize = Math.min(this.maxSingleRemoteRequestSize, stillMissingIds.length);
 					var myMissingIds = stillMissingIds.splice(-reqSize, reqSize);
@@ -1048,7 +1048,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 dataType: 'arraybuffer',
                 mimeType: 'application/octet-stream',
                 success: function (raw) {
-                    itemIds = sserialize.asU32Array(raw);
+                    var itemIds = sserialize.asU32Array(raw);
                     successCB(itemIds);
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
@@ -1169,7 +1169,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
             });
         },
         cqrRexExpFromQuery: function (query) {
-            myRegExpStr = "";
+            var myRegExpStr = "";
             var tokens = [];
             var tokenString = "";
             var qtype = 'substring';
