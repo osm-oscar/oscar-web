@@ -1,5 +1,6 @@
-<script id="itemListEntryHtmlTemplate" type="text/x-tmpl-mustache">
-    <div class="panel panel-default" data-item-id="{{{itemId}}}">
+<script id="arrayItemListEntryHtmlTemplate" type="text/x-tmpl-mustache">
+{{#wrappedarray}}
+	<div class="panel panel-default" data-item-id="{{{itemId}}}">
         <div class="panel-heading results-panel-title" role="tab">
             <div class="panel-title">
                 <h5>
@@ -79,4 +80,5 @@
             </div>
         </div>
     </div>
+{{/wrappedarray}}
 </script>
