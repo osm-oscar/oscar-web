@@ -17,6 +17,38 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			m_domRoot : undefined,
 			m_scrollContainer: scrollContainer,
 			m_itemIds: tools.SimpleSet(),
+			m_eventHandlers : {
+				itemIdQuery: function(e) {
+					var me = $(this);
+					var myItemId = me.attr('data-item-id');
+					if (myItemId === undefined) {
+						return false;
+					}
+					var myQstr = "$item:" + myItemId;
+					tools.addSingleQueryStatementToQuery(myQstr);
+					return false;
+				},
+				itemDetailQuery: function(e) {
+					var me = $(this);
+					var myKey = me.attr('data-query-key');
+					if (myKey === undefined) {
+						return false;
+					}
+					var myQstr = "@" + myKey;
+					var myValue = me.attr('data-query-value');
+					if (myValue !== undefined) {
+						myQstr += ":" + myValue;
+					}
+					tools.addSingleQueryStatementToQuery(myQstr);
+					return false;
+				},
+				itemLinkClicked: function(e) {
+					var me = $(this);
+					var itemIdStr = me.attr("data-item-id");
+					var itemId = parseInt(itemIdStr);
+					handler._slot_itemLinkClicked(itemId);
+				}
+			},
 			//signals emited on the root dom-element
 	   
 			emit_itemDetailsOpened: function(itemId) {
@@ -38,49 +70,32 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				handler.m_domRoot = $("#" + myId);
 			},
 	   
-			_addKeyValueQuery: function(element) {
-				function itemIdQuery(e) {
-					var me = $(this);
-					var myItemId = me.attr('data-item-id');
-					if (myItemId === undefined) {
-						return false;
-					}
-					var myQstr = "$item:" + myItemId;
-					tools.addSingleQueryStatementToQuery(myQstr);
-					return false;
-				};
-
-				function itemDetailQuery(e) {
-					var me = $(this);
-					var myKey = me.attr('data-query-key');
-					if (myKey === undefined) {
-						return false;
-					}
-					var myQstr = "@" + myKey;
-					var myValue = me.attr('data-query-value');
-					if (myValue !== undefined) {
-						myQstr += ":" + myValue;
-					}
-					tools.addSingleQueryStatementToQuery(myQstr);
-					return false;
-				};
-
-				$(".item-detail-key", element).click(itemDetailQuery);
-				$(".item-detail-value", element).click(itemDetailQuery);
-				$(".item-detail-id", element).click(itemIdQuery);
+			_addEventHandlers: function(elements) {
+				//this function takes for 1k elements
+				//170 ms with elements=m_domRoot or elements empty
+				//800 ms with elements set to the array of inserted elements
+				//1k elements -> 235 ms. Make sure that handlers are only attached once!
+				var keyC = $(".item-detail-key", elements);
+				var valC = $(".item-detail-value", elements);
+				var detC = $(".item-detail-id", elements);
+				var actC = $(".accordion-toggle-link", elements);
+				
+				var myClickNS = "click.ilhevh";
+				keyC.unbind(myClickNS).bind(myClickNS, handler.m_eventHandlers.itemDetailQuery);
+				valC.unbind(myClickNS).bind(myClickNS, handler.m_eventHandlers.itemDetailQuery);
+				detC.unbind(myClickNS).bind(myClickNS, handler.m_eventHandlers.itemIdQuery);
+				actC.unbind(myClickNS).bind(myClickNS, handler.m_eventHandlers.itemLinkClicked);
+			},
+			_renderItem: function(item) {
+				var itemTemplateData = state.resultListTemplateDataFromItem(item);
+				var rendered = $.Mustache.render('itemListEntryHtmlTemplate', itemTemplateData);
+				return rendered;
 			},
 			//returns jquery object of the inserted dom item element
 			_appendItem: function(item) {
-				var itemTemplateData = state.resultListTemplateDataFromItem(item);
-				var rendered = $.Mustache.render('itemListEntryHtmlTemplate', itemTemplateData);
+				var rendered = handler._renderItem(item);
 				var inserted = $($(rendered).appendTo(this.m_domRoot));
-				handler._addKeyValueQuery(inserted);
-				$("a[class~='accordion-toggle']", inserted).on("click", function(e) {
-					var me = $(this);
-					var itemIdStr = me.attr("data-item-id");
-					var itemId = parseInt(itemIdStr);
-					handler._slot_itemLinkClicked(itemId);
-				});
+				handler._addEventHandlers(inserted);
 			},
 			_domItemRoot: function(itemId) {
 				return $("div[class~='panel'][data-item-id~='" + itemId + "']", handler.m_domRoot);
@@ -181,14 +196,31 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 			},
 			insertItems: function(items) {
+				var timer0 = tools.timer("ItemListHandler::insertItems::domFilterData for " + items.length + " items");
+				var itemData = [];
 				for(var i in items) {
 					if (!handler.hasItem(items[i].id())) {
-						handler._appendItem(items[i]);
+						itemData.push(state.resultListTemplateDataFromItem(items[i]));
 					}
 				}
+				timer0.stop();
+				var timer1 = tools.timer("ItemListHandler::insertItems::domRender for " + items.length + " items");
+				var toInsert = $($.Mustache.render('arrayItemListEntryHtmlTemplate', {wrappedarray: itemData}));
+				timer1.stop();
+				
+				var timer2 = tools.timer("ItemListHandler::insertItems::domInsert for " + items.length + " items");
+				var inserted = $($(toInsert).appendTo(this.m_domRoot));
+				timer2.stop();
+				
+				var timer3 = tools.timer("ItemListHandler::insertItems::domAddEventHandlers for " + items.length + " items");
+				handler._addEventHandlers(handler.m_domRoot);
+				timer3.stop();
+				
+				var timer4 = tools.timer("ItemListHandler::insertItems::idUpdate for " + items.length + " items");
 				for(var i in items) {
 					handler.m_itemIds.insert(items[i].id());
 				}
+				timer4.stop();
 			},
 			//emits itemDetailsClosed on all open panels   
 			clear: function() {
