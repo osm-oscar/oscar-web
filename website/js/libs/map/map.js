@@ -512,6 +512,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 		};
 		this.add = function(itemId, extraArguments) {
+			this.addWithCallback(itemId, undefined, extraArguments);
+		};
+		//todo remove this in favor of ... syntax
+		///calls cb after adding this to the map
+		this.addWithCallback = function(itemId, cb, extraArguments) {
 			if (this.count(itemId)) {
 				this.incRefCount(itemId);
 				return;
@@ -519,20 +524,23 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			this.incRefCount(itemId);
 			var me = this;
 			//call super class
-			var cb = function(layer) {
+			var mycb = function(layer) {
 				if (me.count(itemId) && me.layer(itemId) === undefined) {
 					layer.itemId = itemId;
 					me._addSignalHandlers(layer, itemId);
 					me.setLayer(itemId, layer);
+					if (cb !== undefined) {
+						cb();
+					}
 				};
 			};
 			if (extraArguments !== undefined) {
-				this._fetchLayer(cb, itemId, extraArguments);
+				this._fetchLayer(mycb, itemId, extraArguments);
 			}
 			else {
-				this._fetchLayer(cb, itemId);
+				this._fetchLayer(mycb, itemId);
 			}
-		};
+		},
 		this.remove = function(itemId) {
 			if (this.count(itemId)) {
 				this.m_layers.at(itemId).refCount -= 1;
@@ -1095,7 +1103,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//panel event handlers
 		onItemDetailsOpened: function(e) {
 			var itemId = e.itemId;
-			map.highlightItemShapes.add(itemId, function() {
+			map.highlightItemShapes.addWithCallback(itemId, function() {
 				if (state.items.activeItem == itemId) {
 					map.highlightItemShapes.zoomTo(itemId);
 				}
