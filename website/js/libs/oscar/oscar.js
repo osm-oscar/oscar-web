@@ -660,6 +660,17 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                         errorCB,
                         count, resultListOffset, this.d.regionFilter);
                 },
+				queryRegionExclusiveItemIds: function (regionId, successCB, errorCB, resultListOffset, count) {
+					if (count === undefined) {
+						count = this.p.maxFetchItems;
+					}
+                    this.p.simpleCqrItems("$qec:1 ($rec:" + regionId + " (" + this.d.query + "))",
+                        function (itemIds) {
+                            successCB(regionId, itemIds);
+                        },
+                        errorCB,
+                        count, resultListOffset, this.d.regionFilter);
+				},
                 rootRegionChildrenInfo: function () {
                     return this.d.regionInfo[0xFFFFFFFF];
                 },
