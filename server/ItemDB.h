@@ -62,6 +62,10 @@ public:
 	void itemParents(std::string itemIdStr);
 	///item has inherited tags from these regions
 	void itemRelatives(std::string itemIdStr);
+	
+	///boundary of cells, call with post and variable which=[int]
+	///Returns { cellId : [minLat, maxLat, minLon, maxLon]}
+	void cellInfo();
 };
 
 
