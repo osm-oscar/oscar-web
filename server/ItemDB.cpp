@@ -11,6 +11,7 @@
 #include <cppcms/util.h>
 #include <sserialize/utility/printers.h>
 #include "BinaryWriter.h"
+#include "helpers.h"
 
 namespace oscar_web {
 
@@ -158,6 +159,8 @@ m_maxPerRequest(10)
 	mapper().assign("multiple","/multiple");
 	dispatcher().assign<ItemDB>("/multipleshapes",&ItemDB::multipleShapes, this);
 	mapper().assign("multipleshapes","/multipleshapes");
+	dispatcher().assign<ItemDB>("/cellinfo",&ItemDB::cellInfo, this);
+	mapper().assign("cellinfo","/cellinfo");
 	dispatcher().assign<ItemDB>("/itemcells/(\\d+)", &ItemDB::itemCells, this, 1);
 	mapper().assign("itemcells","/itemcells/{1}");
 	dispatcher().assign<ItemDB>("/cellparents/(\\d+)", &ItemDB::cellParents, this, 1);
@@ -434,6 +437,29 @@ void ItemDB::itemRelatives(std::string itemIdStr) {
 	}
 }
 
+void ItemDB::cellInfo() {
+	const auto & gh = m_store.geoHierarchy();
+	response().set_content_header("text/json");
+	std::ostream & out = response().out();
+	
+	bool ok = true;
+	auto cellIds = parseJsonArray<uint32_t>(request().post("which"), ok);
+	if (!ok) {
+		out << "{}";
+		return;
+	}
+	
+	out << '{';
+	if (cellIds.size()) {
+		auto bbox = gh.cellBoundary(cellIds.front());
+		out << '"' << cellIds.front() << '"' << ':' << '[' << bbox.minLat() << ',' << bbox.maxLat() << ',' << bbox.minLon() << ',' << bbox.maxLon() << ']';
+	}
+	for(uint32_t i(1), s(cellIds.size()); i < s; ++i) {
+		auto bbox = gh.cellBoundary(cellIds.front());
+		out << ',' << '"' << cellIds.front() << '"' << ':' << '[' << bbox.minLat() << ',' << bbox.maxLat() << ',' << bbox.minLon() << ',' << bbox.maxLon() << ']';
+	}
+	out << '}';
+}
 
 
 }//end namespace
