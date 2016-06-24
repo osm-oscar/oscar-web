@@ -792,6 +792,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			
 			expandDag: function(parentId, cb) {
+				console.assert(state.dag.count(parentId));
 				
 				if (de.inChildrenQueue(parentId)) {
 					de._insertChildrenQueue(parentId, cb);
@@ -836,6 +837,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					//now get the item info for the name and the bbox
 					oscar.getItems(childIds,
 						function (items) {
+							console.assert(items.length == childIds.length);
 							for (var i in items) {
 								var item = items[i];
 								var node = state.dag.at(item.id());
