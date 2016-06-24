@@ -307,7 +307,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 					idxMap = {};
 					for (i = 0; i < idcs.length; ++i) {
 						var idx = idcs[i];
-						idxMap[idxId] = idx;
+						idxMap[idx.id] = idx;
 					}
 					cb(idxMap, remoteRequestId);
 				},
