@@ -277,6 +277,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 		return JsonIndexedDataStore(completerBaseUrl + "/itemdb/multipleshapes");
 	};
 	
+	var CellInfoCache = function(completerBaseUrl) {
+		return JsonIndexedDataStore(completerBaseUrl + "/itemdb/cellinfo");
+	};
+	
 	//before usage you have to add a function _itemFromJson(json) -> Item
 	var ItemCache = function(completerBaseUrl) {
 		var handler = JsonIndexedDataStore(completerBaseUrl + "/itemdb/multiple");
@@ -357,6 +361,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
         shapeCache: ShapeCache(module.config().url),
         idxCache: ItemIndexCache(module.config().url),
         cellIdxIdCache: CellIndexIdCache(module.config().url),
+		cellInfoCache: cellInfoCache(module.config().url),
         cqrOps: {'(': '(', ')': ')', '+': '+', '-': '-', '/': '/', '^': '^'},
         cqrParseSkip : {' ' : ' ', '!' : '!', '#' : '#'},
         cqrRegExpEscapes: {
