@@ -361,7 +361,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
         shapeCache: ShapeCache(module.config().url),
         idxCache: ItemIndexCache(module.config().url),
         cellIdxIdCache: CellIndexIdCache(module.config().url),
-		cellInfoCache: cellInfoCache(module.config().url),
+		cellInfoCache: CellInfoCache(module.config().url),
         cqrOps: {'(': '(', ')': ')', '+': '+', '-': '-', '/': '/', '^': '^'},
         cqrParseSkip : {' ' : ' ', '!' : '!', '#' : '#'},
         cqrRegExpEscapes: {
