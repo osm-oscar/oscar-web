@@ -651,8 +651,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			console.assert(count !== undefined, count);
 			oscar.getItem(itemId, function(item) {
 				var markerPos;
-				if (state.dag.count(itemId) && state.dag.at(itemId).clusterHint !== undefined) {
-					markerPos = state.dag.at(itemId).clusterHint;
+				if (state.dag.hasRegion(itemId) && state.dag.region(itemId).clusterHint !== undefined) {
+					markerPos = state.dag.region(itemId).clusterHint;
 				}
 				else {
 					markerPos = item.centerPoint();
@@ -743,22 +743,24 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			
 			//if cb is called, all relevant items should be in the cache
+			//BUG: THis is broken by new dag
 			expandDagItems: function(parentId, cb, offset) {
 				if (offset === undefined) {
 					offset = 0;
 				}
 				function myOp(regionId, itemIds) {
-					console.assert(state.dag.hasNode(regionId), regionId);
+					console.assert(state.dag.hasRegion(regionId), regionId);
 
 					if (!itemIds.length) {
 						if (offset === 0) {
-							state.dag.at(regionId).mayHaveItems = false;
+							state.dag.region(regionId).mayHaveItems = false;
 						}
 						de._flushItemsQueue(parentId, offset);
 						return;
 					}
 					
 					oscar.getItems(itemIds, function(items) {
+						var parentNode = state.dag.region(regionId)
 						for(var i in items) {
 							var item = items[i];
 							var itemId = item.id();
@@ -792,7 +794,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			
 			expandDag: function(parentId, cb) {
-				console.assert(state.dag.count(parentId));
+				console.assert(state.dag.hasRegion(parentId));
 				
 				if (de.inChildrenQueue(parentId)) {
 					de._insertChildrenQueue(parentId, cb);
@@ -811,7 +813,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				};
 				function processChildren(regionChildrenInfo) {
 					if (!regionChildrenInfo.length) { //parent is a leaf node
-						state.dag.node(parentId).isLeaf = true;
+						state.dag.region(parentId).isLeaf = true;
 						de._flushChildrenQueue(parentId);
 						return;
 					}
@@ -822,10 +824,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					for (var i in regionChildrenInfo) {
 						var childInfo = regionChildrenInfo[i];
 						var childId = childInfo['id'];
-						if (!state.dag.hasNode(childId)) {
+						if (!state.dag.hasRegion(childId)) {
 							state.dag.addNode(childId, dag.NodeTypes.Region);
 						}
-						state.dag.at(childId).count = childInfo['apxitems'];
+						state.dag.region(childId).count = childInfo['apxitems'];
 						childIds.push(childId);
 					}
 					
@@ -838,13 +840,15 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					oscar.getItems(childIds,
 						function (items) {
 							console.assert(items.length == childIds.length);
+							console.assert(state.dag.hasRegion(parentId));
+							var parentNode = state.dag.region(parentId);
 							for (var i in items) {
 								var item = items[i];
-								var node = state.dag.at(item.id());
+								var node = state.dag.region(item.id());
 								node.bbox = item.bbox();
 								node.name = item.name();
 								//add child to our node
-								state.dag.addChild(parentId, item.id());
+								state.dag.addChild(parentNode, node);
 							}
 							myCB();
 						}
@@ -852,7 +856,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					
 					state.cqr.clusterHints(childIds, function(hints) {
 						for(var id in hints) {
-							state.dag.at(id).clusterHint = hints[id];
+							state.dag.region(id).clusterHint = hints[id];
 						}
 						myCB();
 					}, tools.defErrorCB);
@@ -986,7 +990,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			map.reloadShapeConfig();
 			state.dag.addRoot(0xFFFFFFFF);
-			var root = state.dag.node(0xFFFFFFFF);
+			var root = state.dag.region(0xFFFFFFFF);
 			root.count = cqr.rootRegionApxItemCount();
 			root.name = "World";
 			
@@ -1135,7 +1139,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			tools.getMissing(wantItemMarkers, map.itemMarkers, removedIds, missingIds);
 			removedIds.each(function(itemId) {
 				map.itemMarkers.remove(itemId);
-				state.dag.node(itemId).displayState -= dag.DisplayStates.HasItemMarker;
+				state.dag.item(itemId).displayState -= dag.DisplayStates.HasItemMarker;
 			});
 			missingIds.each(function(itemId) {
 				map.itemMarkers.add(itemId);
@@ -1143,7 +1147,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//mark dag nodes accordingly
 			var tmp = map.itemMarkers.values();
 			for(var itemId in tmp) {
-				state.dag.node(itemId).displayState |= dag.DisplayStates.HasItemMarker;
+				state.dag.item(itemId).displayState |= dag.DisplayStates.HasItemMarker;
 			}
 		},
 	   
@@ -1157,7 +1161,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.closePopups();
 			map.clusterMarkers.remove(e.itemId);
 			map.zoomTo(e.itemId);
-			if (state.dag.node(e.itemId).isLeaf) {
+			if (state.dag.region(e.itemId).isLeaf) {
 				map.expandDagItems(e.itemId, function() {
 					map.mapViewChanged();
 				});
@@ -1192,13 +1196,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					return;
 				}
 				map.mapViewChanged();
-				tree.visualizeDAG(state.dag.at(0xFFFFFFFF));
+				tree.visualizeDAG(state.dag.region(0xFFFFFFFF));
 			}
 			
 			function subSetHandler(subSet) {
 				var regions = [];
 				for (var regionId in subSet.regions) {
-					if (!state.dag.count(regionId)) {
+					if (!state.dag.hasRegion(regionId)) {
 						regions.push(parseInt(regionId));
 						state.dag.addNode(regionId, dag.NodeTypes.Region);
 					}
@@ -1208,8 +1212,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				//get the cluster hints
 				state.cqr.clusterHints(regions, function(hints) {
 					for(var regionId in hints) {
-						console.assert(state.dag.count(regionId));
-						state.dag.at(regionId).clusterHint = hints[regionId];
+						console.assert(state.dag.hasRegion(regionId));
+						state.dag.region(regionId).clusterHint = hints[regionId];
 					}
 					myCB();
 				});
@@ -1219,7 +1223,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					function (items) {
 						for (var i in items) {
 							var item = items[i];
-							var node = state.dag.at(item.id());
+							var node = state.dag.region(item.id());
 							node.name = item.name();
 							node.bbox = item.bbox();
 						}
@@ -1232,15 +1236,15 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				);
 				
 				for (var regionId in subSet.regions) {
-					state.dag.at(regionId).count = subSet.regions[regionId].apxitems;
+					state.dag.region(regionId).count = subSet.regions[regionId].apxitems;
 					var children = subSet.regions[regionId].children;
 					for (var i in children) {
-						state.dag.addChild(regionId, children[i]);
+						state.dag.addChild(state.dag.region(regionId), state.dag.region(children[i]));
 					}
 				}
 
 				for (var j in subSet.rootchildren) {
-					state.dag.addChild(0xFFFFFFFF, subSet.rootchildren[j]);
+					state.dag.addChild(state.dag.region(0xFFFFFFFF), state.dag.region(subSet.rootchildren[j]));
 				}
 				myCB();
 			}
@@ -1249,8 +1253,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		zoomTo: function(regionId) {
-			if (state.dag.count(regionId)) {
-				state.map.fitBounds(state.dag.at(regionId).bbox);
+			if (state.dag.region(regionId)) {
+				state.map.fitBounds(state.dag.region(regionId).bbox);
 			}
 		},
 		
@@ -1263,7 +1267,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			if (node.children.size()) {
 				for (var childId in node.children.values()) {
 					
-					var childNode = state.dag.at(childId);
+					var childNode = state.dag.region(childId);
 					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
 
 					if (myOverlap >= config.clusters.bboxOverlap) {
@@ -1314,7 +1318,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		viewChanged: function() {
-			if (state.dag.count(0xFFFFFFFF)) {
+			if (state.dag.hasRegion(0xFFFFFFFF)) {
 				map.mapViewChanged(0xFFFFFFFF);
 			}
 		},
@@ -1361,14 +1365,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			timers.viewDiff.start();
 			var wantTabListRegions = tools.SimpleSet();
 			var wantClusterMarkers = tools.SimpleSet();
-			state.dag.dfs(0xFFFFFFFF, function(node) {
+			state.dag.dfs(state.dag.region(0xFFFFFFFF), function(node) {
 				if (node.displayState & dag.DisplayStates.HasClusterMarker) {
 					wantClusterMarkers.insert(node.id);
 				}
 				if(node.displayState & dag.DisplayStates.InResultsTab) {
 					wantTabListRegions.insert(node.id);
 				}
-			});
+			}, dag.NodeTypes.Region);
 			
 			//now check for missing cluster markers etc.
 			var removedClusterMarkers = tools.SimpleSet();
@@ -1394,7 +1398,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				map.clusterMarkers.remove(key);
 			});
 			missingClusterMarkers.each(function(key) {
-				map.clusterMarkers.add(key, state.dag.node(key).count);
+				map.clusterMarkers.add(key, state.dag.region(key).count);
 			});
 			timers.clusterUpdate.stop();
 			
@@ -1407,7 +1411,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			timers.tabRemove.stop();
 			timers.tabAdd.start();
 			missingTabListRegions.each(function(regionId) {
-				var node = state.dag.at(regionId);
+				var node = state.dag.region(regionId);
 				var ilh = map.resultListTabs.addRegion(regionId, node.name, node.count);
 				var itemIds = [];
 				node.items.each(function(nodeId) {
@@ -1451,7 +1455,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (cqr.ohPath().length) {
 					var path = cqr.ohPath();
 					rid = path[path.length - 1];
-					state.map.fitBounds(state.dag.at(rid).bbox);
+					state.map.fitBounds(state.dag.region(rid).bbox);
 				}
 				else {
 					state.map.fitWorld();

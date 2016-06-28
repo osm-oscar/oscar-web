@@ -1,9 +1,11 @@
 define(["jquery", "tools"], function ($, tools) {
     return d = {
 		NodeTypes: {
-			Region: 0,
-			Cell: 1,
-			Item: 2
+			Region: 1,
+			Cell: 2,
+			Item: 4,
+			//thw following are just for convinience usable in the graph traversal functions
+			All: 7
 		},
 		DisplayStates: {
 			None: 0,
@@ -21,12 +23,16 @@ define(["jquery", "tools"], function ($, tools) {
 				type: type,
 				//these are public, mutable
 				displayState: d.DisplayStates.None,
-				name: undefined,
 				bbox: undefined
 			}
 		},
+		NamedNode: function(id, type) {
+			var node = d.Node(id, type);
+			node.name = undefined;
+			return node;
+		}
 		ItemNode: function(id) {
-			return d.Node(id, d.NodeTypes.Item);
+			var node = d.NamedNode(id, d.NodeTypes.Item);
 		},
 		CellNode: function(id) {
 			var node = d.Node(id, d.NodeTypes.Cell);
@@ -34,9 +40,8 @@ define(["jquery", "tools"], function ($, tools) {
 			return node;
 		},
 		RegionNode: function(id) {
-			var node = d.Node(id, d.NodeTypes.Region);
+			var node = d.NamedNode(id, d.NodeTypes.Region);
 			node.children = tools.SimpleSet();
-			node.items = tools.SimpleSet();
 			node.cells = tools.SimpleSet();
 			node.count = -1;
 			node.isLeaf = false;
@@ -58,6 +63,21 @@ define(["jquery", "tools"], function ($, tools) {
 				itemSize: functio() {
 					return this.m_items.size();
 				},
+				hasNode: function(id, type) {
+					if (type === d.NodeTypes.Region) {
+						return this.hasRegion(id);
+					}
+					else if (type === d.NodeTypes.Cell) {
+						return this.hasCell(id);
+					}
+					else if (type === d.NodeTypes.Item) {
+						return this.hasItem(id);
+					}
+					else {
+						console.assert(false, "Invalid node type", id, type);
+					}
+					return false;
+				},
 				hasRegion: function(id) {
 					return this.m_regions.count(id);
 				},
@@ -76,13 +96,29 @@ define(["jquery", "tools"], function ($, tools) {
 				item: function(id) {
 					return this.m_items.at(id);
 				},
-				addEdge: function(sourceNode, targetNode) {
-					if (! sourceNode instanceof d.Node || !targetNode instanceof d.Node) {
-						throw new Error();
-						return undefined;
+				node: function(id, type) {
+					if (type === d.NodeTypes.Region) {
+						return this.region(id);
 					}
-					if (targetNodee.type === d.NodeTypes.Item) {
-						console.assert(sourceNode.type === d.NodeTypes.Region || sourceNode.type === d.NodeTypes.Cell);
+					else if (type === d.NodeTypes.Cell) {
+						return this.cell(id);
+					}
+					else if (type === d.NodeTypes.Item) {
+						return this.item(id);
+					}
+					else {
+						console.assert(false, "Invalid node type", id, type);
+					}
+					return undefined;
+				}
+				addEdge: function(sourceNode, targetNode) {
+					console.assert(sourceNode instanceof d.Node && this.hasNode(sourceNode.id, sourceNode.type));
+					console.assert(targetNode instanceof d.Node && this.hasNode(targetNode.id, targetNode.type));
+
+					var childId = targetNode.id;
+					var parentId = sourceNode.id;
+					if (targetNode.type === d.NodeTypes.Item) {
+						console.assert(sourceNode.type === d.NodeTypes.Cell);
 						sourceNode.items.insert(childId);
 					}
 					else if (targetNode.type === d.NodeTypes.Cell) {
@@ -94,7 +130,7 @@ define(["jquery", "tools"], function ($, tools) {
 						sourceNode.children.insert(childId);
 					}
 					else {
-						console.assert(false);
+						console.assert(false, "Invalid node type", id, type);
 					}
 					childNode.parents.insert(parentId);
 				},
@@ -103,68 +139,109 @@ define(["jquery", "tools"], function ($, tools) {
 					return this.addNode(id, d.NodeTypes.Region);
 				},
 				addNode: function(id, type) {
-					if (!this.hasNode(id)) {
+					if (!this.hasNode(id, type)) {
 						if (type === d.NodeTypes.Region) {
-							this.m_nodes.insert(id, this.RegionNode(id));
+							this.m_regions.insert(id, d.RegionNode(id));
 						}
 						else if (type === d.NodeTypes.Cell) {
-							this.m_nodes.insert(id, this.ItemNode(id));
+							this.m_cells.insert(id, d.CellNode(id));
 						}
 						else if (type === d.NodeTypes.Item) {
-							
+							this.m_nodes.insert(id, d.ItemNode(id));
+						}
+						else {
+							console.assert(false, "Invalid node type", id, type);
 						}
 					}
-					return this.node(id);
+					return this.node(id, type);
 				},
-				//BUG: does not remove children though they may be unlinked
-				removeNode: function(id) {
-					if (!this.hasNode(id)) {
-						return;
-					}
-					var n = this.node(id);
-					if (n.type === d.NodeTypes.Region) {
-						for(var parent in n.parents.values()) {
-							this.node(parent).children.erase(id);
+				removeNode: function(node) {
+					console.assert(node instanceof d.Node && this.hasNode(node.id, node.type));
+					if (node.type === d.NodeTypes.Region) {
+						for(var parentId in node.parents.values()) {
+							this.region(parentId).children.erase(node.id);
 						}
-						for(var child in n.children.values()) {
-							this.node(child).parents.erase(id);
+						for(var childId in node.children.values()) {
+							this.region(childId).parents.erase(node.id);
 						}
-					}
-					else { //node is an item node
-						for(var parent in n.parents.values()) {
-							this.node(parent).items.erase(id);
+						for(var cellId in node.cells.values()) {
+							this.cell(cellId).parents.erase(node.id);
 						}
+						this.m_regions.erase(node.id);
 					}
-					this.m_nodes.erase(id);
+					else if (node.type === d.NodeTypes.Cell) {
+						for(var parentId in node.parents.values()) {
+							this.region(parentId).cells.erase(node.id);
+						}
+						for(var itemId in node.items.values()) {
+							this.item(itemId).parents.erase(node.id);
+						}
+						this.m_cells.erase(node.id);
+					}
+					else if (node.type === d.NodeTypes.Item) {
+						for(var parentId in node.parents.values()) {
+							this.cell(parentId).items.erase(node.id);
+						}
+						this.m_items.erase(node.id);
+					}
+					else {
+						console.assert(false, "Invalid node type");
+					}
 				},
 				//calls cb for each node
-				each: function(cb) {
-					for(var i in this.m_nodes.values()) {
-						cb(this.at(i));
+				each: function(cb, types = d.NodeTypes.All) {
+					if (types & d.NodeTypes.Region) {
+						for(var i in this.m_regions.values()) {
+							cb(this.m_regions.at(i));
+						}
+					}
+					if (types & d.NodeTypes.Cell) {
+						for(var i in this.m_cells.values()) {
+							cb(this.m_cells.at(i));
+						}
+					}
+					if (types & d.NodeTypes.Item) {
+						for(var i in this.m_items.values()) {
+							cb(this.m_items.at(i));
+						}
 					}
 				},
 				//calls cb for every visited node, iff cb() returns false, then the traversal is stopped
-				bfs: function(startNode, cb) {
-					if (!this.hasNode(startNode)) {
-						return;
-					}
-					var queue = [startNode];
+				bfs: function(startNode, cb, types = d.NodeTypes.Region) {
+					console.assert(startNode instanceof d.Node && this.hasNode(startNode.id, startNode.type));
+					var queue = [{id: startNode.id, type: startNode.type}];
 					for(var i = 0; i < queue.length; ++i) {
-						var node = this.at(queue[startNode]);
+						var qe = queue[i];
+						var node = this.node(qe.id, qe.type);
 						var ret = cb(node);
 						if (ret !== undefined && ret == false) {
 							return;
 						}
-						for(var childId in node.children.values()) {
-							queue.push(childId);
+						if (node.type === d.NodeTypes.Region) {
+							if (types & d.NodeTypes.Region) {
+								for(var childId in node.children.values()) {
+									queue.push({id: childId, type: d.NodeTypes.Region});
+								}
+							}
+							if (types & d.NodeTypes.Cell) {
+								for(var cellId in node.cells.values()) {
+									queue.push({id:cellId, type: d.NodeTypes.Cell});
+								}
+							}
+							
+						}
+						else if (node.type === d.NodeTypes.Cell) {
+							if (types & d.NodeTypes.Item) {
+								for(var itemId in node.items.values()) {
+									queue.push({id:itemId, type: d.NodeTypes.Item});
+								}
+							}
 						}
 					}
 				},
 				//if cb returns false, then the descent is stopped (but not the traversal!)
 				dfs: function(startNode, cb) {
-					if (!this.hasNode(startNode)) {
-						return;
-					}
+					console.assert(startNode instanceof d.Node && this.hasNode(startNode.id, startNode.type));
 					var node = this.at(startNode);
 					var ret = cb(node);
 					if (ret !== undefined && ret == false) {
@@ -180,10 +257,11 @@ define(["jquery", "tools"], function ($, tools) {
 					});
 				},
 				clear: function() {
-					this.m_nodes = tools.SimpleHash();
+					this.m_regions = tools.SimpleHash();
+					this.m_cells = tools.SimpleHash();
+					this.m_items = tools.SimpleHash();
 				}
 			};
 		}
 	};
 });
-

@@ -144,10 +144,12 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 $("#onePath").button();
                 $("#wholeTree").button().click(function () {
                     map.loadWholeTree();
-                    tree.visualizeDAG(state.dag.at(0xFFFFFFFF));
+					if (state.dag.hasRegion(0xFFFFFFFF)) {
+						tree.visualizeDAG(state.dag.region(0xFFFFFFFF));
+					}
                 });
-                if (state.dag.at(0xFFFFFFFF)) {
-                    tree.visualizeDAG(state.dag.at(0xFFFFFFFF));
+                if (state.dag.hasRegion(0xFFFFFFFF)) {
+                    tree.visualizeDAG(state.dag.region(0xFFFFFFFF));
                 }
             });
 
