@@ -251,10 +251,10 @@ define(["jquery", "tools"], function ($, tools) {
 						this.dfs(childId, cb);
 					}
 				},
-				clearDisplayState: function() {
+				clearDisplayState: function(nodeTypes = d.NodeTypes.All) {
 					this.each(function(node) {
 						node.displayState = d.DisplayStates.None;
-					});
+					}, nodeTypes);
 				},
 				clear: function() {
 					this.m_regions = tools.SimpleHash();

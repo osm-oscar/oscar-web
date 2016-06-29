@@ -252,6 +252,8 @@ void CQRCompleter::items() {
 }
 
 void CQRCompleter::children() {
+	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr NodePtr;
+
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 	
@@ -260,48 +262,90 @@ void CQRCompleter::children() {
 	response().set_content_header("text/json");
 	
 	//params
-	std::string cqs = request().get("q");
-	std::string regionFilter = request().get("rf");
-	uint32_t regionId = sserialize::Static::spatial::GeoHierarchy::npos;
-	uint32_t cqrSize = 0;
-
+	std::string cqs = request().post("q");
+	std::string regionFilter = request().post("rf");
+	bool withCells = sserialize::toBool( request().post("withCells") );
+	std::vector<uint32_t> regions;
 	{
-		std::string tmpStr = request().get("r");
-		if (!tmpStr.empty()) {
-			regionId = atoi(tmpStr.c_str());
+		bool ok;
+		std::vector<uint32_t> tmp( parseJsonArray<uint32_t>(request().post("which"), ok) );
+		if (!ok) {
+			response().out() << "Invalid request";
+			return;
+		}
+		regions.reserve(tmp.size());
+		uint32_t maxR = gh.regionSize();
+		for(uint32_t x : tmp) {
+			if (x < maxR || x == sserialize::Static::spatial::GeoHierarchy::npos) {
+				regions.emplace_back(x);
+			}
+		}
+		if (!regions.size()) {
+			regions.emplace_back(sserialize::Static::spatial::GeoHierarchy::npos);
 		}
 	}
 	
-	if (regionId != sserialize::Static::spatial::GeoHierarchy::npos) {
-		cqs = sserialize::toString("$region:", regionId, " (", cqs, ")");
+	if (regions.size() == 1 && regions.front() != sserialize::Static::spatial::GeoHierarchy::npos) {
+		cqs = sserialize::toString("$region:", regions.front(), " (", cqs, ")");
 	}
 
+	uint32_t fullSubSetLimit = (withCells ? 0xFFFFFFFF : m_dataPtr->fullSubSetLimit);
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), fullSubSetLimit, m_dataPtr->treedCQR);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, fullSubSetLimit, m_dataPtr->treedCQR);
 	}
 	
-	sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
-	cqrSize = subSet.cqr().cellCount(); //for stats
-
-	//now write the data
-	BinaryWriter bw(response().out());
-	if (rPtr) {
-		bw.putU32(rPtr->size()*2);
-		for(const SubSetNodePtr & x : *rPtr) {
-		bw.putU32( gh.ghIdToStoreId(x->ghId()) );
-			bw.putU32( x->maxItemsSize() );
+	std::ostream & out = response().out();
+	
+	char sep = '{';
+	for(uint32_t regionId : regions) {
+		NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
+		if (!rPtr) {
+			continue;
 		}
+		out << sep;
+		sep = ',';
+		out << '"' << regionId << "\":";
+		char mySep = '{';
+		for(const NodePtr & child : *rPtr) {
+			out << mySep;
+			mySep = ',';
+			out << '"' << gh.ghIdToStoreId( child->ghId() ) << "\":{\"apxItems\":" << child->maxItemsSize();
+			if (withCells) {
+				out << ",\"cells\":";
+				if (child->cellPositions().size()) {
+					char mySep = '[';
+					for(uint32_t cellPos : child->cellPositions()) {
+						uint32_t cellId = subSet.cqr().cellId(cellPos);
+						out << mySep;
+						mySep = ',';
+						out << cellId;
+					}
+					out << ']';
+				}
+				else {
+					out << "[]";
+				}
+			}
+			else {
+				out << '}';
+			}
+		}
+		if (mySep == '{') {
+			out << mySep;
+		}
+		out << '}';
 	}
-	else {
-		bw.putU32(0);
+	if (sep == '{') {
+		out << sep;
 	}
+	out << '}';
 
 	ttm.end();
-	writeLogStats("children", cqs, ttm, cqrSize, 0);
+	writeLogStats("children", cqs, ttm, subSet.cqr().cellCount(), 0);
 }
 
 void CQRCompleter::cells() {
@@ -328,6 +372,84 @@ void CQRCompleter::cells() {
 	out << ']';
 	ttm.end();
 	writeLogStats("cells", cqs, ttm, cqr.cellCount(), 0);
+}
+
+void CQRCompleter::cellItems() {
+	sserialize::TimeMeasurer ttm;
+	ttm.begin();
+	
+	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
+
+	response().set_content_header("text/json");
+	
+	//params
+	std::string cqs = request().get("q");
+	std::string regionFilter = request().get("rf");
+	uint32_t numItems = 0;
+	uint32_t skipItems = 0;
+	uint32_t cqrSize = 0;
+	bool ok;
+	std::vector<uint32_t> rqCId( parseJsonArray<uint32_t>(request().post("which"), ok) );
+	
+	if (!ok) {
+		std::ostream & out = response().out();
+		out << "Invalid request!";
+		return;
+	}
+
+	{
+		std::string tmpStr = request().get("k");
+		if (!tmpStr.empty()) {
+			numItems = std::min<uint32_t>(m_dataPtr->maxItemDBReq, atoi(tmpStr.c_str()));
+		}
+		tmpStr = request().get("o");
+		if (!tmpStr.empty()) {
+			skipItems = atoi(tmpStr.c_str());
+		}
+	}
+	
+	sserialize::CellQueryResult cqr;
+	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+	}
+	else {
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+	}
+	std::ostream & out = response().out();
+	char sep = '{';
+	for(uint32_t cIt(0), rIt(0), cS(cqr.cellCount()), rS(rqCId.size()); cIt < cS && rIt < rS;) {
+		uint32_t cqrCellId = cqr.cellId(cIt);
+		if (cqrCellId == rqCId.at(rIt)) {
+			out << sep;
+			sep = ',';
+			out << '[';
+			SSERIALIZE_CHEAP_ASSERT_LARGER(cqr.idxSize(cIt), 0);
+			sserialize::ItemIndex idx(cqr.idx(cIt));
+			sserialize::ItemIndex::const_iterator idxIt(idx.begin());
+			if (idx.size() > skipItems) {
+				idxIt += skipItems;
+				out << *idxIt;
+				++idxIt;
+				for(uint32_t i(1), s(std::min<uint32_t>(idx.size()-skipItems, numItems)); i < s; ++idxIt, ++i) {
+					out << ',' << *idxIt;
+				}
+			}
+			out << ']';
+		}
+		else if (cqrCellId < rqCId[rIt]) {
+			++cIt;
+		}
+		else {
+			++rIt;
+		}
+	}
+	if (sep == '{') {
+		out << sep;
+	}
+	out << '}';
+
+	ttm.end();
+	writeLogStats("cellItems", cqs, ttm, cqr.cellCount(), 0);
 }
 
 void CQRCompleter::maximumIndependentChildren() {

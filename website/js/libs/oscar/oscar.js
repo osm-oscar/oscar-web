@@ -671,6 +671,13 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                         errorCB,
                         count, resultListOffset, this.d.regionFilter);
 				},
+				queryRegionExclusiveCellIds: function (regionId, successCB, errorCB) {
+                    this.p.cells("$qec:1 ($rec:" + regionId + " (" + this.d.query + "))",
+                        function (cells, ) {
+                            successCB(regionId, itemIds);
+                        },
+                        errorCB, this.d.regionFilter);
+				},
                 rootRegionChildrenInfo: function () {
                     return this.d.regionInfo[0xFFFFFFFF];
                 },
@@ -1087,8 +1094,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 type: "GET",
                 url: qpath,
                 data: params,
-                dataType: 'arraybuffer',
-                mimeType: 'application/octet-stream',
+                mimeType: 'text/plain',
                 success: function (raw) {
                     praw = sserialize.asU32Array(raw);
                     var childrenInfo = [];

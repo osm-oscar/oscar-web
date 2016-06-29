@@ -57,11 +57,13 @@ public:
 	  */
 	void items();
 	/** return the region children for the query q:
+	  * call with POST
 	  * q=<searchstring>
-	  * r=<regionid>
 	  * rf=<region filter>
+	  * which=[<regionId>]
+	  * withCells=true|false
 	  * Return:
-	  * array<(uint32_t, uint32_t)>: [(region children|region children maxitems)]
+	  * { <parentRegionId>: {<childId>: {apxItems: <int>, cells:[]}, ...}
 	  */
 	void children();
 	
@@ -71,6 +73,16 @@ public:
 	  * [cellId]
 	  */
 	void cells();
+	/** returns the top-k items of each cell for the query q:
+	  * call with POST
+	  * q=<searchstring>
+	  * k=<number_of_items>
+	  * o=<offset_in_items_result_list>
+	  * which=[cellId]
+	  * Return:
+	  * {<cellId> : [<itemId>]
+	  */
+	void cellItems();
 	
 	/** return the maximum set of independet region children for the query q:
 	  * q=<searchstring>
