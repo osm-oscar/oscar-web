@@ -74,6 +74,14 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 	//It tries to minimize the number of requests made by caching former results
 	//USAGE: derive from this and add a function _getData(callback=function(data, remoteRequestId), remoteRequestId) which does the request
 	//where data is of the form {dataId: dataEntry}
+	
+	//you can change the underlying storage by providing a new class
+	//This calss has to provide the following functions:
+	//at(id) -> data
+	//size() -> <int>
+	//count(id) -> <bool>
+	//insert(id, data)
+
 	var IndexedDataStore = function() {
 		this.m_data = tools.SimpleHash(); //maps from id -> data
 		this.m_inFlight = tools.SimpleHash(); //maps from id -> remoteRequestId
@@ -108,6 +116,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			}
 			return [];
 		};
+		
+		//you may overload this to change the underlying storage
 		this._requestFromStore = function(cb, dataIds) {
 			res = [];
 			for(var i in dataIds) {
@@ -115,6 +125,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			}
 			cb(res);
 		};
+		
 		//data is of the form {dataId: dataEntry}
 		this._handleReturnedRemoteRequest = function(remoteRequestId, data) {
 			var myRemoteRequest = this.m_remoteRequests.at(remoteRequestId);
