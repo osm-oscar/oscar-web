@@ -1006,73 +1006,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 
 		loadWholeTree: function () {
-			//TODO: move all into DagExpander?
-			var myCBCount = 0;
-			var myCB = function() {
-				myCBCount += 1;
-				if (myCBCount < 3) {
-					return;
-				}
+			map.dagExpander.loadAll(function() {
 				map.mapViewChanged();
 				tree.visualizeDAG(state.dag.region(0xFFFFFFFF));
-			}
-			
-			function subSetHandler(subSet) {
-				var regions = [];
-				for (var regionId in subSet.regions) {
-					if (!state.dag.hasRegion(regionId)) {
-						regions.push(parseInt(regionId));
-						state.dag.addNode(regionId, dag.NodeTypes.Region);
-					}
-				}
-				//don't cache shapes here! there may be a lot of shapes!
-				
-				//get the cluster hints
-				state.cqr.clusterHints(regions, function(hints) {
-					for(var regionId in hints) {
-						console.assert(state.dag.hasRegion(regionId));
-						state.dag.region(regionId).clusterHint = hints[regionId];
-					}
-					myCB();
-				});
-				
-				//fetch the item info
-				oscar.getItems(regions,
-					function (items) {
-						for (var i in items) {
-							var item = items[i];
-							var node = state.dag.region(item.id());
-							node.name = item.name();
-							node.bbox = item.bbox();
-						}
-						myCB();
-					},
-					function(p1, p2) {
-						tools.defErrorCB(p1, p2);
-						myCB();
-					}
-				);
-				
-				for (var regionId in subSet.regions) {
-					state.dag.region(regionId).count = subSet.regions[regionId].apxitems;
-					var children = subSet.regions[regionId].children;
-					if (children.length) {
-						for (var i in children) {
-							state.dag.addChild(state.dag.region(regionId), state.dag.region(children[i]));
-						}
-					}
-					else {
-						state.dag.at(regionId).isLeaf = true;
-					}
-				}
-
-				for (var j in subSet.rootchildren) {
-					state.dag.addChild(state.dag.region(0xFFFFFFFF), state.dag.region(subSet.rootchildren[j]));
-				}
-				myCB();
-			}
-
-			state.cqr.getDag(subSetHandler, tools.defErrorCB);
+			});
 		},
 		
 		zoomTo: function(regionId) {
