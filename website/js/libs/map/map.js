@@ -1,9 +1,10 @@
 //This module handles most stuff associated with the map-gui. It HAS to be a singleton!
-define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner", "leaflet", "dag"],
+define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner", "leaflet", "dag", "dagexp"],
 function (require, state, $, config, oscar, flickr, tools, tree) {
     var spinner = require("spinner");
 	var L = require("leaflet");
 	var dag = require("dag");
+	var dagexp = require("dagexp");
 
 	//handles a single item list
 	//parent is the parent element of the Item list the handler should take care of
@@ -326,6 +327,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			count: function(regionId) {
 				return handler.hasRegion(regionId);
+			},
+			itemListHandler: function(regionId) {
+				return handler.m_regions.at(regionId).handler;
 			},
 			//adds a new region, returns an ItemListHandler
 			addRegion: function(regionId, regionName, itemCount) {
@@ -689,201 +693,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return handler;
 	};
 	
-	//expands the dag on demand
-	var DagExpander = function() {
-		return de = {
-			cfg: {
-				preloadShapes : true,
-				bulkItemFetchCount: 100
-			},
-	   
-			m_childrenQueue: tools.SimpleHash(), //parentId -> [call-back-functions]
-			m_itemsQueue: tools.SimpleHash(), //(parentId, offset) -> [call-back-functions]
-	   
-			_insertChildrenQueue: function(parentId, cb) {
-				if (!de.inChildrenQueue(parentId)) {
-					de.m_childrenQueue.insert(parentId, [cb]);
-				}
-				else {
-					de.m_childrenQueue.at(parentId).push(cb);
-				}
-			},
-			_insertItemsQueue: function(parentId, offset, cb) {
-				if (!de.inItemsQueue(parentId, offset)) {
-					de.m_itemsQueue.insert(parentId + ":" + offset, [cb]);
-				}
-				else {
-					de.m_itemsQueue.at(parentId + ":" + offset).push(cb);
-				}
-			},
-			_eraseChildrenQueue: function(parentId) {
-				return de.m_childrenQueue.erase(parentId);
-			},
-			_eraseItemsQueue: function(parentId, offset) {
-				return de.m_itemsQueue.erase(parentId + ":" + offset);
-			},
-			_getChildrenQueue: function(parentId) {
-				return de.m_childrenQueue.at(parentId);
-			},
-			_getItemsQueue: function(parentId, offset) {
-				return de.m_itemsQueue.at(parentId + ":" + offset);
-			},
-	   
-			inChildrenQueue: function(parentId) {
-				return de.m_childrenQueue.count(parentId);
-			},
-			inItemsQueue: function(parentId, offset) {
-				return de.m_itemsQueue.count(parentId + ":" + offset);
-			},
-			
-			_flushChildrenQueue: function(parentId) {
-				var cbs = de._getChildrenQueue(parentId);
-				for(var i in cbs) {
-					cbs[i]();
-				}
-				de._eraseChildrenQueue(parentId);
-			},
-			
-			_flushItemsQueue: function(parentId, offset) {
-				var cbs = de._getItemsQueue(parentId, offset);
-				for(var i in cbs) {
-					cbs[i]();
-				}
-				de._eraseItemsQueue(parentId, offset);
-			},
-			
-			//if cb is called, all relevant items should be in the cache
-			//BUG: THis is broken by new dag
-			expandDagItems: function(parentId, cb, offset) {
-				if (offset === undefined) {
-					offset = 0;
-				}
-				function myOp(regionId, itemIds) {
-					console.assert(state.dag.hasRegion(regionId), regionId);
-
-					if (!itemIds.length) {
-						if (offset === 0) {
-							state.dag.region(regionId).mayHaveItems = false;
-						}
-						de._flushItemsQueue(parentId, offset);
-						return;
-					}
-					
-					oscar.getItems(itemIds, function(items) {
-						var parentNode = state.dag.region(regionId)
-						for(var i in items) {
-							var item = items[i];
-							var itemId = item.id();
-							var node = state.dag.addNode(itemId, dag.NodeTypes.Item);
-							node.name = item.name();
-							node.bbox = item.bbox();
-							state.dag.addChild(regionId, itemId);
-						}
-						de._flushItemsQueue(parentId, offset);
-					});
-				};
-				var parentNode = state.dag.node(parentId);
-				if (parentNode.count >= offset && parentNode.items.size() <= offset) {
-					if (de.inItemsQueue(parentId, offset)) {
-						de._insertItemsQueue(parentId, offset, cb);
-						return;
-					}
-					else {
-						de._insertItemsQueue(parentId, offset, cb);
-					}
-					state.cqr.regionExclusiveItemIds(parentId,
-						myOp,
-						tools.defErrorCB,
-						offset,
-						de.cfg.bulkItemFetchCount
-					);
-				}
-				else {
-					cb();
-				}
-			},
-			expandDag: function(parentId, cb) {
-				console.assert(state.dag.hasRegion(parentId));
-				
-				if (de.inChildrenQueue(parentId)) {
-					de._insertChildrenQueue(parentId, cb);
-					return;
-				}
-				else {
-					de._insertChildrenQueue(parentId, cb);
-				}
-				
-				var myCBCount = 0;
-				var myCB = function() {
-					myCBCount += 1;
-					if (myCBCount == 3) {
-						de._flushChildrenQueue(parentId);
-					}
-				};
-				function processChildren(regionChildrenInfo) {
-					if (!regionChildrenInfo.length) { //parent is a leaf node
-						state.dag.region(parentId).isLeaf = true;
-						de._flushChildrenQueue(parentId);
-						return;
-					}
-					
-					var childIds = [];
-					var parentNode = state.dag.at(parentId);
-
-					for (var i in regionChildrenInfo) {
-						var childInfo = regionChildrenInfo[i];
-						var childId = childInfo['id'];
-						if (!state.dag.hasRegion(childId)) {
-							state.dag.addNode(childId, dag.NodeTypes.Region);
-						}
-						state.dag.region(childId).count = childInfo['apxitems'];
-						childIds.push(childId);
-					}
-					
-					//cache the shapes
-					if (de.cfg.preloadShapes) {
-						oscar.fetchShapes(childIds, function() {});
-					}
-					
-					//now get the item info for the name and the bbox
-					oscar.getItems(childIds,
-						function (items) {
-							console.assert(items.length == childIds.length);
-							console.assert(state.dag.hasRegion(parentId));
-							var parentNode = state.dag.region(parentId);
-							for (var i in items) {
-								var item = items[i];
-								var node = state.dag.region(item.id());
-								node.bbox = item.bbox();
-								node.name = item.name();
-								//add child to our node
-								state.dag.addChild(parentNode, node);
-							}
-							myCB();
-						}
-					);
-					
-					state.cqr.clusterHints(childIds, function(hints) {
-						for(var id in hints) {
-							state.dag.region(id).clusterHint = hints[id];
-						}
-						myCB();
-					}, tools.defErrorCB);
-				};
-				
-				spinner.startLoadingSpinner();
-				state.cqr.regionChildrenInfo(parentId, function(regionChildrenInfo) {
-					spinner.endLoadingSpinner()
-					processChildren(regionChildrenInfo);
-				},
-				tools.defErrorCB
-				);
-				
-				de.expandDagItems(parentId, myCB);
-			}
-		};
-	};
-	
     var map = {
 		ItemListHandler: ItemListHandler,
 		RegionItemListTabHandler: RegionItemListTabHandler,
@@ -906,7 +715,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		clusterMarkers: undefined,
 		
 		//dag handling
-		dagExpander: DagExpander(),
+		dagExpander: dagexp.dagExpander(),
 		
 		//cfg
 		cfg: {
@@ -1268,7 +1077,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		//get the top-k items that are in the cells specified by cells which is an array;
-		topKItem: function(k, offset, cells) {
+		topKItems: function(k, offset, cells) {
 			//iterators would be nice
 			var tmp = tools.SimpleSet();
 			for(var i in cells) {
@@ -1393,10 +1202,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					for(var cellId in node.cells.values()) {
 						var cellNode = state.dag.cell(cellId);
 						if (cellNode.displayState & dag.DisplayState.HasClusterMarker === 0 &&
-							currentMapBounds.intersects(cellNode.bbox))
+							currentMapBounds.intersects(cellNode.bbox) &&
+							tools.percentOfOverlap(state.map, state.map, cellNode.bbox))
 						{
 							ok = true;
-							break;
+						}
+						else { //don't put it into the results tab
+							cellNode.displayState -= dag.DisplayStates.InResultsTab;
 						}
 					}
 					if (!ok) {
@@ -1405,30 +1217,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 			}, dag.NodeTypes.Region);
 			
-			//clear the display state of all cells and recalculate them with the new region assignments
-			state.dag.clearDisplayState(dag.NodeTypes.Cell);
-			state.dag.each(function(node) {
-				if (node.displayState & dag.DisplayStates.HasClusterMarker) {
-					for(var cellId in node.cells.values()) {
-						state.dag.cell(cellId).displayState |= dag.DisplayStates.HasClusterMarker;
-					}
-				}
-			}, dag.NodeTypes.Region);
-			
-			state.dag.each(function(node) {
-				if (node.displayState & dag.DisplayStates.InResultsTab) {
-					for(var cellId in node.cells.values()) {
-						var cellNode = state.dag.cell(cellId);
-						if (cellNode.displayState & dag.DisplayStates.HasClusterMarker === 0 &&
-							currentMapBounds.intersects(cellNode.bbox))
-						{
-							cellNode.displayState |= dag.DisplayStates.InResultsTab;
-						}
-					}
-				}
-			}, dag.NodeTypes.Region);
-			
-			
+			//cells now hold the correct display state (either InResultsTab or HasClusterMarker)
+			//regions now hold the correct display state as well
 			timers.updateDag.stop();
 			
 			//the dag now holds the state the gui should have
@@ -1497,7 +1287,20 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				var removedCells = tools.SimpleSet();
 				var missingCells = tools.SimpleSet();
 				tools.getMissing(wantCells, map.resultListTabs.cells(), removedCells, missingCells);
-				var removedItems = tools.SimplSet();
+				
+				//nothing to change
+				if (!missingCells.size() && ! removedCells.size()) {
+					continue;
+				}
+				
+				//TODO: add ability to remove single results
+				var topKItems = map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, wantCells);
+				var ilh = map.resultListTabs.itemListHandler(regionId);
+				ilh.clear();
+				//this should return instantly since the items are in the cache
+				oscar.getItems(topKItems, function(items) {
+					ilh.insertItems(items);
+				});
 			}
 			timers.tabUpdate.stop();
 			
