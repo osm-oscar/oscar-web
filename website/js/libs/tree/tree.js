@@ -135,10 +135,10 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
         _nodeLabel: function (node) {
             var label = "<div class='treeNode'>";
 			label += "<div class='treeNodeName'>" + node.name.toString() + "<span class='badge'>" + node.count + "</span></div>";
-			if (!node.isLeaf) {
-				label += "<a nodeId='" + node.id+ "' class='treeNodeSub treeNodeLink' href='#'>Show Children</a>";
+			if (!node.isLeaf && !node.children.size()) {
+				label += "<a nodeId='" + node.id+ "' class='treeNodeSub treeNodeLink' href='#'>Load children</a>";
 			}
-			label += "<a nodeId='" + node.id + "' class='treeNodeItems treeNodeLink' href='#'>Load Items</a>";
+			label += "<a nodeId='" + node.id + "' class='treeNodeItems treeNodeLink' href='#'>Load items</a>";
 			label += "<a NodeId='" + node.id + "' class='treeNodeShow treeNodeLink' href='#'>Show</a>";
 			label += "</div>";
 			return label;
