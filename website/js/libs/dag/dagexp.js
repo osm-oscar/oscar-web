@@ -100,6 +100,47 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 			myWrapper(parentIds[i]);
 		}
 	};
+	
+	var cellItemExpander = oscar.IndexedDataStore();
+	
+	cellItemExpander.m_cfg = {
+		maxFetchCount: 100
+	};
+	//itemInfo is a simple array [itemId]
+	cellItemExpander.m_data = {
+		insert: function(cellId, itemInfo) {
+			for(var i in itemInfo) {
+				var cellNode = state.dag.cell(cellId);
+				var childNode = state.dag.addNode(itemInfo[i], dag.NodeTypes.Item);
+				state.dag.addEdge(cellNode, childNode);
+			}
+		},
+		size: function() {
+			return state.dag.cellSize();
+		},
+		count: function(id) {
+			if (!state.dag.hasCell(id)) {
+				return false;
+			}
+			var node = state.dag.cell(id);
+			return node.items.size() || !node.mayHaveItems;
+		},
+		at: function(id) {
+			console.assert(false, "Should never be called");
+			return;
+		};
+	};
+	//fetching stuff from store is not necessary,
+	//we only call the cb to tell that we're done
+	cellItemExpander._requestFromStore(cb, cellIds) {
+		cb();
+	};
+	cellItemExpander._getData(cb, remoteRequestId) {
+		var cellIds = handler._remoteRequestDataIds(remoteRequestId);
+		state.cqr.getCellItems(cellIds, function(cellItems) {
+			cb(cellItems, remoteRequestId);
+		}, tools.defErrorCB);
+	};
 
 	var dagExpander = function() {
 		return {
@@ -180,60 +221,48 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 				state.cqr.getDag(subSetHandler, tools.defErrorCB);
 			},
 			
-			expandCells: function(cellIds, cb, offset) {
-				
-			}
-			
 			//if cb is called, all relevant items should be in the cache
-			//BUG: THis is broken by new dag
-			expandDagItems: function(parentId, cb, offset) {
-				if (offset === undefined) {
-					offset = 0;
+			//offset is currently unsupported
+			expandCellItems: function(cellIds, cb, offset) {
+				if (cellIds instanceof int) {
+					cellIds = [cellIds];
 				}
-				function myOp(regionId, itemIds) {
-					console.assert(state.dag.hasRegion(regionId), regionId);
-
-					if (!itemIds.length) {
-						if (offset === 0) {
-							state.dag.region(regionId).mayHaveItems = false;
+				cellItemExpander.fetch(cellIds, function() {
+					//items are now in the dag, check which need the bbox/name
+					var itemIds = [];
+					for(var i in cellIds) {
+						var cellNode = state.dag.cell(cellIds[i]);
+						for(var itemId in cellNode.items.values()) {
+							var itemNode = state.dag.item(itemId);
+							
 						}
-						de._flushItemsQueue(parentId, offset);
-						return;
 					}
-					
-					oscar.getItems(itemIds, function(items) {
-						var parentNode = state.dag.region(regionId)
-						for(var i in items) {
-							var item = items[i];
-							var itemId = item.id();
-							var node = state.dag.addNode(itemId, dag.NodeTypes.Item);
-							node.name = item.name();
-							node.bbox = item.bbox();
-							state.dag.addChild(regionId, itemId);
-						}
-						de._flushItemsQueue(parentId, offset);
-					});
-				};
-				var parentNode = state.dag.node(parentId);
-				if (parentNode.count >= offset && parentNode.items.size() <= offset) {
-					if (de.inItemsQueue(parentId, offset)) {
-						de._insertItemsQueue(parentId, offset, cb);
-						return;
-					}
-					else {
-						de._insertItemsQueue(parentId, offset, cb);
-					}
-					state.cqr.regionExclusiveItemIds(parentId,
-						myOp,
-						tools.defErrorCB,
-						offset,
-						de.cfg.bulkItemFetchCount
-					);
-				}
-				else {
-					cb();
-				}
+				});
 			},
+
+			expandRegionCells: function(regionIds, cb) {
+				regionCellExpander.fetch(regionIds, function() {
+					//the cells nodes are now in the dag
+					//let's get the bbox of cells that don't have one
+					var cellIds = [];
+					for(var i in regionIds) {
+						var node = state.dag.region(regionIds[i]);
+						for(var cellId in node.cells.values()) {
+							if (state.dag.cell(cellId).bbox === undefined) {
+								cellIds.push(cellId);
+							}
+						}
+					}
+					//cellInfo is of the form [[bounds]]
+					oscar.getCellInfo(cellIds, function(cellInfo) {
+						for(var i in cellIds) {
+							state.dag.cell(cellIds[i]).bbox = cellInfo[i];
+						}
+						cb();
+					}, tools.defErrorCB);
+				});
+			},   
+
 			expandDag: function(parentId, cb) {
 				console.assert(state.dag.hasRegion(parentId));
 				

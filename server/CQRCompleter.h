@@ -80,7 +80,7 @@ public:
 	  * o=<offset_in_items_result_list>
 	  * which=[cellId]
 	  * Return:
-	  * {<cellId> : [<itemId>]
+	  * {<cellId> : [<itemId>]}
 	  */
 	void cellItems();
 	

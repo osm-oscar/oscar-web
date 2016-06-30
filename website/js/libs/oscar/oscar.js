@@ -712,6 +712,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 					var myQ = "$region:" + regionId + " ( " + this.d.query + " )";
 					this.p.cells(myQ, successCB, errorCB);
 				},
+				getCellItems: function(cellIds, successCB, errorCB) {
+					console.assert(false, "Not implemented yet");
+				},
                 //returning an array in successCB with objects={id : int, apxitems : int}
                 //returns rootRegionChildrenInfo if regionId is undefined
                 regionChildrenInfo: function (regionId, successCB, errorCB) {
@@ -869,6 +872,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 				}
 			}, [itemId]);
         },
+		
+		getCellInfo: function(cellIds, successCB, errorCB) {
+			this.cellInfoCache.get(successCB, cellIds);
+		}
 
         fetchIndexes: function (arrayOfIndexIds, successCB, errorCB) {
 			this.idxCache.fetch(successCB, arrayOfIndexIds);
