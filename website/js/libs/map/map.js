@@ -1234,8 +1234,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				for (var regionId in subSet.regions) {
 					state.dag.at(regionId).count = subSet.regions[regionId].apxitems;
 					var children = subSet.regions[regionId].children;
-					for (var i in children) {
-						state.dag.addChild(regionId, children[i]);
+					if (children.length) {
+						for (var i in children) {
+							state.dag.addChild(regionId, children[i]);
+						}
+					}
+					else {
+						state.dag.at(regionId).isLeaf = true;
 					}
 				}
 
