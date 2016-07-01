@@ -61,6 +61,13 @@ define(["jquery"], function ($) {
 					cb(key);
 				}
 			};
+			ss.toArray = function() {
+				var tmp = [];
+				for(var i in this.values()) {
+					tmp.push(i);
+				}
+				return tmp;
+			};
 			return ss;
 		},
 		
