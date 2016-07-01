@@ -42,7 +42,8 @@ requirejs.config({
         "state": "state/manager",
         "query": "query/query",
         "search": "search/search",
-		"dag": "dag/dag"
+		"dag": "dag/dag",
+		"dagexp" : "dag/dagexp"
     },
     shim: {
         'bootstrap': {deps: ['jquery']},

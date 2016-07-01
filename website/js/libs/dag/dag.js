@@ -30,7 +30,7 @@ define(["jquery", "tools"], function ($, tools) {
 			var node = d.Node(id, type);
 			node.name = undefined;
 			return node;
-		}
+		},
 		ItemNode: function(id) {
 			var node = d.NamedNode(id, d.NodeTypes.Item);
 		},
@@ -60,7 +60,7 @@ define(["jquery", "tools"], function ($, tools) {
 				cellSize: function() {
 					return this.m_cells.size();
 				},
-				itemSize: functio() {
+				itemSize: function() {
 					return this.m_items.size();
 				},
 				hasNode: function(id, type) {
@@ -110,7 +110,7 @@ define(["jquery", "tools"], function ($, tools) {
 						console.assert(false, "Invalid node type", id, type);
 					}
 					return undefined;
-				}
+				},
 				addEdge: function(sourceNode, targetNode) {
 					console.assert(sourceNode instanceof d.Node && this.hasNode(sourceNode.id, sourceNode.type));
 					console.assert(targetNode instanceof d.Node && this.hasNode(targetNode.id, targetNode.type));
@@ -188,8 +188,11 @@ define(["jquery", "tools"], function ($, tools) {
 						console.assert(false, "Invalid node type");
 					}
 				},
-				//calls cb for each node
-				each: function(cb, types = d.NodeTypes.All) {
+				//calls cb for each node, default param is d.NodeTypes.All
+				each: function(cb, types) {
+					if (types === undefined) {
+						types = d.NodeTypes.All;
+					}
 					if (types & d.NodeTypes.Region) {
 						for(var i in this.m_regions.values()) {
 							cb(this.m_regions.at(i));
@@ -207,7 +210,10 @@ define(["jquery", "tools"], function ($, tools) {
 					}
 				},
 				//calls cb for every visited node, iff cb() returns false, then the traversal is stopped
-				bfs: function(startNode, cb, types = d.NodeTypes.Region) {
+				bfs: function(startNode, cb, types) {
+					if (types === undefined) {
+						types = d.NodeTypes.All;
+					}
 					console.assert(startNode instanceof d.Node && this.hasNode(startNode.id, startNode.type));
 					var queue = [{id: startNode.id, type: startNode.type}];
 					for(var i = 0; i < queue.length; ++i) {
@@ -251,10 +257,13 @@ define(["jquery", "tools"], function ($, tools) {
 						this.dfs(childId, cb);
 					}
 				},
-				clearDisplayState: function(nodeTypes = d.NodeTypes.All) {
+				clearDisplayState: function(types) {
+					if (types === undefined) {
+						types = d.NodeTypes.All;
+					}
 					this.each(function(node) {
 						node.displayState = d.DisplayStates.None;
-					}, nodeTypes);
+					}, types);
 				},
 				clear: function() {
 					this.m_regions = tools.SimpleHash();

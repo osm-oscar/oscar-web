@@ -409,6 +409,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 				return me.Item(json, me);
 			};
 		},
+		
+		IndexedDataStore: function() {
+			return new IndexedDataStore();
+		},
 
         Item: function (d, parent) {
 
@@ -687,10 +691,11 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                         errorCB,
                         count, resultListOffset, this.d.regionFilter);
 				},
+				//calls successCB(regionId, cells)
 				queryRegionExclusiveCellIds: function (regionId, successCB, errorCB) {
                     this.p.cells("$qec:1 ($rec:" + regionId + " (" + this.d.query + "))",
-                        function (cells, ) {
-                            successCB(regionId, itemIds);
+                        function (cells) {
+                            successCB(regionId, cells);
                         },
                         errorCB, this.d.regionFilter);
 				},
@@ -713,7 +718,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 					this.p.cells(myQ, successCB, errorCB);
 				},
 				//calls successCB with { cellId: [itemId] }
-				getCellItems: function(cellIds, successCB, errorCB, offset=0) {
+				getCellItems: function(cellIds, successCB, errorCB, offset) {
 					this.p.simpleCqrGetCellItems(this.d.query, successCB, errorCB, cellIds, offset);
 				},
                 //returning an array in successCB with objects={id : int, apxitems : int}
@@ -876,7 +881,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 		
 		getCellInfo: function(cellIds, successCB, errorCB) {
 			this.cellInfoCache.get(successCB, cellIds);
-		}
+		},
 
         fetchIndexes: function (arrayOfIndexIds, successCB, errorCB) {
 			this.idxCache.fetch(successCB, arrayOfIndexIds);
@@ -1178,6 +1183,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 					var json;
 					try {
 						json = JSON.parse(raw);
+					}
+					catch (err) {
+						errorCB("Parsing the cells failed with the following parameters: " + JSON.stringify(params), err);
 					}
                     successCB(json);
                 },

@@ -699,8 +699,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		ItemShapeHandler: ItemShapeHandler,
 		ItemMarkerHandler: ItemMarkerHandler,
 		RegionMarkerHandler: RegionMarkerHandler,
-		DagExpander: DagExpander,
-		
+
 		resultListTabs: undefined,
 		relativesTab: { activeItemHandler: undefined, relativesHandler: undefined },
 		
@@ -1041,7 +1040,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 			}
 			return ret;
-		}
+		},
 	   
 		//this is recursive function, you have to clear the displayState of the dag before calling
 		//childrenToFetch should be of type tools.SimpleSet() and will contain the nodes that should be expanded

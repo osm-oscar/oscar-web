@@ -36,14 +36,14 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 		at: function(id) {
 			console.assert(false, "Should never be called");
 			return;
-		};
+		}
 	};
 	//fetching stuff from store is not necessary,
 	//we only call the cb to tell that we're done
-	regionChildrenExpander._requestFromStore(cb, parentIds) {
+	regionChildrenExpander._requestFromStore = function(cb, parentIds) {
 		cb();
 	};
-	regionChildrenExpander._getData(cb, remoteRequestId) {
+	regionChildrenExpander._getData = function(cb, remoteRequestId) {
 		var parentIds = handler._remoteRequestDataIds(remoteRequestId);
 		// is of the form regionId -> { childId -> {apxitems : <int>, name: <string>, bbox: <bbox>, clusterHint: <hint>} }
 		var result = {};
@@ -149,14 +149,14 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 		at: function(id) {
 			console.assert(false, "Should never be called");
 			return;
-		};
+		}
 	};
 	//fetching stuff from store is not necessary,
 	//we only call the cb to tell that we're done
-	regionCellExpander._requestFromStore(cb, parentIds) {
+	regionCellExpander._requestFromStore = function(cb, parentIds) {
 		cb();
 	};
-	regionCellExpander._getData(cb, remoteRequestId) {
+	regionCellExpander._getData = function(cb, remoteRequestId) {
 		var parentIds = handler._remoteRequestDataIds(remoteRequestId);
 		var result = {}; // parentId -> { cellId: bbox }
 		var resultSize = 0;
@@ -198,7 +198,7 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 		var myWrapper = function(parentId) {
 			state.cqr.getCells(parentId, function(cellInfo) {
 				var tmp = {};
-				for(var i in cellInfo {
+				for(var i in cellInfo) {
 					tmp[cellInfo[i]] = undefined;
 				}
 				resultSize += 1;
@@ -249,14 +249,14 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 		at: function(id) {
 			console.assert(false, "Should never be called");
 			return;
-		};
+		}
 	};
 	//fetching stuff from store is not necessary,
 	//we only call the cb to tell that we're done
-	cellItemExpander._requestFromStore(cb, cellIds) {
+	cellItemExpander._requestFromStore = function(cb, cellIds) {
 		cb();
 	};
-	cellItemExpander._getData(cb, remoteRequestId) {
+	cellItemExpander._getData = function(cb, remoteRequestId) {
 		var cellIds = handler._remoteRequestDataIds(remoteRequestId);
 		
 		//cellItems is { cellId: {itemId: {name:<string>, bbox: <bbox>}}}
@@ -285,8 +285,8 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 						if (!state.dag.hasItem(itemId)) {
 							var item = tmp[itemId];
 							ci[itemId] = {
-								name: item.name();
-								bbox: item.bbox();
+								name: item.name(),
+								bbox: item.bbox()
 							};
 						}
 					}
@@ -294,10 +294,17 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 				cb();
 			}, tools.defErrorCB);
 			cb(cellItems, remoteRequestId);
-		}
+		};
 		
-		state.cqr.getCellItems(cellIds, function(cellItems) {
-			
+		state.cqr.getCellItems(cellIds, function(info) {
+			for(var cellId in info) {
+				var ci = info[cellId];
+				var tci = cellItems[cellId] = {};
+				for(var i in ci) {
+					var itemId = [ci];
+					tci[itemId] = undefined;
+				}
+			}
 			myFinish();
 		}, tools.defErrorCB);
 	};
