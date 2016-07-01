@@ -1,7 +1,12 @@
 define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, state, spinner, oscar) {
 	var regionChildrenExpander = oscar.IndexedDataStore();
-	//childrenInfo is the same as the
-	//info returned from oscar.SimpleCqr.regionChildrenInfo()
+	
+	regionChildrenExpander.m_cfg = {
+		preloadShapes : true,
+	},
+	
+	//childrenInfo is:
+	//{ <childId> : { apxitems: <int>, name: name, bbox: bbox }
 	regionChildrenExpander.m_data = {
 		insert: function(parentId, childrenInfo) {
 			for(var i in childrenInfo) {
@@ -36,12 +41,17 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 		var result = {};
 		var resultSize = 0;
 		
+		var myFinish = function() {
+			
+			cb(result, remoteRequestId);
+		};
+		
 		var myWrapper = function(parentId) {
 			state.cqr.regionChildrenInfo(parentId, function(childrenInfo) {
 				resultSize += 1;
 				result[parentId] = childrenInfo;
 				if (resultSize == parentIds.length) {
-					cb(result, remoteRequestId);
+					myFinish();
 				}
 			}, tools.defErrorCB);
 		};
@@ -224,24 +234,38 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 			//if cb is called, all relevant items should be in the cache
 			//offset is currently unsupported
 			expandCellItems: function(cellIds, cb, offset) {
+				spinner.startLoadingSpinner();
 				if (cellIds instanceof int) {
 					cellIds = [cellIds];
 				}
-				cellItemExpander.fetch(cellIds, function() {
+				de.cellItemExpander.fetch(cellIds, function() {
 					//items are now in the dag, check which need the bbox/name
-					var itemIds = [];
+					var itemIds = tools.SimpleSet();
 					for(var i in cellIds) {
 						var cellNode = state.dag.cell(cellIds[i]);
 						for(var itemId in cellNode.items.values()) {
 							var itemNode = state.dag.item(itemId);
-							
+							if (itemNode.bbox === undefined) {
+								itemIds.insert(itemId);
+							}
 						}
 					}
+					oscar.getItems(itemIds.asArray(), function(items) {
+						for(var i in items) {
+							var item = items[i];
+							var node = state.dag.node(item.id());
+							node.name = item.name();
+							node.bbox = item.bbox();
+						}
+						spinner.endLoadingSpinner();
+						cb();
+					}, tools.defErrorCB);
 				});
 			},
 
 			expandRegionCells: function(regionIds, cb) {
-				regionCellExpander.fetch(regionIds, function() {
+				spinner.startLoadingSpinner();
+				de.regionCellExpander.fetch(regionIds, function() {
 					//the cells nodes are now in the dag
 					//let's get the bbox of cells that don't have one
 					var cellIds = [];
@@ -258,10 +282,62 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 						for(var i in cellIds) {
 							state.dag.cell(cellIds[i]).bbox = cellInfo[i];
 						}
+						spinner.endLoadingSpinner();
 						cb();
 					}, tools.defErrorCB);
 				});
-			},   
+			},
+	   
+			expandRegionChildren: function(regionIds, cb) {
+				if (regionIds instanceof int) {
+					regionIds = [regionIds];
+				}
+				
+
+				var myCBCount = 0;
+				var myCB = function() {
+					myCBCount += 1;
+					if (myCBCount == 2) {
+						cb();
+					}
+				};
+				
+				de.regionChildrenExpander.fetch(regionIds, function() {
+					var childIds = tools.SimpleSet();
+					for(var i in regionIds) {
+						for(var childId in state.dag.at(regionIds[i]).children.values()) {
+							childIds.insert(childId);
+						}
+					}
+					var childIds = childIds.toArray();
+					//cache the shapes
+					if (de.cfg.preloadShapes) {
+						oscar.fetchShapes(childIds, function() {});
+					}
+					
+
+					//now get the item info for the name and the bbox
+					oscar.getItems(childIds,
+						function (items) {
+							console.assert(items.length == childIds.length);
+							for (var i in items) {
+								var item = items[i];
+								var node = state.dag.region(item.id());
+								node.bbox = item.bbox();
+								node.name = item.name();
+							}
+							myCB();
+						}
+					);
+					
+					state.cqr.clusterHints(childIds, function(hints) {
+						for(var id in hints) {
+							state.dag.region(id).clusterHint = hints[id];
+						}
+						myCB();
+					}, tools.defErrorCB);
+				});
+			},
 
 			expandDag: function(parentId, cb) {
 				console.assert(state.dag.hasRegion(parentId));
