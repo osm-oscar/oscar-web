@@ -712,7 +712,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 					var myQ = "$region:" + regionId + " ( " + this.d.query + " )";
 					this.p.cells(myQ, successCB, errorCB);
 				},
-				getCellItems: function(cellIds, successCB, errorCB) {
+				//calls successCB with { cellId: [itemId] }
+				getCellItems: function(cellIds, successCB, errorCB, offset=0) {
 					console.assert(false, "Not implemented yet");
 				},
                 //returning an array in successCB with objects={id : int, apxitems : int}

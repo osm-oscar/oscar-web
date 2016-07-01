@@ -1044,7 +1044,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		}
 	   
 		//this is recursive function, you have to clear the displayState of the dag before calling
-		updateDag: function(node) {
+		//childrenToFetch should be of type tools.SimpleSet() and will contain the nodes that should be expanded
+		updateDag: function(node, childrenToFetch) {
 			if (!node) {
 				return;
 			}
@@ -1080,11 +1081,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				node.displayState |= dag.DisplayStates.InResultsTab;
 			}
 			else {//fetch children
-				if (!map.dagExpander.inChildrenQueue(node.id)) {
-					map.expandDag(node.id, function() {
-						map.mapViewChanged();
-					});
-				}
+				childrenToFetch.insert(node.id);
 			}
 		},
 		
@@ -1126,7 +1123,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.closePopups();
 			
 			timers.updateDag.start();
-			map.updateDag(state.dag.at(0xFFFFFFFF));
+			var childrenToFetch = tools.SimpleSet();
+			map.updateDag(state.dag.at(0xFFFFFFFF), childrenToFetch);
+			
+			map.dagExpander.expandRegionChildren(childrenToFetch.toArray(), function() {
+				map.mapViewChanged();
+			});
 			
 			//now mark all the cells accordingly
 			state.dag.each(function(node) {
