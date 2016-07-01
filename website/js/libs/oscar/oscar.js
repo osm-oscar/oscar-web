@@ -714,7 +714,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 				},
 				//calls successCB with { cellId: [itemId] }
 				getCellItems: function(cellIds, successCB, errorCB, offset=0) {
-					console.assert(false, "Not implemented yet");
+					this.p.simpleCqrGetCellItems(this.d.query, successCB, errorCB, cellIds, offset);
 				},
                 //returning an array in successCB with objects={id : int, apxitems : int}
                 //returns rootRegionChildrenInfo if regionId is undefined
@@ -1163,6 +1163,29 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 }
             });
         },
+		simpleCqrGetCellItems: function(query, successCB, errorCB, cellIds, offset) {
+            var params = {};
+            params['q'] = query;
+			params['k'] = offset;
+			params['which'] = JSON.stringify(tools.toIntArray(cellIds));
+            var qpath = this.completerBaseUrl + "/cqr/clustered/cellitems";
+            jQuery.ajax({
+                type: "POST",
+                url: qpath,
+                data: params,
+                mimeType: 'text/plain',
+                success: function (raw) {
+					var json;
+					try {
+						json = JSON.parse(raw);
+					}
+                    successCB(json);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    errorCB(textStatus, errorThrown);
+                }
+            });
+		},
         cells: function (query, successCB, errorCB) {
             var params = {};
             params['q'] = query;
@@ -1173,6 +1196,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 data: params,
                 mimeType: 'text/plain',
                 success: function (plain) {
+					var json;
 					try {
 						json = JSON.parse(plain);
 					}
