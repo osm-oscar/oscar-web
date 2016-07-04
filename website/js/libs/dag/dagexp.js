@@ -315,6 +315,22 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 			regionCellExpander: regionCellExpander,
 			cellItemExpander: cellItemExpander,
 	   
+			preloadShapes: function()  {
+				return this.regionChildrenExpander.m_cfg.preloadShapes ;
+			},
+	   
+			setPreloadShapes: function(value) {
+				this.regionChildrenExpander.m_cfg.preloadShapes = value;
+			},
+	   
+			bulkItemFetchCount: function() {
+				return this.cellItemExpander.m_cfg.bulkItemFetchCount 
+			},
+	   
+			setBulkItemFetchCount: function(value) {
+				this.cellItemExpander.m_cfg.bulkItemFetchCount = value;
+			},
+	   
 			loadAll: function(cb) {
 				var myCBCount = 0;
 				var myCB = function() {
@@ -387,7 +403,7 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 			//offset is currently unsupported
 			expandCellItems: function(cellIds, cb, offset) {
 				spinner.startLoadingSpinner();
-				if (cellIds instanceof int) {
+				if (cellIds instanceof 5) {
 					cellIds = [cellIds];
 				}
 				de.cellItemExpander.fetch(cellIds, function() {
@@ -397,7 +413,7 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 			},
 
 			expandRegionCells: function(regionIds, cb) {
-				if (regionIds instanceof int) {
+				if (regionIds instanceof 5) {
 					regionIds = [regionIds];
 				}
 				spinner.startLoadingSpinner();
@@ -408,7 +424,7 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 			},
 	   
 			expandRegionChildren: function(regionIds, cb) {
-				if (regionIds instanceof int) {
+				if (regionIds instanceof 5) {
 					regionIds = [regionIds];
 				}
 				spinner.startLoadingSpinner();

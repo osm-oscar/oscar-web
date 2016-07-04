@@ -796,8 +796,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					map.cfg.clusterShapes.display = true;
 				}
 			}
-			map.dagExpander.cfg.preloadShapes = map.cfg.clusterShapes.preload;
-			map.dagExpander.cfg.bulkItemFetchCount = map.cfg.resultList.bulkItemFetchCount;
+			map.dagExpander.setPreloadShapes(map.cfg.clusterShapes.preload);
+			map.dagExpander.setBulkItemFetchCount(map.cfg.resultList.bulkItemFetchCount);
 		},
 	   
 		displayCqr: function (cqr) {
@@ -1304,7 +1304,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			spinner.startLoadingSpinner();
 			if (cqr.ohPath().length) {
-				if (map.dagExpander.cfg.fetchShapes) {
+				if (map.dagExpander.preloadShapes()) {
 					oscar.fetchShapes(cqr.ohPath(), function() {});
 				}
 				for(var i in cqr.ohPath()) {
@@ -1313,10 +1313,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				var parentId = 0xFFFFFFFF;
 				for(var i in cqr.ohPath()) {
-					map.dagExpander.expandDag(parentId, function() { childProcessed(); });
+					map.dagExpander.expandRegionChildren(parentId, function() { childProcessed(); });
 					parentId = cqr.ohPath()[i];
 				}
-				map.dagExpander.expandDag(parentId, function() { childProcessed(); });
+				map.dagExpander.expandRegionChildren(parentId, function() { childProcessed(); });
 			}
 			else {
 				childProcessed();
