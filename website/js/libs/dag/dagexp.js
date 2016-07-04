@@ -9,7 +9,9 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	//{ <childId> : { apxitems: <int>, name: name, bbox: bbox, clusterHint: hint}
 	regionChildrenExpander.m_data = {
 		insert: function(parentId, childrenInfo) {
+			var hasChildren = false;
 			for(var childId in childrenInfo) {
+				hasChildren = true;
 				if (state.dag.hasRegion(childId)) {
 					continue;
 				}
@@ -21,6 +23,9 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 				childNode.bbox = ci["bbox"];
 				childNode.clusterHint = ci["clusterHint"];
 				state.dag.addEdge(parentNode, childNode);
+			}
+			if (!hasChildren) {
+				state.dag.region(parentId).isLeaf = true;
 			}
 		},
 		size: function() {
