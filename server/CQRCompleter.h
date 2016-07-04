@@ -56,6 +56,17 @@ public:
 	  * array<uint32_t> : [item id]
 	  */
 	void items();
+	
+
+	/** return the region children for the query q:
+	  * q=<searchstring>
+	  * r=<regionid>
+	  * rf=<region filter>
+	  * Return:
+	  * array<(uint32_t, uint32_t)>: [(region children|region children maxitems)]
+	  */
+	void children();
+	
 	/** return the region children for the query q:
 	  * call with POST
 	  * q=<searchstring>
@@ -65,7 +76,7 @@ public:
 	  * Return:
 	  * { <parentRegionId>: {<childId>: {apxItems: <int>, cells:[]}, ...}
 	  */
-	void children();
+	void childrenWithCells();
 	
 	/** return the cells for the query q:
 	  * q=<searchstring>

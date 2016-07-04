@@ -25,6 +25,7 @@ m_cqrSerializer(dataPtr->completer->indexStore().indexType())
 	dispatcher().assign("/clustered/full", &CQRCompleter::fullCQR, this);
 	dispatcher().assign("/clustered/simple", &CQRCompleter::simpleCQR, this);
 	dispatcher().assign("/clustered/children", &CQRCompleter::children, this);
+	dispatcher().assign("/clustered/childrenwithcells", &CQRCompleter::childrenWithCells, this);
 	dispatcher().assign("/clustered/cells", &CQRCompleter::cells, this);
 	dispatcher().assign("/clustered/cellitems", &CQRCompleter::cellItems, this);
 	dispatcher().assign("/clustered/michildren", &CQRCompleter::maximumIndependentChildren, this);
@@ -252,7 +253,61 @@ void CQRCompleter::items() {
 	writeLogStats("items", cqs, ttm, cqrSize, idx.size());
 }
 
+
 void CQRCompleter::children() {
+	sserialize::TimeMeasurer ttm;
+	ttm.begin();
+	
+	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
+
+	response().set_content_header("text/json");
+	
+	//params
+	std::string cqs = request().get("q");
+	std::string regionFilter = request().get("rf");
+	uint32_t regionId = sserialize::Static::spatial::GeoHierarchy::npos;
+	uint32_t cqrSize = 0;
+
+	{
+		std::string tmpStr = request().get("r");
+		if (!tmpStr.empty()) {
+			regionId = atoi(tmpStr.c_str());
+		}
+	}
+	
+	if (regionId != sserialize::Static::spatial::GeoHierarchy::npos) {
+		cqs = sserialize::toString("$region:", regionId, " (", cqs, ")");
+	}
+
+	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
+	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+	}
+	else {
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+	}
+	
+	sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
+	cqrSize = subSet.cqr().cellCount(); //for stats
+
+	//now write the data
+	BinaryWriter bw(response().out());
+	if (rPtr) {
+		bw.putU32(rPtr->size()*2);
+		for(const SubSetNodePtr & x : *rPtr) {
+		bw.putU32( gh.ghIdToStoreId(x->ghId()) );
+			bw.putU32( x->maxItemsSize() );
+		}
+	}
+	else {
+		bw.putU32(0);
+	}
+
+	ttm.end();
+	writeLogStats("children", cqs, ttm, cqrSize, 0);
+}
+
+void CQRCompleter::childrenWithCells() {
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr NodePtr;
 
 	sserialize::TimeMeasurer ttm;
