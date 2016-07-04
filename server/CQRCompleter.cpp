@@ -367,7 +367,7 @@ template<bool T_WITH_CELLS, bool T_WITH_CLUSTERHINTS>
 struct ChildrenInfoWriter {
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr NodePtr;
 
-	///interleaved: { <parentRegionId>: {<childId>: {apxItems: <int>, cells:[]}, ...}
+	///interleaved: { <parentRegionId>: {<childId>: {apxitems: <int>, cells:[]}, ...}
 	static void writeInterleaved(std::ostream & out,
 		sserialize::Static::spatial::GeoHierarchy::SubSet & subSet,
 		const std::vector<uint32_t> & regions,
@@ -388,7 +388,7 @@ struct ChildrenInfoWriter {
 			for(const NodePtr & child : *rPtr) {
 				out << mySep;
 				mySep = ',';
-				out << '"' << gh.ghIdToStoreId( child->ghId() ) << "\":{\"apxItems\":" << child->maxItemsSize();
+				out << '"' << gh.ghIdToStoreId( child->ghId() ) << "\":{\"apxitems\":" << child->maxItemsSize();
 				if (T_WITH_CLUSTERHINTS) {
 					const auto & p = clusterHints.at(child->ghId());
 					out << ",\"clusterHint\":[" << p.first << ',' << p.second << ']';
@@ -467,7 +467,7 @@ struct ChildrenInfoWriter {
 			const auto & child = tmp.second;
 			out << sep;
 			sep = ',';
-			out << '"' << gh.ghIdToStoreId( tmp.first ) << "\":{\"apxItems\":" << child->maxItemsSize();
+			out << '"' << gh.ghIdToStoreId( tmp.first ) << "\":{\"apxitems\":" << child->maxItemsSize();
 			if (T_WITH_CLUSTERHINTS) {
 				const auto & p = clusterHints.at(tmp.first);
 				out << ",\"clusterHint\":[" << p.first << ',' << p.second << ']';

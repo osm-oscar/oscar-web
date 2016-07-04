@@ -152,6 +152,20 @@ define(["jquery"], function ($) {
                 }
             }
         },
+	   
+		AsyncCallBackHandler: function(targetCount, cb) {
+			return h = {
+				m_tc: targetCount,
+				m_cc: 0,
+				m_cb: cb,
+				inc: function() {
+					h.m_cc += 1;
+					if (h.m_cc >= h.m_tc) {
+						h.m_cb();
+					}
+				}
+			};
+		},
 
         /**
          * adds a string to the search input

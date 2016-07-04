@@ -745,7 +745,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 },
 				//returns { parentId: { childId : {apxitems: <int>, cells: [cellId], clusterHint: [lat, lon]}}}
 				multiRegionChildrenInfo: function(which, successCB, errorCB, withCellIds, withClusterHints) {
-					this.p.simpleCqrChildrenWithCells(
+					this.p.simpleCqrChildrenInfo(
 						this.d.query,
 						successCB,
 						errorCB,

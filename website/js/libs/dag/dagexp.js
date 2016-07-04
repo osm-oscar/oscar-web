@@ -1,4 +1,4 @@
-define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, state, spinner, oscar) {
+define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, tools, state, spinner, oscar, dag) {
 	var regionChildrenExpander = oscar.IndexedDataStore();
 	
 	regionChildrenExpander.m_cfg = {
@@ -44,11 +44,11 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 		cb();
 	};
 	regionChildrenExpander._getData = function(cb, remoteRequestId) {
-		var parentIds = handler._remoteRequestDataIds(remoteRequestId);
-		
+		var parentIds = this._remoteRequestDataIds(remoteRequestId);
+		var me = this;
 		var myFinish = function(result, allChildIds) {
 			//cache the shapes
-			if (this.m_cfg.preloadShapes) {
+			if (me.m_cfg.preloadShapes) {
 				oscar.fetchShapes(allChildIds, function() {});
 			}
 			
@@ -125,7 +125,7 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 		cb();
 	};
 	regionCellExpander._getData = function(cb, remoteRequestId) {
-		var parentIds = handler._remoteRequestDataIds(remoteRequestId);
+		var parentIds = this._remoteRequestDataIds(remoteRequestId);
 		var result = {}; // parentId -> { cellId: bbox }
 		var resultSize = 0;
 		
@@ -225,7 +225,7 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 		cb();
 	};
 	cellItemExpander._getData = function(cb, remoteRequestId) {
-		var cellIds = handler._remoteRequestDataIds(remoteRequestId);
+		var cellIds = this._remoteRequestDataIds(remoteRequestId);
 		
 		//cellItems is { cellId: {itemId: {name:<string>, bbox: <bbox>}}}
 		var cellItems = {};
@@ -374,10 +374,10 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 				if (cellIds instanceof 5) {
 					cellIds = [cellIds];
 				}
-				de.cellItemExpander.fetch(cellIds, function() {
+				this.cellItemExpander.fetch(function() {
 					spinner.endLoadingSpinner();
 					cb();
-				});
+				}, cellIds);
 			},
 
 			expandRegionCells: function(regionIds, cb) {
@@ -385,10 +385,10 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 					regionIds = [regionIds];
 				}
 				spinner.startLoadingSpinner();
-				de.regionCellExpander.fetch(regionIds, function() {
+				this.regionCellExpander.fetch(function() {
 					spinner.endLoadingSpinner();
 					cb();
-				});
+				}, regionIds);
 			},
 	   
 			expandRegionChildren: function(regionIds, cb) {
@@ -396,10 +396,10 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 					regionIds = [regionIds];
 				}
 				spinner.startLoadingSpinner();
-				de.regionChildrenExpander.fetch(regionIds, function() {
+				this.regionChildrenExpander.fetch(function() {
 					spinner.endLoadingSpinner();
 					cb();
-				});
+				}, regionIds);
 			}
 		}
 	};

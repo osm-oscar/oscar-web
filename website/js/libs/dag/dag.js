@@ -112,8 +112,8 @@ define(["jquery", "tools"], function ($, tools) {
 					return undefined;
 				},
 				addEdge: function(sourceNode, targetNode) {
-					console.assert(sourceNode instanceof d.Node && this.hasNode(sourceNode.id, sourceNode.type));
-					console.assert(targetNode instanceof d.Node && this.hasNode(targetNode.id, targetNode.type));
+					console.assert(this.hasNode(sourceNode.id, sourceNode.type));
+					console.assert(this.hasNode(targetNode.id, targetNode.type));
 
 					var childId = targetNode.id;
 					var parentId = sourceNode.id;
@@ -132,7 +132,7 @@ define(["jquery", "tools"], function ($, tools) {
 					else {
 						console.assert(false, "Invalid node type", id, type);
 					}
-					childNode.parents.insert(parentId);
+					targetNode.parents.insert(parentId);
 				},
 				//add a rootNode
 				addRoot: function(id) {
@@ -156,7 +156,7 @@ define(["jquery", "tools"], function ($, tools) {
 					return this.node(id, type);
 				},
 				removeNode: function(node) {
-					console.assert(node instanceof d.Node && this.hasNode(node.id, node.type));
+					console.assert(this.hasNode(node.id, node.type));
 					if (node.type === d.NodeTypes.Region) {
 						for(var parentId in node.parents.values()) {
 							this.region(parentId).children.erase(node.id);
@@ -214,7 +214,7 @@ define(["jquery", "tools"], function ($, tools) {
 					if (types === undefined) {
 						types = d.NodeTypes.All;
 					}
-					console.assert(startNode instanceof d.Node && this.hasNode(startNode.id, startNode.type));
+					console.assert(this.hasNode(startNode.id, startNode.type));
 					var queue = [{id: startNode.id, type: startNode.type}];
 					for(var i = 0; i < queue.length; ++i) {
 						var qe = queue[i];
@@ -247,14 +247,15 @@ define(["jquery", "tools"], function ($, tools) {
 				},
 				//if cb returns false, then the descent is stopped (but not the traversal!)
 				dfs: function(startNode, cb) {
-					console.assert(startNode instanceof d.Node && this.hasNode(startNode.id, startNode.type));
-					var node = this.at(startNode);
-					var ret = cb(node);
+					console.assert(this.hasNode(startNode.id, startNode.type));
+					console.assert(startNode.type === d.NodeTypes.Region);
+					var ret = cb(startNode);
 					if (ret !== undefined && ret == false) {
 						return;
 					}
-					for(var childId in node.children.values()) {
-						this.dfs(childId, cb);
+					for(var childId in startNode.children.values()) {
+						var childNode = this.region(childId);
+						this.dfs(childNode, cb);
 					}
 				},
 				clearDisplayState: function(types) {

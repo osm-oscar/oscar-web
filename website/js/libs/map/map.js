@@ -1056,14 +1056,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
 
 					if (myOverlap >= config.clusters.bboxOverlap) {
-						map.updateDag(childNode)
+						map.updateDag(childNode, childrenToFetch)
 						childNode.displayState |= dag.DisplayStates.InResultsTab;
 					}
 					else if (myOverlap > config.clusters.shapeOverlap &&
 							oscar.shapeCache.count(childNode.id) &&
 							oscar.intersect(state.map.getBounds(), oscar.shapeCache.at(childNode.id)))
 					{
-						map.updateDag(childNode);
+						map.updateDag(childNode, childrenToFetch);
 						childNode.displayState |= dag.DisplayStates.InResultsTab;
 					}
 					else { //overlap is smaller, only draw the cluster marker
@@ -1102,6 +1102,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			if (startNode === undefined) {
 				startNode = 0xFFFFFFFF;
 			}
+			
+			//callback handler
+			cbh = undefined;
+			
 			var timers = {
 				complete: tools.timer("mapViewChanged::complete"),
 				dagClear: tools.timer("mapViewChanged::dagClear"),
@@ -1123,20 +1127,18 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			timers.updateDag.start();
 			var childrenToFetch = tools.SimpleSet();
-			map.updateDag(state.dag.at(0xFFFFFFFF), childrenToFetch);
+			map.updateDag(state.dag.region(0xFFFFFFFF), childrenToFetch);
 			
 			//get the children and the cells of regions that expand their cells
-			{
-				var myParentIds = childrenToFetch.toArray();
-				var myFinishCount = 0;
-				var myFinish = function() {
-					myFinishCount += 1;
-					if (myFinishCount == 2) {
-						map.mapViewChanged();
-					}
+			if (childrenToFetch.size()) {
+				cbh = tools.AsyncCallBackHandler(3, function() {
+					map.mapViewChanged();
+				});
+				var myWrapper = function(parentIds, cbh) {
+					map.dagExpander.expandRegionChildren(parentIds, function() { cbh.inc();});
+					map.dagExpander.expandRegionCells(parentIds, function() { cbh.inc();});
 				}
-				map.dagExpander.expandRegionChildren(myParentIds, myFinish);
-				map.dagExpander.expandRegionCells(myParentIds, myFinish);
+				myWrapper(childrenToFetch.toArray(), cbh);
 			}
 			
 			//now mark all the cells accordingly
@@ -1154,7 +1156,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					var ok = false;
 					for(var cellId in node.cells.values()) {
 						var cellNode = state.dag.cell(cellId);
-						if (cellNode.displayState & dag.DisplayState.HasClusterMarker === 0 &&
+						if (cellNode.displayState & dag.DisplayStates.HasClusterMarker === 0 &&
 							currentMapBounds.intersects(cellNode.bbox) &&
 							tools.percentOfOverlap(state.map, state.map, cellNode.bbox))
 						{
@@ -1165,7 +1167,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						}
 					}
 					if (!ok) {
-						node.displayState -= dag.DisplayState.InResultsTab;
+						node.displayState -= dag.DisplayStates.InResultsTab;
 					}
 				}
 			}, dag.NodeTypes.Region);
@@ -1282,6 +1284,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			timers.handleTabs.stop();
 			timers.mapUpdate.stop();
 			timers.complete.stop();
+			if(cbh !== undefined) {
+				cbh.inc();
+			}
 		},
 		
 		//starts the clustering by expanding the view to the ohPath
