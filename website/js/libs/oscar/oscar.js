@@ -743,15 +743,16 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                             this.d.regionFilter);
                     }
                 },
-				//returns { parentId: { childId : {apxitems: <int>, cells: [cellId]}}}
-				regionChildrenWithCells: function(which, successCB, errorCB) {
+				//returns { parentId: { childId : {apxitems: <int>, cells: [cellId], clusterHint: [lat, lon]}}}
+				multiRegionChildrenInfo: function(which, successCB, errorCB, withCellIds, withClusterHints) {
 					this.p.simpleCqrChildrenWithCells(
 						this.d.query,
 						successCB,
 						errorCB,
 						which,
 						this.d.regionFilter,
-						true
+						withCellIds,
+						withClusterHints
 					);
 				},
                 hasResults: function () {

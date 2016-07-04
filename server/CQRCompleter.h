@@ -77,7 +77,7 @@ public:
 	  * which=[<regionId>]
 	  * withCells=true|false
 	  * Return:
-	  * { <parentRegionId>: {<childId>: {apxItems: <int>, cells:[]}, ...}
+	  * { regionInfo: { regionId: { apxitems: <int>, cells: [], clusterHint}}, graph: { regionId: [childId]} }
 	  */
 	void childrenInfo();
 	

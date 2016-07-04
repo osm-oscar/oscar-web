@@ -367,7 +367,8 @@ template<bool T_WITH_CELLS, bool T_WITH_CLUSTERHINTS>
 struct ChildrenInfoWriter {
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr NodePtr;
 
-	static void write(std::ostream & out,
+	///interleaved: { <parentRegionId>: {<childId>: {apxItems: <int>, cells:[]}, ...}
+	static void writeInterleaved(std::ostream & out,
 		sserialize::Static::spatial::GeoHierarchy::SubSet & subSet,
 		const std::vector<uint32_t> & regions,
 		const std::unordered_map<uint32_t, std::pair<double, double> > & clusterHints)
@@ -390,7 +391,7 @@ struct ChildrenInfoWriter {
 				out << '"' << gh.ghIdToStoreId( child->ghId() ) << "\":{\"apxItems\":" << child->maxItemsSize();
 				if (T_WITH_CLUSTERHINTS) {
 					const auto & p = clusterHints.at(child->ghId());
-					out << ",\"clusterhint\":[" << p.first << ',' << p.second << ']';
+					out << ",\"clusterHint\":[" << p.first << ',' << p.second << ']';
 				}
 				if (T_WITH_CELLS) {
 					out << ",\"cells\":";
@@ -421,6 +422,89 @@ struct ChildrenInfoWriter {
 			out << sep;
 		}
 		out << '}';
+	}
+	///graph style: { graph: { regionId: [childId]}, regionInfo: { regionId: { apxitems: <int>, cells: [], clusterHint}} }
+	static void writeGraph(std::ostream & out,
+		sserialize::Static::spatial::GeoHierarchy::SubSet & subSet,
+		const std::vector<uint32_t> & regions,
+		const std::unordered_map<uint32_t, std::pair<double, double> > & clusterHints)
+	{
+		std::unordered_map<uint32_t, NodePtr> children;
+		out.precision(10);
+		const auto & gh = subSet.cqr().geoHierarchy();
+		out << '{' << "\"graph\":";
+		char sep = '{';
+		for(uint32_t regionId : regions) {
+			NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
+			if (!rPtr || !rPtr->size()) {
+				continue;
+			}
+			out << sep << gh.ghIdToStoreId( rPtr->ghId() ) << '[';
+			sep = ',';
+			auto cIt( rPtr->cbegin());
+			out << gh.ghIdToStoreId( (*cIt)->ghId() );
+			if (!children.count((*cIt)->ghId())) {
+				children[(*cIt)->ghId()] = *cIt;
+			}
+			++cIt;
+			for(auto cEnd(rPtr->cend()); cIt != cEnd; ++cIt) {
+				out << ',' << gh.ghIdToStoreId( (*cIt)->ghId() );
+				if (!children.count((*cIt)->ghId())) {
+					children[(*cIt)->ghId()] = *cIt;
+				}
+			}
+			out << ']';
+		}
+		if (sep == '{') {
+			out << '}';
+		}
+		out << '}'; // end of graph
+		
+		//now take care of children
+		out << ", \"regionInfo\":";
+		sep = '{';
+		for(const auto & tmp : children) {
+			const auto & child = tmp.second;
+			out << sep;
+			sep = ',';
+			out << '"' << gh.ghIdToStoreId( tmp.first ) << "\":{\"apxItems\":" << child->maxItemsSize();
+			if (T_WITH_CLUSTERHINTS) {
+				const auto & p = clusterHints.at(tmp.first);
+				out << ",\"clusterHint\":[" << p.first << ',' << p.second << ']';
+			}
+			if (T_WITH_CELLS) {
+				out << ",\"cells\":";
+				if (child->cellPositions().size()) {
+					char mySep = '[';
+					for(uint32_t cellPos : child->cellPositions()) {
+						uint32_t cellId = subSet.cqr().cellId(cellPos);
+						out << mySep;
+						mySep = ',';
+						out << cellId;
+					}
+					out << ']';
+				}
+				else {
+					out << "[]";
+				}
+			}
+			else {
+				out << '}';
+			}
+		}
+		if (sep == '{') {
+			out << '}';
+		}
+		out << '}'; // end of children info
+		
+		out << '}'; //end of outer object
+	}
+	static void write(std::ostream & out,
+		sserialize::Static::spatial::GeoHierarchy::SubSet & subSet,
+		const std::vector<uint32_t> & regions,
+		const std::unordered_map<uint32_t, std::pair<double, double> > & clusterHints)
+	{
+		writeInterleaved(out, subSet, regions, clusterHints);
 	}
 };
 

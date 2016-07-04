@@ -45,21 +45,8 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 	};
 	regionChildrenExpander._getData = function(cb, remoteRequestId) {
 		var parentIds = handler._remoteRequestDataIds(remoteRequestId);
-		// is of the form regionId -> { childId -> {apxitems : <int>, name: <string>, bbox: <bbox>, clusterHint: <hint>} }
-		var result = {};
-		var allChildIds = tools.SimpleSet();
-		var resultSize = 0;
 		
-		var myCBCount = 0;
-		var myCB = function() {
-			myCBCount += 1;
-			if (myCBCount == 2) {
-				cb(result, remoteRequestId);
-			}
-		};
-
-		var myFinish = function() {
-			var allChildIds = allChildIds.toArray();
+		var myFinish = function(result, allChildIds) {
 			//cache the shapes
 			if (this.m_cfg.preloadShapes) {
 				oscar.fetchShapes(allChildIds, function() {});
@@ -82,41 +69,22 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 							ci["bbox"] = tmp[childId]["bbox"];
 						}
 					}
-					myCB();
+					cb(result, remoteRequestId);
 				}
 			);
-			
-			state.cqr.clusterHints(allChildIds, function(hints) {
-				for(var regionId in result) {
-					var ri = result[regionId];
-					for(var childId in ri) {
-						var ci = ri[childId];
-						ci["clusterHint"] = hints[childId];
-					}
-				}
-				myCB();
-			}, tools.defErrorCB);
 		};
-		
-		var myWrapper = function(parentId) {
-			state.cqr.regionChildrenInfo(parentId, function(childrenInfo) {
-				var tmp = {};
-				for(var i in childrenInfo) {
-					var childId = childrenInfo[i]["id"];
-					tmp[childId] = { "apxitems": childrenInfo[i]["apxitems"] }
-					allChildIds.insert(childId);
+		// result is of the form
+		// regionId -> { childId -> {apxitems : <int>, cells: [], name: <string>, bbox: <bbox>, clusterHint: <hint>} }
+		//don't fetch cells! cells are fetched by reigonCellExpander
+		state.cqr.multiRegionChildrenInfo(parentIds, function(result) {
+			var children = tools.SimpleSet();
+			for(var regionId in result) {
+				for(var childId in result[regionId]) {
+					children.insert(childId);
 				}
-				resultSize += 1;
-				result[parentId] = tmp;
-				if (resultSize == parentIds.length) {
-					myFinish();
-				}
-			}, tools.defErrorCB);
-		};
-		
-		for(var i in parentIds) {
-			myWrapper(parentIds[i]);
-		}
+			}
+			myFinish(result, children.toArray());
+		}, tools.defErrorCB, false, true);
 	};
 	
 	var regionCellExpander = oscar.IndexedDataStore();
@@ -413,7 +381,7 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 			},
 
 			expandRegionCells: function(regionIds, cb) {
-				if (regionIds instanceof 5) {
+				if (parseInt( regionIds ) === regionIds) {
 					regionIds = [regionIds];
 				}
 				spinner.startLoadingSpinner();
@@ -424,7 +392,7 @@ define(["jquery", "tools", "state", "spinner", "oscar"], function ($, tools, sta
 			},
 	   
 			expandRegionChildren: function(regionIds, cb) {
-				if (regionIds instanceof 5) {
+				if (parseInt( regionIds ) === regionIds) {
 					regionIds = [regionIds];
 				}
 				spinner.startLoadingSpinner();

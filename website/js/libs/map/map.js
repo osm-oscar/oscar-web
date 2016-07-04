@@ -1125,9 +1125,19 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			var childrenToFetch = tools.SimpleSet();
 			map.updateDag(state.dag.at(0xFFFFFFFF), childrenToFetch);
 			
-			map.dagExpander.expandRegionChildren(childrenToFetch.toArray(), function() {
-				map.mapViewChanged();
-			});
+			//get the children and the cells of regions that expand their cells
+			{
+				var myParentIds = childrenToFetch.toArray();
+				var myFinishCount = 0;
+				var myFinish = function() {
+					myFinishCount += 1;
+					if (myFinishCount == 2) {
+						map.mapViewChanged();
+					}
+				}
+				map.dagExpander.expandRegionChildren(myParentIds, myFinish);
+				map.dagExpander.expandRegionCells(myParentIds, myFinish);
+			}
 			
 			//now mark all the cells accordingly
 			state.dag.each(function(node) {
