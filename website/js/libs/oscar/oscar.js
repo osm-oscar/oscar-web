@@ -743,6 +743,17 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                             this.d.regionFilter);
                     }
                 },
+				//returns { parentId: { childId : {apxitems: <int>, cells: [cellId]}}}
+				regionChildrenWithCells: function(which, successCB, errorCB) {
+					this.p.simpleCqrChildrenWithCells(
+						this.d.query,
+						successCB,
+						errorCB,
+						which,
+						this.d.regionFilter,
+						true
+					);
+				},
                 hasResults: function () {
                     var tmp = this.d.regionInfo[0xFFFFFFFF];
                     return tmp !== undefined && tmp.length > 0;
@@ -1103,6 +1114,43 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 success: function (raw) {
                     var itemIds = sserialize.asU32Array(raw);
                     successCB(itemIds);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    errorCB(textStatus, errorThrown);
+                }
+            });
+        },
+		//returns the same as CQRCompleter::childrenWithCells:
+		//{parentId: { childId: {apxitems: <int>, clusterHint: [lat, lon], cells: []}}
+        simpleCqrChildrenInfo: function (query, successCB, errorCB, which, regionFilter, withCells, withClusterHints) {
+            var params = {};
+            params['q'] = query;
+			params['which'] = JSON.stringify( tools.toIntArray(which) );
+            if (regionFilter !== undefined) {
+               params['rf'] = regionFilter;
+            }
+            if (withCells) {
+				params['withCells'] = "true";
+			}
+			if (withClusterHints) {
+				params['withClusterHints'] = "true";
+			}
+            var qpath = this.completerBaseUrl + "/cqr/clustered/childreninfo";
+            jQuery.ajax({
+                type: "POST",
+                url: qpath,
+                data: params,
+                mimeType: 'text/plain',
+                success: function (raw) {
+					var dec;
+					try {
+						dec = JSON.parse(raw);
+					}
+					catch(error) {
+						errorCB("Parsing the result failed with the following parameters: " + JSON.stringify(params), err);
+						return;
+					}
+                    successCB(dec);
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     errorCB(textStatus, errorThrown);

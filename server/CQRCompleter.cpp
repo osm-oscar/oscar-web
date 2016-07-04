@@ -16,6 +16,62 @@ void CQRCompleter::writeLogStats(const std::string & fn, const std::string& quer
 	*(m_dataPtr->log) << "CQRCompleter::" << fn << ": t=" << tm.beginTime() << "s, rip=" << request().remote_addr() << ", q=[" << query << "], rs=" << cqrSize <<  " is=" << idxSize << ", ct=" << tm.elapsedMilliSeconds() << "ms" << std::endl;
 }
 
+std::unordered_map< uint32_t, std::pair< double, double > >
+CQRCompleter::getClusterCenters(sserialize::Static::spatial::GeoHierarchy::SubSet& subSet)
+{
+	//calcs in ghId!
+	struct Calc {
+		std::unordered_map<uint32_t, std::pair<double, double> > clusterCenters;
+		const sserialize::CellQueryResult & cqr;
+		const sserialize::Static::spatial::GeoHierarchy & gh;
+		const CompletionFileDataPtr & dataPtr;
+		Calc(const sserialize::CellQueryResult & cqr, const CompletionFileDataPtr & dataPtr) :
+		cqr(cqr), gh(dataPtr->completer->store().geoHierarchy()), dataPtr(dataPtr)
+		{}
+
+		void calc(const sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr & p) {
+			if (clusterCenters.count(p->ghId())) {
+				return;
+			}
+			if (p->size()) {
+				for(auto x : *p) {
+					calc(x);
+				}
+				std::pair<double, double> tmp(0.0, 0.0);
+				for(auto x : *p) {
+					const auto & d = clusterCenters.at(x->ghId());
+					tmp.first += d.first;
+					tmp.second += d.second;
+				}
+				tmp.first /= p->size();
+				tmp.second /= p->size();
+				clusterCenters.emplace(p->ghId(), tmp);
+			}
+			else if (p->cellPositions().size()) {//use the cells
+				std::pair<double, double> tmp(0.0, 0.0);
+				for(uint32_t cellPos : p->cellPositions()) {
+					uint32_t cellId = cqr.cellId(cellPos);
+					const auto & midPoint = dataPtr->cellMidPoints.at(cellId);
+					tmp.first += midPoint.first;
+					tmp.second += midPoint.second;
+				}
+				tmp.first /= p->cellPositions().size();
+				tmp.second /= p->cellPositions().size();
+				clusterCenters.emplace(p->ghId(), tmp);
+			}
+			else {
+				clusterCenters.emplace(p->ghId(), dataPtr->regionMidPoints.at(p->ghId()));
+			}
+		}
+	};
+	Calc calc(subSet.cqr(), m_dataPtr);
+	
+	calc.calc(subSet.root());
+	
+	return calc.clusterCenters;
+}
+
+
 CQRCompleter::CQRCompleter(cppcms::service& srv, const CompletionFileDataPtr & dataPtr) :
 application(srv),
 m_dataPtr(dataPtr),
@@ -25,7 +81,7 @@ m_cqrSerializer(dataPtr->completer->indexStore().indexType())
 	dispatcher().assign("/clustered/full", &CQRCompleter::fullCQR, this);
 	dispatcher().assign("/clustered/simple", &CQRCompleter::simpleCQR, this);
 	dispatcher().assign("/clustered/children", &CQRCompleter::children, this);
-	dispatcher().assign("/clustered/childrenwithcells", &CQRCompleter::childrenWithCells, this);
+	dispatcher().assign("/clustered/childreninfo", &CQRCompleter::childrenInfo, this);
 	dispatcher().assign("/clustered/cells", &CQRCompleter::cells, this);
 	dispatcher().assign("/clustered/cellitems", &CQRCompleter::cellItems, this);
 	dispatcher().assign("/clustered/michildren", &CQRCompleter::maximumIndependentChildren, this);
@@ -307,9 +363,68 @@ void CQRCompleter::children() {
 	writeLogStats("children", cqs, ttm, cqrSize, 0);
 }
 
-void CQRCompleter::childrenWithCells() {
+template<bool T_WITH_CELLS, bool T_WITH_CLUSTERHINTS>
+struct ChildrenInfoWriter {
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr NodePtr;
 
+	static void write(std::ostream & out,
+		sserialize::Static::spatial::GeoHierarchy::SubSet & subSet,
+		const std::vector<uint32_t> & regions,
+		const std::unordered_map<uint32_t, std::pair<double, double> > & clusterHints)
+	{
+		out.precision(10);
+		const auto & gh = subSet.cqr().geoHierarchy();
+		char sep = '{';
+		for(uint32_t regionId : regions) {
+			NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
+			if (!rPtr) {
+				continue;
+			}
+			out << sep;
+			sep = ',';
+			out << '"' << regionId << "\":";
+			char mySep = '{';
+			for(const NodePtr & child : *rPtr) {
+				out << mySep;
+				mySep = ',';
+				out << '"' << gh.ghIdToStoreId( child->ghId() ) << "\":{\"apxItems\":" << child->maxItemsSize();
+				if (T_WITH_CLUSTERHINTS) {
+					const auto & p = clusterHints.at(child->ghId());
+					out << ",\"clusterhint\":[" << p.first << ',' << p.second << ']';
+				}
+				if (T_WITH_CELLS) {
+					out << ",\"cells\":";
+					if (child->cellPositions().size()) {
+						char mySep = '[';
+						for(uint32_t cellPos : child->cellPositions()) {
+							uint32_t cellId = subSet.cqr().cellId(cellPos);
+							out << mySep;
+							mySep = ',';
+							out << cellId;
+						}
+						out << ']';
+					}
+					else {
+						out << "[]";
+					}
+				}
+				else {
+					out << '}';
+				}
+			}
+			if (mySep == '{') {
+				out << mySep;
+			}
+			out << '}';
+		}
+		if (sep == '{') {
+			out << sep;
+		}
+		out << '}';
+	}
+};
+
+void CQRCompleter::childrenInfo() {
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 	
@@ -321,6 +436,7 @@ void CQRCompleter::childrenWithCells() {
 	std::string cqs = request().post("q");
 	std::string regionFilter = request().post("rf");
 	bool withCells = sserialize::toBool( request().post("withCells") );
+	bool withClusterHints = sserialize::toBool( request().post("withClusterHints") );
 	std::vector<uint32_t> regions;
 	{
 		bool ok;
@@ -355,53 +471,27 @@ void CQRCompleter::childrenWithCells() {
 	}
 	
 	std::ostream & out = response().out();
+	std::unordered_map<uint32_t, std::pair<double, double> > ch;
+	if (withClusterHints) {
+		ch = getClusterCenters(subSet);
+		if (withCells) {
+			ChildrenInfoWriter<true, true>::write(out, subSet, regions, ch);
+		}
+		else {
+			ChildrenInfoWriter<false, true>::write(out, subSet, regions, ch);
+		}
+	}
+	else {
+		if (withCells) {
+			ChildrenInfoWriter<true, false>::write(out, subSet, regions, ch);
+		}
+		else {
+			ChildrenInfoWriter<false, false>::write(out, subSet, regions, ch);
+		}
+	}
 	
-	char sep = '{';
-	for(uint32_t regionId : regions) {
-		NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
-		if (!rPtr) {
-			continue;
-		}
-		out << sep;
-		sep = ',';
-		out << '"' << regionId << "\":";
-		char mySep = '{';
-		for(const NodePtr & child : *rPtr) {
-			out << mySep;
-			mySep = ',';
-			out << '"' << gh.ghIdToStoreId( child->ghId() ) << "\":{\"apxItems\":" << child->maxItemsSize();
-			if (withCells) {
-				out << ",\"cells\":";
-				if (child->cellPositions().size()) {
-					char mySep = '[';
-					for(uint32_t cellPos : child->cellPositions()) {
-						uint32_t cellId = subSet.cqr().cellId(cellPos);
-						out << mySep;
-						mySep = ',';
-						out << cellId;
-					}
-					out << ']';
-				}
-				else {
-					out << "[]";
-				}
-			}
-			else {
-				out << '}';
-			}
-		}
-		if (mySep == '{') {
-			out << mySep;
-		}
-		out << '}';
-	}
-	if (sep == '{') {
-		out << sep;
-	}
-	out << '}';
-
 	ttm.end();
-	writeLogStats("children", cqs, ttm, subSet.cqr().cellCount(), 0);
+	writeLogStats("childrenInfo", cqs, ttm, subSet.cqr().cellCount(), 0);
 }
 
 void CQRCompleter::cells() {
@@ -716,55 +806,8 @@ void CQRCompleter::clusterHints() {
 		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
 	}
 
-	//calcs in ghId!
-	struct Calc {
-		std::unordered_map<uint32_t, std::pair<double, double> > clusterCenters;
-		const sserialize::CellQueryResult & cqr;
-		const sserialize::Static::spatial::GeoHierarchy & gh;
-		const CompletionFileDataPtr & dataPtr;
-		Calc(const sserialize::CellQueryResult & cqr, const sserialize::Static::spatial::GeoHierarchy & gh, const CompletionFileDataPtr & dataPtr) :
-		cqr(cqr), gh(gh), dataPtr(dataPtr)
-		{}
+	std::unordered_map<uint32_t, std::pair<double, double> > clusterCenters = getClusterCenters(subSet);
 
-		void calc(const sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr & p) {
-			if (clusterCenters.count(p->ghId())) {
-				return;
-			}
-			if (p->size()) {
-				for(auto x : *p) {
-					calc(x);
-				}
-				std::pair<double, double> tmp(0.0, 0.0);
-				for(auto x : *p) {
-					const auto & d = clusterCenters.at(x->ghId());
-					tmp.first += d.first;
-					tmp.second += d.second;
-				}
-				tmp.first /= p->size();
-				tmp.second /= p->size();
-				clusterCenters.emplace(p->ghId(), tmp);
-			}
-			else if (p->cellPositions().size()) {//use the cells
-				std::pair<double, double> tmp(0.0, 0.0);
-				for(uint32_t cellPos : p->cellPositions()) {
-					uint32_t cellId = cqr.cellId(cellPos);
-					const auto & midPoint = dataPtr->cellMidPoints.at(cellId);
-					tmp.first += midPoint.first;
-					tmp.second += midPoint.second;
-				}
-				tmp.first /= p->cellPositions().size();
-				tmp.second /= p->cellPositions().size();
-				clusterCenters.emplace(p->ghId(), tmp);
-			}
-			else {
-				clusterCenters.emplace(p->ghId(), dataPtr->regionMidPoints.at(p->ghId()));
-			}
-		}
-	};
-	Calc calc(subSet.cqr(), gh, m_dataPtr);
-	
-	calc.calc(subSet.root());
-	
 	std::ostream & out = response().out();
 	out.precision(8);
 	
@@ -776,8 +819,8 @@ void CQRCompleter::clusterHints() {
 		auto it(rqRId.begin()), end(rqRId.end());
 		while (it != end) {
 			uint32_t ghId = gh.storeIdToGhId(*it);
-			if (calc.clusterCenters.count(ghId)) {
-				auto & tmp = calc.clusterCenters.at(ghId);
+			if (clusterCenters.count(ghId)) {
+				auto & tmp = clusterCenters.at(ghId);
 				out << '"' << *it << "\":[" << tmp.first << ',' << tmp.second << ']';
 				++it;
 				break;
@@ -788,8 +831,8 @@ void CQRCompleter::clusterHints() {
 		}
 		for(; it != end; ++it) {
 			uint32_t ghId = gh.storeIdToGhId(*it);
-			if (calc.clusterCenters.count(ghId)) {
-				auto & tmp = calc.clusterCenters.at(ghId);
+			if (clusterCenters.count(ghId)) {
+				auto & tmp = clusterCenters.at(ghId);
 				out << ",\"" << *it << "\":[" << tmp.first << ',' << tmp.second << ']';
 			}
 		}

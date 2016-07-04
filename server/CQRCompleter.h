@@ -1,5 +1,6 @@
 #ifndef OSCAR_WEB_CQR_COMPLETER_H
 #define OSCAR_WEB_CQR_COMPLETER_H
+#include <unordered_map>
 #include <cppcms/application.h>
 #include <sserialize/utility/debug.h>
 #include "types.h"
@@ -27,6 +28,8 @@ private:
 	void writeSubSet(std::ostream & out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
 	void writeDag(std::ostream & out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
 	void writeLogStats(const std::string & fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize);
+	///calulates cluster centers for the hierarchy, ids are ghIds!
+	std::unordered_map<uint32_t, std::pair<double, double> > getClusterCenters(sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
 public:
 	CQRCompleter(cppcms::service& srv, const CompletionFileDataPtr & dataPtr);
 	virtual ~CQRCompleter();
@@ -76,7 +79,7 @@ public:
 	  * Return:
 	  * { <parentRegionId>: {<childId>: {apxItems: <int>, cells:[]}, ...}
 	  */
-	void childrenWithCells();
+	void childrenInfo();
 	
 	/** return the cells for the query q:
 	  * q=<searchstring>
