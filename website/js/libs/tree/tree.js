@@ -70,7 +70,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             $(".treeNodeSub").each(function (key, value) {
                 $(value).on("click", function () {
                     var id = $(this).attr("nodeId");
-                    state.mapHandler.expandDag(id, function () {
+                    state.mapHandler.expandRegion(id, function () {
 						if (!state.dag.hasRegion(id)) {
 							return;
 						}

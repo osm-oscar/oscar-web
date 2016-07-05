@@ -105,6 +105,8 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 				else {
 					childNode = state.dag.addNode(cellId, dag.NodeTypes.Cell);
 					childNode.bbox = cellInfo[cellId];
+					var tmp = [[childNode.bbox[0], childNode.bbox[2]], [childNode.bbox[1], childNode.bbox[3]]];
+					childNode.bbox = tmp;
 				}
 				state.dag.addEdge(parentNode, childNode);
 			}
