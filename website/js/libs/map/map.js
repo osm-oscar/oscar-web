@@ -1183,27 +1183,38 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			//and now check for each region that has the displayState == InResultsTab
 			//if at least one of its cells that overlaps the current map bounds has the state InResultsTab
+			//bottom-up traversal makes sure that only the lowest region will get a tab
 			var currentMapBounds = state.map.getBounds();
-			state.dag.each(function(node) {
+			state.dag.bottomUp(state.dag.region(0xFFFFFFFF), function(node) {
 				if (node.displayState & dag.DisplayStates.InResultsTab) {
 					var ok = false;
 					for(var cellId in node.cells.values()) {
 						var cellNode = state.dag.cell(cellId);
-						var ds = cellNode.displayState & dag.DisplayStates.HasClusterMarker;
+						var ds = cellNode.displayState & (dag.DisplayStates.HasClusterMarker | dag.DisplayStates.InResultsTab2);
 						var xMap = currentMapBounds.intersects(cellNode.bbox);
-						var pOv =tools.percentOfOverlap(state.map, cellNode.bbox);
-						if (ds === 0 &&
-							xMap &&
-							pOv >= config.clusters.shapeOverlap)
+// 						var pOv =tools.percentOfOverlap(state.map, cellNode.bbox);
+						if (ds === 0 && xMap)
+// 							&& pOv >= config.clusters.shapeOverlap)
 						{
 							ok = true;
+							cellNode.displayState |= dag.DisplayStates.InResultsTab2;
 						}
-						else { //don't put it into the results tab
-							cellNode.displayState &= ~dag.DisplayStates.InResultsTab;
-						}
+						cellNode.displayState &= ~dag.DisplayStates.InResultsTab;
 					}
 					if (!ok) {
 						node.displayState &= ~dag.DisplayStates.InResultsTab;
+					}
+				}
+			}, dag.NodeTypes.Region);
+			
+			//reset the cell display states to the original values
+			state.dag.each(function(node) {
+				if (node.displayState & dag.DisplayStates.InResultsTab) {
+					for(var cellId in node.cells.values()) {
+						var cellNode = state.dag.cell(cellId);
+						if (cellNode.displayState & dag.DisplayStates.InResultsTab2) {
+							cellNode.displayState = dag.DisplayStates.InResultsTab;
+						}
 					}
 				}
 			}, dag.NodeTypes.Region);

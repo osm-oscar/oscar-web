@@ -13,7 +13,8 @@ define(["jquery", "tools"], function ($, tools) {
 			InResultsTab: 2,
 			InItemList: 4,
 			HasItemMarker: 8,
-			HasClusterMarker: 16
+			HasClusterMarker: 16,
+			InResultsTab2: 32
 		},
 		//type should be either region, cell or item
 		Node: function(id, type) {
@@ -257,6 +258,25 @@ define(["jquery", "tools"], function ($, tools) {
 					for(var childId in startNode.children.values()) {
 						var childNode = this.region(childId);
 						this.dfs(childNode, cb);
+					}
+				},
+				//visit the subtree under the node startNode in bottom-up order
+				bottomUp: function(startNode, cb) {
+					console.assert(startNode.type === d.NodeTypes.Region);
+					console.assert(this.hasNode(startNode.id, startNode.type));
+					var queue = [startNode.id];
+					var visited = {};
+					for(var i = 0; i < queue.length; ++i) {
+						var node = this.region(queue[i]);
+						for(var childId in node.children.values()) {
+							if (visited[childId] === undefined) {
+								queue.push(childId);
+								visited[childId] = childId;
+							}
+						}
+					}
+					for(var i = queue.length-1; i >= 0; --i) {
+						cb(this.region(queue[i]));
 					}
 				},
 				clearDisplayState: function(types) {
