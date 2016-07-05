@@ -736,6 +736,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				bulkItemFetchCount: 100
 			}
 		},
+	   
+	   locks: {
+		   mapViewChanged: {locked: false, queued: false}
+	   },
 		
 		//this has to be called prior usage
 		init: function() {
@@ -1071,7 +1075,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					if (myOverlap >= config.clusters.bboxOverlap) {
 						map.updateDag(childNode, childrenToFetch, cellsToFetch)
 						childNode.displayState |= dag.DisplayStates.InResultsTab;
-						if (!childNode.cells.size()) {
+						if (!childNode.cells.size() && childNode.mayHaveItems) {
 							cellsToFetch.insert(childNode.id);
 						}
 					}
@@ -1081,7 +1085,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					{
 						map.updateDag(childNode, childrenToFetch, cellsToFetch);
 						childNode.displayState |= dag.DisplayStates.InResultsTab;
-						if (!childNode.cells.size()) {
+						if (!childNode.cells.size() && childNode.mayHaveItems) {
 							cellsToFetch.insert(childNode.id);
 						}
 					}
@@ -1097,7 +1101,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			else if (node.isLeaf) {
 				node.displayState |= dag.DisplayStates.InResultsTab;
-				if (!node.cells.size()) {
+				if (!node.cells.size() && childNode.mayHaveItems) {
 					cellsToFetch.insert(node.id);
 				}
 			}
@@ -1120,10 +1124,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.dagExpander.expandRegion(parentId, cb);
 		},
 		
-		mapViewChanged: function(startNode) {
-			if (startNode === undefined) {
-				startNode = 0xFFFFFFFF;
+		mapViewChanged: function() {
+			if (map.locks.mapViewChanged.locked) {
+				map.locks.mapViewChanged.queued = true;
+				return;
 			}
+			map.locks.mapViewChanged.locked = true;
 			
 			//callback handler
 			cbh = undefined;
@@ -1342,6 +1348,18 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			timers.complete.stop();
 			if(cbh !== undefined) {
 				cbh.inc();
+			}
+			if (map.locks.mapViewChanged.queued) {
+				//this is guaranteed to be running before any other call to mapViewChanged
+				//due to the lock that is NOT released yet
+				setTimeout(function() {
+					map.locks.mapViewChanged.locked = false;
+					map.locks.mapViewChanged.queued = false;
+					map.mapViewChanged();
+				}, 0);
+			}
+			else {
+				map.locks.mapViewChanged.locked = false;
 			}
 		},
 		

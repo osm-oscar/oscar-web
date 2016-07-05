@@ -11,15 +11,18 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 		insert: function(parentId, childrenInfo) {
 			var parentNode = state.dag.region(parentId);
 			for(var childId in childrenInfo) {
+				var childNode;
 				if (state.dag.hasRegion(childId)) {
-					continue;
+					childNode = state.dag.region(childId);
 				}
-				var ci = childrenInfo[childId];
-				var childNode = state.dag.addNode(childId, dag.NodeTypes.Region);
-				childNode.count = ci["apxitems"];
-				childNode.name = ci["name"];
-				childNode.bbox = ci["bbox"];
-				childNode.clusterHint = ci["clusterHint"];
+				else {
+					childNode = state.dag.addNode(childId, dag.NodeTypes.Region);
+					var ci = childrenInfo[childId];
+					childNode.count = ci["apxitems"];
+					childNode.name = ci["name"];
+					childNode.bbox = ci["bbox"];
+					childNode.clusterHint = ci["clusterHint"];
+				}
 				state.dag.addEdge(parentNode, childNode);
 			}
 			if ($.isEmptyObject(childrenInfo)) {
@@ -201,8 +204,8 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	//itemInfo is a simple array {itemId: {name: <string>, bbox: <bbox>}}
 	cellItemExpander.m_data = {
 		insert: function(cellId, itemsInfo) {
+			var cellNode = state.dag.cell(cellId);
 			for(var itemId in itemsInfo) {
-				var cellNode = state.dag.cell(cellId);
 				var childNode;
 				if (state.dag.hasItem(itemId)) {
 					childNode = state.dag.item(itemId);
