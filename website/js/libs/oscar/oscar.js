@@ -713,6 +713,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                     }
                     this.p.simpleCqrMaxIndependentChildren(this.d.query, successCB, errorCB, regionId, maxOverlap, this.d.regionFilter);
                 },
+				getRegionExclusiveCells: function(regionId, successCB, errorCB) {
+					var myQ = "$rec:" + regionId + " ( " + this.d.query + " )";
+					this.p.cells(myQ, successCB, errorCB);
+				},
 				getCells: function(regionId, successCB, errorCB) {
 					var myQ = "$region:" + regionId + " ( " + this.d.query + " )";
 					this.p.cells(myQ, successCB, errorCB);

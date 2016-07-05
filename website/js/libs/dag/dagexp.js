@@ -9,14 +9,12 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	//{ <childId> : { apxitems: <int>, name: name, bbox: bbox, clusterHint: hint}
 	regionChildrenExpander.m_data = {
 		insert: function(parentId, childrenInfo) {
-			var hasChildren = false;
+			var parentNode = state.dag.region(parentId);
 			for(var childId in childrenInfo) {
-				hasChildren = true;
 				if (state.dag.hasRegion(childId)) {
 					continue;
 				}
 				var ci = childrenInfo[childId];
-				var parentNode = state.dag.region(parentId);
 				var childNode = state.dag.addNode(childId, dag.NodeTypes.Region);
 				childNode.count = ci["apxitems"];
 				childNode.name = ci["name"];
@@ -24,8 +22,8 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 				childNode.clusterHint = ci["clusterHint"];
 				state.dag.addEdge(parentNode, childNode);
 			}
-			if (!hasChildren) {
-				state.dag.region(parentId).isLeaf = true;
+			if ($.isEmptyObject(childrenInfo)) {
+				parentNode.isLeaf = true;
 			}
 		},
 		size: function() {
@@ -96,8 +94,8 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	//cellInfo is { cellId: bbox }
 	regionCellExpander.m_data = {
 		insert: function(parentId, cellInfo) {
+			var parentNode = state.dag.region(parentId);
 			for(var cellId in cellInfo) {
-				var parentNode = state.dag.region(parentId);
 				var childNode;
 				if (state.dag.hasCell(cellId)) {
 					childNode = state.dag.cell(cellId);
@@ -109,6 +107,9 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 					childNode.bbox = tmp;
 				}
 				state.dag.addEdge(parentNode, childNode);
+			}
+			if ($.isEmptyObject(cellInfo)) {
+				parentNode.mayHaveItems = false;
 			}
 		},
 		size: function() {
@@ -149,6 +150,9 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 					if (!state.dag.hasCell(cellId)) {
 						missingCellInfo.insert(cellId);
 					}
+					else {
+						console.assert(state.dag.cell(cellId).bbox !== undefined);
+					}
 				}
 			}
 			var missingCellInfo = missingCellInfo.toArray();
@@ -171,7 +175,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 		};
 		
 		var myWrapper = function(parentId) {
-			state.cqr.getCells(parentId, function(cellInfo) {
+			state.cqr.getRegionExclusiveCells(parentId, function(cellInfo) {
 				var tmp = {};
 				for(var i in cellInfo) {
 					tmp[cellInfo[i]] = undefined;
@@ -192,7 +196,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	var cellItemExpander = oscar.IndexedDataStore();
 	
 	cellItemExpander.m_cfg = {
-		maxFetchCount: 100
+		maxFetchCount: 10
 	};
 	//itemInfo is a simple array {itemId: {name: <string>, bbox: <bbox>}}
 	cellItemExpander.m_data = {

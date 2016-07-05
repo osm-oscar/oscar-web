@@ -1192,9 +1192,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						var cellNode = state.dag.cell(cellId);
 						var ds = cellNode.displayState & (dag.DisplayStates.HasClusterMarker | dag.DisplayStates.InResultsTab2);
 						var xMap = currentMapBounds.intersects(cellNode.bbox);
-// 						var pOv =tools.percentOfOverlap(state.map, cellNode.bbox);
-						if (ds === 0 && xMap)
-// 							&& pOv >= config.clusters.shapeOverlap)
+						var pOv =tools.percentOfOverlap(state.map, cellNode.bbox);
+						if (ds === 0 && xMap
+							&& pOv >= config.clusters.shapeOverlap)
 						{
 							ok = true;
 							cellNode.displayState |= dag.DisplayStates.InResultsTab2;
