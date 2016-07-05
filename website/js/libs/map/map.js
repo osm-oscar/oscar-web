@@ -314,6 +314,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			cells: function(regionId) {
 				return handler.m_regions.at(regionId).cells;
 			},
+			
+			///cells must be of type tools.SimpleSet()
+			setCells: function(regionId, cells) {
+				if (handler.hasRegion(regionId)) {
+					handler.m_regions.at(regionId).cells = cells;
+				}
+			},
 	   
 			size: function() {
 				return handler.m_regions.size();
@@ -1018,28 +1025,33 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		//get the top-k items that are in the cells specified by cells which is an array;
-		topKItems: function(k, offset, cells) {
-			//iterators would be nice
-			var tmp = tools.SimpleSet();
-			for(var i in cells) {
-				var cellNode = state.dag.cell(cells[i]);
-				for(var itemId in cellNode.items()) {
-					tmp.insert(itemId);
+		topKItems: function(k, offset, cellIds, cb) {
+			map.dagExpander.expandCellItems(cellIds, function() {
+
+				//iterators would be nice
+				var tmp = tools.SimpleSet();
+				for(var i in cellIds) {
+					var cellNode = state.dag.cell(cellIds[i]);
+					for(var itemId in cellNode.items.values()) {
+						tmp.insert(itemId);
+					}
 				}
-			}
-			var ret = [];
-			for(var itemId in tmp) {
-				if (!offset) {
-					ret.push(itemId);
+				var ret = [];
+				for(var itemId in tmp.values()) {
+					if (!offset) {
+						ret.push(itemId);
+					}
+					else {
+						--offset;
+					}
+					if (ret.length == k) {
+						break;
+					}
 				}
-				else {
-					--offset;
-				}
-				if (ret.length == k) {
-					break;
-				}
-			}
-			return ret;
+				
+				cb(ret);
+				
+			}, offset);
 		},
 	   
 		//this is recursive function, you have to clear the displayState of the dag before calling
@@ -1253,56 +1265,64 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			});
 			timers.tabRemove.stop();
 			
+			var tabPopulate = function(itemIds, ilh) {
+				//TODO: add ability to remove single results
+				ilh.clear();
+				//this should return instantly since the items are in the cache
+				oscar.getItems(itemIds, function(items) {
+					console.assert(itemIds.length == items.length);
+					if (!map.resultListTabs.count(regionId)) {
+						return;
+					}
+					ilh.insertItems(items);
+					if (map.resultListTabs.size() === 1) {
+						map.resultListTabs.emit_activeRegionChanged(regionId);
+					}
+				});
+			}
+			
 			timers.tabUpdate.start();
 			//check if the currently active tabs have all the items of the current cells
 			//and if there are any items that should not be there
 			for(var regionId in map.resultListTabs.values()) {
 				var wantCells = tools.SimpleSet();
-				for(var cellId in state.dag.region(regionId).cells) {
+				for(var cellId in state.dag.region(regionId).cells.values()) {
 					if (state.dag.cell(cellId).displayState & dag.DisplayStates.InResultsTab) {
 						wantCells.insert(cellId);
 					}
 				}
 				var removedCells = tools.SimpleSet();
 				var missingCells = tools.SimpleSet();
-				tools.getMissing(wantCells, map.resultListTabs.cells(), removedCells, missingCells);
+				tools.getMissing(wantCells, map.resultListTabs.cells(regionId), removedCells, missingCells);
 				
 				//nothing to change
 				if (!missingCells.size() && ! removedCells.size()) {
 					continue;
 				}
+				map.resultListTabs.setCells(regionId, wantCells);
 				
-				//TODO: add ability to remove single results
-				var topKItems = map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, wantCells);
+				var topKItems = map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, wantCells.toArray());
 				var ilh = map.resultListTabs.itemListHandler(regionId);
-				ilh.clear();
-				//this should return instantly since the items are in the cache
-				oscar.getItems(topKItems, function(items) {
-					ilh.insertItems(items);
-				});
+				tabPopulate(topKItems, ilh);
 			}
 			timers.tabUpdate.stop();
 			
 			timers.tabAdd.start();
 			missingTabListRegions.each(function(regionId) {
-				var node = state.dag.region(regionId);
+				var rn = state.dag.region(regionId);
+				map.resultListTabs.addRegion(regionId, rn.name, rn.count);
+				
+				var wantCells = tools.SimpleSet();
+				for(var cellId in state.dag.region(regionId).cells.values()) {
+					if (state.dag.cell(cellId).displayState & dag.DisplayStates.InResultsTab) {
+						wantCells.insert(cellId);
+					}
+				}
+				map.resultListTabs.setCells(regionId, wantCells);
+				
+				var topKItems = map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, wantCells.toArray());
 				var ilh = map.resultListTabs.addRegion(regionId, node.name, node.count);
-				var itemIds = [];
-				node.items.each(function(nodeId) {
-					itemIds.push(nodeId);
-				});
-				//this should return instantly since the items are in the cache
-				oscar.getItems(itemIds, function(items) {
-					if (!map.resultListTabs.count(regionId)) {
-						return;
-					}
-					ilh.insertItems(items);
-					//check if theres only one tab, if so,
-					//then trigger onActiveTabChanged in order to populate the map with markers
-					if (map.resultListTabs.size() === 1) {
-						map.resultListTabs.emit_activeRegionChanged(regionId);
-					}
-				});
+				tabPopulate(topKItems, ilh);
 			});
 			timers.tabAdd.stop();
 			timers.handleTabs.stop();
