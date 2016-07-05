@@ -455,8 +455,9 @@ void ItemDB::cellInfo() {
 		out << '"' << cellIds.front() << '"' << ':' << '[' << bbox.minLat() << ',' << bbox.maxLat() << ',' << bbox.minLon() << ',' << bbox.maxLon() << ']';
 	}
 	for(uint32_t i(1), s(cellIds.size()); i < s; ++i) {
-		auto bbox = gh.cellBoundary(cellIds.front());
-		out << ',' << '"' << cellIds.front() << '"' << ':' << '[' << bbox.minLat() << ',' << bbox.maxLat() << ',' << bbox.minLon() << ',' << bbox.maxLon() << ']';
+		uint32_t cellId = cellIds.at(i);
+		auto bbox = gh.cellBoundary(cellId);
+		out << ',' << '"' << cellId << '"' << ':' << '[' << bbox.minLat() << ',' << bbox.maxLat() << ',' << bbox.minLon() << ',' << bbox.maxLon() << ']';
 	}
 	out << '}';
 }
