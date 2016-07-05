@@ -1027,7 +1027,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//get the top-k items that are in the cells specified by cells which is an array;
 		topKItems: function(k, offset, cellIds, cb) {
 			map.dagExpander.expandCellItems(cellIds, function() {
-
+				
 				//iterators would be nice
 				var tmp = tools.SimpleSet();
 				for(var i in cellIds) {
@@ -1113,7 +1113,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		expandDagItems: function(parentId, cb, offset) {
-			map.dagExpander.expandDagItems(parentId, cb, offset);
+			console.log("Expanding dag items is currently not supported");
 		},
 		
 		expandRegion: function(parentId, cb) {
@@ -1265,21 +1265,26 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			});
 			timers.tabRemove.stop();
 			
-			var tabPopulate = function(itemIds, ilh) {
-				//TODO: add ability to remove single results
-				ilh.clear();
-				//this should return instantly since the items are in the cache
-				oscar.getItems(itemIds, function(items) {
-					console.assert(itemIds.length == items.length);
-					if (!map.resultListTabs.count(regionId)) {
-						return;
-					}
-					ilh.insertItems(items);
-					if (map.resultListTabs.size() === 1) {
-						map.resultListTabs.emit_activeRegionChanged(regionId);
-					}
+			//cells are tools.SimpleSet()
+			var tabPopulate = function(cells, regionId) {
+				map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, cells.toArray(), function(itemIds){					
+					//this should return instantly since the items are in the cache
+					oscar.getItems(itemIds, function(items) {
+						console.assert(itemIds.length == items.length);
+						if (!map.resultListTabs.count(regionId) || !cells.equal(map.resultListTabs.cells(regionId))) {
+							return;
+						}
+						var ilh = map.resultListTabs.itemListHandler(regionId);
+				
+						//TODO: add ability to remove single results
+						ilh.clear();
+						ilh.insertItems(items);
+						if (map.resultListTabs.size() === 1) {
+							map.resultListTabs.emit_activeRegionChanged(regionId);
+						}
+					});
 				});
-			}
+			};
 			
 			timers.tabUpdate.start();
 			//check if the currently active tabs have all the items of the current cells
@@ -1301,9 +1306,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				map.resultListTabs.setCells(regionId, wantCells);
 				
-				var topKItems = map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, wantCells.toArray());
-				var ilh = map.resultListTabs.itemListHandler(regionId);
-				tabPopulate(topKItems, ilh);
+				tabPopulate(wantCells, regionId);
 			}
 			timers.tabUpdate.stop();
 			
@@ -1320,9 +1323,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				map.resultListTabs.setCells(regionId, wantCells);
 				
-				var topKItems = map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, wantCells.toArray());
-				var ilh = map.resultListTabs.addRegion(regionId, node.name, node.count);
-				tabPopulate(topKItems, ilh);
+				tabPopulate(wantCells, regionId);
 			});
 			timers.tabAdd.stop();
 			timers.handleTabs.stop();

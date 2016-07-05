@@ -196,15 +196,16 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	};
 	//itemInfo is a simple array {itemId: {name: <string>, bbox: <bbox>}}
 	cellItemExpander.m_data = {
-		insert: function(cellId, itemInfo) {
-			for(var itemId in itemInfo) {
+		insert: function(cellId, itemsInfo) {
+			for(var itemId in itemsInfo) {
 				var cellNode = state.dag.cell(cellId);
 				var childNode;
 				if (state.dag.hasItem(itemId)) {
 					childNode = state.dag.item(itemId);
 				}
 				else {
-					childNode = state.dag.addNode(itemInfo[i], dag.NodeTypes.Item);
+					childNode = state.dag.addNode(itemId, dag.NodeTypes.Item);
+					var itemInfo = itemsInfo[itemId];
 					childNode.name = itemInfo["name"];
 					childNode.bbox = itemInfo["bbox"];
 				}
@@ -219,7 +220,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 				return false;
 			}
 			var node = state.dag.cell(id);
-			return node.items.size() || !node.mayHaveItems;
+			return node.items.size();
 		},
 		at: function(id) {
 			console.assert(false, "Should never be called");
@@ -234,53 +235,44 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	cellItemExpander._getData = function(cb, remoteRequestId) {
 		var cellIds = this._remoteRequestDataIds(remoteRequestId);
 		
-		//cellItems is { cellId: {itemId: {name:<string>, bbox: <bbox>}}}
-		var cellItems = {};
-		
-		var myFinish = function() {
-		
+		//cellInfo is of the form {cellId: [itemId]}
+		state.cqr.getCellItems(cellIds, function(cellInfo) {
+
 			var missingItemInfo = tools.SimpleSet();
-			for(var cellId in cellItems) {
-				var ci = cellItems[cellId];
-				for(var itemId in ci) {
+			for(var cellId in cellInfo) {
+				var cellItemIds = cellInfo[cellId];
+				for(var i in cellItemIds) {
+					var itemId = cellItemIds[i];
 					if (!state.dag.hasItem(itemId) ) {
-						missingItemInfoinsert(itemId);
+						missingItemInfo.insert(itemId);
 					}
 				}
 			}
-			oscar.getItems(missingItemInfo.asArray(), function(items) {
+			oscar.getItems(missingItemInfo.toArray(), function(items) {
 				var tmp = {};
 				for(var i in items) {
 					var item = items[i];
 					tmp[item.id()] = item;
 				}
-				for(var cellId in cellItems) {
-					var ci = cellItems[cellId];
-					for(var itemId in ci) {
-						if (!state.dag.hasItem(itemId)) {
+				var res = {};
+				for(var cellId in cellInfo) {
+					res[cellId] = {};
+					var ci = cellInfo[cellId];
+					var rci = res[cellId];
+					for(var i in ci) {
+						var itemId = ci[i];
+						rci[itemId] = {};
+						var ri = rci[itemId];
+						if (tmp[itemId] !== undefined) {
 							var item = tmp[itemId];
-							ci[itemId] = {
-								name: item.name(),
-								bbox: item.bbox()
-							};
+							ri["name"] = item.name();
+							ri["bbox"] = item.bbox();
 						}
 					}
 				}
-				cb();
+				
+				cb(res, remoteRequestId);
 			}, tools.defErrorCB);
-			cb(cellItems, remoteRequestId);
-		};
-		
-		state.cqr.getCellItems(cellIds, function(info) {
-			for(var cellId in info) {
-				var ci = info[cellId];
-				var tci = cellItems[cellId] = {};
-				for(var i in ci) {
-					var itemId = [ci];
-					tci[itemId] = undefined;
-				}
-			}
-			myFinish();
 		}, tools.defErrorCB);
 	};
 
@@ -378,7 +370,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 			//offset is currently unsupported
 			expandCellItems: function(cellIds, cb, offset) {
 				spinner.startLoadingSpinner();
-				if (cellIds instanceof 5) {
+				if (parseInt(cellIds) === cellIds) {
 					cellIds = [cellIds];
 				}
 				this.cellItemExpander.fetch(function() {

@@ -613,8 +613,8 @@ void CQRCompleter::cellItems() {
 	response().set_content_header("text/json");
 	
 	//params
-	std::string cqs = request().get("q");
-	std::string regionFilter = request().get("rf");
+	std::string cqs = request().post("q");
+	std::string regionFilter = request().post("rf");
 	uint32_t numItems = 0;
 	uint32_t skipItems = 0;
 	uint32_t cqrSize = 0;
@@ -628,14 +628,19 @@ void CQRCompleter::cellItems() {
 	}
 
 	{
-		std::string tmpStr = request().get("k");
+		std::string tmpStr = request().post("k");
 		if (!tmpStr.empty()) {
 			numItems = std::min<uint32_t>(m_dataPtr->maxItemDBReq, atoi(tmpStr.c_str()));
 		}
-		tmpStr = request().get("o");
+		tmpStr = request().post("o");
 		if (!tmpStr.empty()) {
 			skipItems = atoi(tmpStr.c_str());
 		}
+	}
+	
+	if (!numItems) {
+		response().out() << "{}";
+		return;
 	}
 	
 	sserialize::CellQueryResult cqr;
@@ -652,7 +657,7 @@ void CQRCompleter::cellItems() {
 		if (cqrCellId == rqCId.at(rIt)) {
 			out << sep;
 			sep = ',';
-			out << '[';
+			out << '"' << cqrCellId << "\":[";
 			SSERIALIZE_CHEAP_ASSERT_LARGER(cqr.idxSize(cIt), 0);
 			sserialize::ItemIndex idx(cqr.idx(cIt));
 			sserialize::ItemIndex::const_iterator idxIt(idx.begin());
@@ -665,6 +670,8 @@ void CQRCompleter::cellItems() {
 				}
 			}
 			out << ']';
+			++cIt;
+			++rIt;
 		}
 		else if (cqrCellId < rqCId[rIt]) {
 			++cIt;

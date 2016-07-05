@@ -1220,7 +1220,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 		simpleCqrGetCellItems: function(query, successCB, errorCB, cellIds, offset) {
             var params = {};
             params['q'] = query;
-			params['k'] = offset;
+			params['k'] = oscarObject.maxFetchItems;
+			params['o'] = offset;
 			params['which'] = JSON.stringify(tools.toIntArray(cellIds));
             var qpath = this.completerBaseUrl + "/cqr/clustered/cellitems";
             jQuery.ajax({

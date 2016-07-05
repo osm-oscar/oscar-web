@@ -68,6 +68,17 @@ define(["jquery"], function ($) {
 				}
 				return tmp;
 			};
+			ss.equal = function(other) {
+				if (this.size() != other.size()) {
+					return false;
+				}
+				for(var i in this.values()) {
+					if (!other.count(i)) {
+						return false;
+					}
+				}
+				return true;
+			};
 			return ss;
 		},
 		

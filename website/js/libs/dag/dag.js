@@ -33,6 +33,7 @@ define(["jquery", "tools"], function ($, tools) {
 		},
 		ItemNode: function(id) {
 			var node = d.NamedNode(id, d.NodeTypes.Item);
+			return node;
 		},
 		CellNode: function(id) {
 			var node = d.Node(id, d.NodeTypes.Cell);
@@ -147,7 +148,7 @@ define(["jquery", "tools"], function ($, tools) {
 							this.m_cells.insert(id, d.CellNode(id));
 						}
 						else if (type === d.NodeTypes.Item) {
-							this.m_nodes.insert(id, d.ItemNode(id));
+							this.m_items.insert(id, d.ItemNode(id));
 						}
 						else {
 							console.assert(false, "Invalid node type", id, type);
