@@ -1101,7 +1101,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			else if (node.isLeaf) {
 				node.displayState |= dag.DisplayStates.InResultsTab;
-				if (!node.cells.size() && childNode.mayHaveItems) {
+				if (!node.cells.size() && node.mayHaveItems) {
 					cellsToFetch.insert(node.id);
 				}
 			}
