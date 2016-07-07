@@ -17,13 +17,12 @@
                 var count = 0;
                 if (cluster.count) { // custom call
                     count = cluster.count;
-                } else if (cluster.getAllChildMarkers) {
+                }
+                else if (cluster.getAllChildMarkers) {
                     var children = cluster.getAllChildMarkers();
-                    for (var i = 0; i < children.length; i++) {
+                    for (var i in children) {
                         if (children[i].count) {
-                            count += children[i].count;
-                        } else {
-                            count++;
+                            count = Math.max(children[i].count, count);
                         }
                     }
                 }
