@@ -1151,7 +1151,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 					try {
 						dec = JSON.parse(raw);
 					}
-					catch(error) {
+					catch(err) {
 						errorCB("Parsing the result failed with the following parameters: " + JSON.stringify(params), err);
 						return;
 					}

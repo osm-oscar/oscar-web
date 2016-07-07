@@ -989,12 +989,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.closePopups();
 			map.clusterMarkers.remove(e.itemId);
 			map.zoomTo(e.itemId);
-			if (state.dag.region(e.itemId).isLeaf) {
-				map.expandDagItems(e.itemId, function() {
-					map.mapViewChanged();
-				});
-			}
-			else {
+			if (!state.dag.region(e.itemId).isLeaf) {
 				map.expandRegion(e.itemId, function() {
 					map.mapViewChanged();
 				});
@@ -1116,12 +1111,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 		},
 		
-		expandDagItems: function(parentId, cb, offset) {
-			console.log("Expanding dag items is currently not supported");
-		},
-		
 		expandRegion: function(parentId, cb) {
-			map.dagExpander.expandRegion(parentId, cb);
+			map.dagExpander.expandRegionChildren(parentId, cb);
 		},
 		
 		mapViewChanged: function() {

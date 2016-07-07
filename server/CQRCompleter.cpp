@@ -373,6 +373,11 @@ struct ChildrenInfoWriter {
 		const std::vector<uint32_t> & regions,
 		const std::unordered_map<uint32_t, std::pair<double, double> > & clusterHints)
 	{
+		if (!regions.size() || !subSet.cqr().cellCount()) {
+			out << "{}";
+			return;
+		}
+	
 		out.precision(10);
 		const auto & gh = subSet.cqr().geoHierarchy();
 		char sep = '{';
@@ -389,6 +394,7 @@ struct ChildrenInfoWriter {
 				out << mySep;
 				mySep = ',';
 				out << '"' << gh.ghIdToStoreId( child->ghId() ) << "\":{\"apxitems\":" << child->maxItemsSize();
+				out << ",\"leaf\":" << (child->size() ? "false" : "true");
 				if (T_WITH_CLUSTERHINTS) {
 					const auto & p = clusterHints.at(child->ghId());
 					out << ",\"clusterHint\":[" << p.first << ',' << p.second << ']';

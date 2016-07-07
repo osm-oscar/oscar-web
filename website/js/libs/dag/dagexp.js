@@ -21,6 +21,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 					childNode.count = ci["apxitems"];
 					childNode.name = ci["name"];
 					childNode.bbox = ci["bbox"];
+					childNode.isLeaf = ci["leaf"]; //either undefined, which is ok as well
 					childNode.clusterHint = ci["clusterHint"];
 				}
 				state.dag.addEdge(parentNode, childNode);
@@ -356,16 +357,16 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 						var children = subSet.regions[regionId].children;
 						if (children.length) {
 							for (var i in children) {
-								state.dag.addChild(state.dag.region(regionId), state.dag.region(children[i]));
+								state.dag.addEdge(state.dag.region(regionId), state.dag.region(children[i]));
 							}
 						}
 						else {
-							state.dag.at(regionId).isLeaf = true;
+							state.dag.region(regionId).isLeaf = true;
 						}
 					}
 
 					for (var j in subSet.rootchildren) {
-						state.dag.addChild(state.dag.region(0xFFFFFFFF), state.dag.region(subSet.rootchildren[j]));
+						state.dag.addEdge(state.dag.region(0xFFFFFFFF), state.dag.region(subSet.rootchildren[j]));
 					}
 					myCB();
 				}
@@ -377,7 +378,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 			//offset is currently unsupported
 			expandCellItems: function(cellIds, cb, offset) {
 				spinner.startLoadingSpinner();
-				if (parseInt(cellIds) === cellIds) {
+				if (! $.isArray(cellIds) ) {
 					cellIds = [cellIds];
 				}
 				this.cellItemExpander.fetch(function() {
@@ -387,7 +388,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 			},
 
 			expandRegionCells: function(regionIds, cb) {
-				if (parseInt( regionIds ) === regionIds) {
+				if (! $.isArray(regionIds) ) {
 					regionIds = [regionIds];
 				}
 				spinner.startLoadingSpinner();
@@ -398,7 +399,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 			},
 	   
 			expandRegionChildren: function(regionIds, cb) {
-				if (parseInt( regionIds ) === regionIds) {
+				if (! $.isArray(regionIds) ) {
 					regionIds = [regionIds];
 				}
 				spinner.startLoadingSpinner();

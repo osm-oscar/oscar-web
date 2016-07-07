@@ -100,9 +100,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
                 $(value).on("click", function () {
                     var id = $(this).attr("nodeId");
 					state.mapHandler.zoomTo(id);
-					state.mapHandler.expandDagItems(id, function() {
-						state.mapHandler.mapViewChanged();
-					});
+					//loading items for the region is currently not supported
                 });
             });
         },
@@ -137,7 +135,6 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
 			if (!node.isLeaf && !node.children.size()) {
 				label += "<a nodeId='" + node.id+ "' class='treeNodeSub treeNodeLink' href='#'>Load children</a>";
 			}
-			label += "<a nodeId='" + node.id + "' class='treeNodeItems treeNodeLink' href='#'>Load items</a>";
 			label += "<a NodeId='" + node.id + "' class='treeNodeShow treeNodeLink' href='#'>Show</a>";
 			label += "</div>";
 			return label;
@@ -228,7 +225,6 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             d3.selectAll(".node").on("mouseover", this._hoverNode.bind(this));
             d3.selectAll(".node").on("mouseout", this._deHoverNode.bind(this));
             this._addClickToLoadSubHierarchy();
-            this._addClickToLoadItems();
 			this._addClickToShowRegion();
         },
 

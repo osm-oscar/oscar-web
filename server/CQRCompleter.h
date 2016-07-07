@@ -77,7 +77,7 @@ public:
 	  * which=[<regionId>]
 	  * withCells=true|false
 	  * Return:
-	  * { regionInfo: { regionId: { apxitems: <int>, cells: [], clusterHint}}, graph: { regionId: [childId]} }
+	  * { regionInfo: { regionId: { apxitems: <int>, cells: [], clusterHint, leaf: <bool>}}, graph: { regionId: [childId]} }
 	  */
 	void childrenInfo();
 	
