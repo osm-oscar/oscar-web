@@ -1182,24 +1182,34 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//if at least one of its cells that overlaps the current map bounds has the state InResultsTab
 			//bottom-up traversal makes sure that only the lowest region will get a tab
 			var currentMapBounds = state.map.getBounds();
+			var maxOverlap = 0.0;
+			var maxOverlapRegionId = -1;
 			state.dag.bottomUp(state.dag.region(0xFFFFFFFF), function(node) {
 				if (node.displayState & dag.DisplayStates.InResultsTab) {
 					var ok = false;
+					var hasMaxOverlapCell = false;
 					for(var cellId in node.cells.values()) {
 						var cellNode = state.dag.cell(cellId);
 						var ds = cellNode.displayState & (dag.DisplayStates.HasClusterMarker | dag.DisplayStates.InResultsTab2);
 						var xMap = currentMapBounds.intersects(cellNode.bbox);
-						var pOv =tools.percentOfOverlap(state.map, cellNode.bbox);
+						var pOv = tools.percentOfOverlap(state.map, cellNode.bbox);
 						if (ds === 0 && xMap
 							&& pOv >= config.clusters.shapeOverlap)
 						{
 							ok = true;
 							cellNode.displayState |= dag.DisplayStates.InResultsTab2;
+							if (pOv > maxOverlap) {
+								maxOverlap = pOv;
+								hasMaxOverlapCell = true;
+							}
 						}
 						cellNode.displayState &= ~dag.DisplayStates.InResultsTab;
 					}
 					if (!ok) {
 						node.displayState &= ~dag.DisplayStates.InResultsTab;
+					}
+					if (ok && hasMaxOverlapCell) {
+						maxOverlapRegionId = node.id;
 					}
 				}
 			}, dag.NodeTypes.Region);
@@ -1274,8 +1284,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			timers.tabRemove.stop();
 			
 			//cells are tools.SimpleSet()
-			var tabPopulate = function(cells, regionId) {
-				map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, cells.toArray(), function(itemIds){					
+			var tabPopulate = function(cells, regionId, focusAfterLoad) {
+				map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, cells.toArray(), function(itemIds) {
 					//this should return instantly since the items are in the cache
 					oscar.getItems(itemIds, function(items) {
 						console.assert(itemIds.length == items.length);
@@ -1289,6 +1299,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						ilh.insertItems(items);
 						if (map.resultListTabs.size() === 1) {
 							map.resultListTabs.emit_activeRegionChanged(regionId);
+						}
+						if (focusAfterLoad) {
+							map.resultListTabs.openTab(regionId);
 						}
 					});
 				});
@@ -1310,11 +1323,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				
 				//nothing to change
 				if (!missingCells.size() && ! removedCells.size()) {
+					if (parseInt(regionId) == maxOverlapRegionId) {
+						map.resultListTabs.openTab(regionId);
+					}
 					continue;
 				}
 				map.resultListTabs.setCells(regionId, wantCells);
 				
-				tabPopulate(wantCells, regionId);
+				tabPopulate(wantCells, regionId, parseInt(regionId) == maxOverlapRegionId);
 			}
 			timers.tabUpdate.stop();
 			
@@ -1331,7 +1347,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				map.resultListTabs.setCells(regionId, wantCells);
 				
-				tabPopulate(wantCells, regionId);
+				tabPopulate(wantCells, regionId, parseInt(regionId) == maxOverlapRegionId);
 			});
 			timers.tabAdd.stop();
 			timers.handleTabs.stop();
