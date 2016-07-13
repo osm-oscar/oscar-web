@@ -82,6 +82,7 @@ m_cqrSerializer(dataPtr->completer->indexStore().indexType())
 	dispatcher().assign("/clustered/simple", &CQRCompleter::simpleCQR, this);
 	dispatcher().assign("/clustered/children", &CQRCompleter::children, this);
 	dispatcher().assign("/clustered/childreninfo", &CQRCompleter::childrenInfo, this);
+	dispatcher().assign("/clustered/cellinfo", &CQRCompleter::cellInfo, this);
 	dispatcher().assign("/clustered/cells", &CQRCompleter::cells, this);
 	dispatcher().assign("/clustered/cellitems", &CQRCompleter::cellItems, this);
 	dispatcher().assign("/clustered/michildren", &CQRCompleter::maximumIndependentChildren, this);
@@ -363,8 +364,8 @@ void CQRCompleter::children() {
 	writeLogStats("children", cqs, ttm, cqrSize, 0);
 }
 
-template<bool T_WITH_CLUSTERHINTS, bool T_WITH_CHILDREN_CELLS, bool T_WITH_PARENT_CELLS, bool T_REGION_EXCLUSIVE_CELLS>
-struct ChildrenInfoWriter {
+template<bool T_REGION_EXCLUSIVE_CELLS>
+struct CellInfoWriter {
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr NodePtr;
 
 	///prints the cellIds of rPtr as an json-array
@@ -381,19 +382,20 @@ struct ChildrenInfoWriter {
 				return;
 			}
 			const auto & cellPositions = rPtr->cellPositions();
+			auto cpIt(cellPositions.begin()), cpEnd(cellPositions.end());
 			sserialize::ItemIndex::const_iterator reIt(reCells.begin()), reEnd(reCells.end());
-			for(uint32_t i(0), s(cellPositions.size()); i < s && reIt != reEnd;) {
-				uint32_t cqrCellId = cqr.cellId(i);
+			for(; cpIt != cpEnd && reIt != reEnd;) {
+				uint32_t cqrCellId = cqr.cellId(*cpIt);
 				uint32_t reCellId = *reIt;
 				if (cqrCellId == reCellId) {
 					out << mySep;
 					mySep = ',';
 					out << reCellId;
 					++reIt;
-					++i;
+					++cpIt;
 				}
 				else if (cqrCellId < reCellId) {
-					++i;
+					++cpIt;
 				}
 				else {
 					++reIt;
@@ -413,6 +415,38 @@ struct ChildrenInfoWriter {
 			}
 			out << ']';
 		}
+	}
+	
+	static void write(std::ostream & out,
+		const sserialize::spatial::GeoHierarchySubGraph & ghs,
+		sserialize::Static::spatial::GeoHierarchy::SubSet & subSet,
+		const std::vector<uint32_t> & regions)
+	{
+		char mySep = '{';
+		for(uint32_t regionId : regions) {
+			NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
+			if (!rPtr) {
+				continue;
+			}
+			out << mySep;
+			mySep = ',';
+			out << '"' << regionId << '"' << ':';
+			printCells(out, ghs, subSet.cqr(), rPtr);
+		}
+		if (mySep == '{') {
+			out << mySep;
+		}
+		out << '}';
+	}
+};
+
+template<bool T_WITH_CLUSTERHINTS, bool T_WITH_CHILDREN_CELLS, bool T_WITH_PARENT_CELLS, bool T_REGION_EXCLUSIVE_CELLS>
+struct ChildrenInfoWriter {
+	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr NodePtr;
+
+	///prints the cellIds of rPtr as an json-array
+	static void printCells(std::ostream & out, const sserialize::spatial::GeoHierarchySubGraph & ghs, const sserialize::CellQueryResult & cqr, const NodePtr & rPtr) {
+		CellInfoWriter<T_REGION_EXCLUSIVE_CELLS>::printCells(out, ghs, cqr, rPtr);
 	}
 	
 	///graph style: { graph: { regionId: [childId]}, cells: { regionId: [cellId] } regionInfo: { regionId: { apxitems: <int>, clusterHint}} }
@@ -655,6 +689,102 @@ void CQRCompleter::childrenInfo() {
 	
 	ttm.end();
 	writeLogStats("childrenInfo", cqs, ttm, subSet.cqr().cellCount(), 0);
+}
+
+void CQRCompleter::cellInfo() {
+	sserialize::TimeMeasurer ttm;
+	uint32_t cellCount = 0;
+	ttm.begin();
+	
+	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
+
+	response().set_content_header("text/json");
+	
+	//params
+	std::string cqs = request().post("q");
+	std::string regionFilter = request().post("rf");
+	bool regionExclusiveCells = sserialize::toBool( request().post("regionExclusiveCells") );
+	std::vector<uint32_t> regions;
+	{
+		bool ok;
+		std::vector<uint32_t> tmp( parseJsonArray<uint32_t>(request().post("which"), ok) );
+		if (!ok) {
+			response().out() << "Invalid request";
+			return;
+		}
+		regions.reserve(tmp.size());
+		uint32_t maxR = gh.regionSize();
+		for(uint32_t x : tmp) {
+			if (x < maxR || x == sserialize::Static::spatial::GeoHierarchy::npos) {
+				regions.emplace_back(x);
+			}
+		}
+		if (!regions.size()) {
+			regions.emplace_back(sserialize::Static::spatial::GeoHierarchy::npos);
+		}
+	}
+	
+	if (regions.size() > 1) {
+	
+		uint32_t fullSubSetLimit = 0xFFFFFFFF;
+		sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
+		if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+			subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), fullSubSetLimit, m_dataPtr->treedCQR);
+		}
+		else {
+			subSet = m_dataPtr->completer->clusteredComplete(cqs, fullSubSetLimit, m_dataPtr->treedCQR);
+		}
+		cellCount = subSet.cqr().cellCount();
+		
+		std::ostream & out = response().out();
+
+		sserialize::spatial::GeoHierarchySubGraph ghs;
+		if (regionExclusiveCells) {
+			if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+				ghs = m_dataPtr->ghSubSetCreators.at(regionFilter);
+			}
+			else {
+				ghs = sserialize::spatial::GeoHierarchySubGraph(gh, m_dataPtr->completer->indexStore(), sserialize::spatial::GeoHierarchySubGraph::T_PASS_THROUGH);
+			}
+			CellInfoWriter<true>::write(out, ghs, subSet, regions);
+		}
+		else {
+			CellInfoWriter<false>::write(out, ghs, subSet, regions);
+		}
+	}
+	else {
+		if (regionExclusiveCells) {
+			cqs = sserialize::toString("$rec:", regions.front(), " (", cqs, ")");
+		}
+		else if (regions.front() != sserialize::Static::spatial::GeoHierarchy::npos) {
+			cqs = sserialize::toString("$region:", regions.front(), " (", cqs, ")");
+		}
+		
+		
+		sserialize::CellQueryResult cqr;
+		if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+			cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR);
+		}
+		else {
+			cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR);
+		}
+		cellCount = cqr.cellCount();
+		
+		std::ostream & out = response().out();
+		if (!cqr.cellCount()) {
+			out << "[]";
+		}
+		else {
+			out << "{\"" << regions.front() << "\":[" << cqr.cellId(0);
+			for(uint32_t i(1), s(cqr.cellCount()); i < s; ++i) {
+				out << ',' << cqr.cellId(i);
+			}
+			out << "]}";
+		}
+	}
+	
+	ttm.end();
+	writeLogStats("childrenInfo", cqs, ttm, cellCount, 0);
 }
 
 void CQRCompleter::cells() {

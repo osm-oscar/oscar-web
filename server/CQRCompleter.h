@@ -83,6 +83,17 @@ public:
 	  */
 	void childrenInfo();
 	
+	/** return the region children for the query q:
+	  * call with POST
+	  * q=<searchstring>
+	  * rf=<region filter>
+	  * which=[<regionId>]
+	  * regionExclusiveCells=true|FALSE
+	  * Return:
+	  * { regionId: [cellId] }
+	  */
+	void cellInfo();
+	
 	/** return the cells for the query q:
 	  * q=<searchstring>
 	  * Return:
