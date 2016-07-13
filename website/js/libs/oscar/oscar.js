@@ -1142,7 +1142,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 }
             });
         },
-		//returns the same as CQRCompleter::childrenWithCells:
+		//returns the same as CQRCompleter::childrenInfo:
 		//{parentId: { childId: {apxitems: <int>, clusterHint: [lat, lon], cells: []}}
         simpleCqrChildrenInfo: function (query, successCB, errorCB, which, regionFilter, withClusterHints, withChildrenCells, withParentCells, regionExclusiveCells) {
             var params = {};
@@ -1164,6 +1164,39 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 				params['regionExclusiveCells'] = "true";
 			}
             var qpath = this.completerBaseUrl + "/cqr/clustered/childreninfo";
+            jQuery.ajax({
+                type: "POST",
+                url: qpath,
+                data: params,
+                mimeType: 'text/plain',
+                success: function (raw) {
+					var dec;
+					try {
+						dec = JSON.parse(raw);
+					}
+					catch(err) {
+						errorCB("Parsing the result failed with the following parameters: " + JSON.stringify(params), err);
+						return;
+					}
+                    successCB(dec);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    errorCB(textStatus, errorThrown);
+                }
+            });
+        },
+		//returns the same as CQRCompleter::cellInfo
+        simpleCqrCellInfo: function (query, successCB, errorCB, which, regionFilter, regionExclusiveCells) {
+            var params = {};
+            params['q'] = query;
+			params['which'] = JSON.stringify( tools.toIntArray(which) );
+            if (regionFilter !== undefined) {
+               params['rf'] = regionFilter;
+            }
+			if (regionExclusiveCells) {
+				params['regionExclusiveCells'] = "true";
+			}
+            var qpath = this.completerBaseUrl + "/cqr/clustered/cellinfo";
             jQuery.ajax({
                 type: "POST",
                 url: qpath,
