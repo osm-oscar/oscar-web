@@ -1070,9 +1070,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					if (myOverlap >= config.clusters.bboxOverlap) {
 						map.updateDag(childNode, childrenToFetch, cellsToFetch)
 						childNode.displayState |= dag.DisplayStates.InResultsTab;
-						if (!childNode.cells.size() && childNode.mayHaveItems) {
-							cellsToFetch.insert(childNode.id);
-						}
+// 						if (!childNode.cells.size() && childNode.mayHaveItems) {
+// 							cellsToFetch.insert(childNode.id);
+// 						}
 					}
 					else if (myOverlap > config.clusters.shapeOverlap &&
 							oscar.shapeCache.count(childNode.id) &&
@@ -1080,9 +1080,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					{
 						map.updateDag(childNode, childrenToFetch, cellsToFetch);
 						childNode.displayState |= dag.DisplayStates.InResultsTab;
-						if (!childNode.cells.size() && childNode.mayHaveItems) {
-							cellsToFetch.insert(childNode.id);
-						}
+// 						if (!childNode.cells.size() && childNode.mayHaveItems) {
+// 							cellsToFetch.insert(childNode.id);
+// 						}
 					}
 					else { //overlap is smaller, only draw the cluster marker
 						if ((childNode.clusterHint !== undefined && state.map.getBounds().contains(childNode.clusterHint)) ||

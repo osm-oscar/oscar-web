@@ -728,7 +728,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 					if (! $.isArray(regionIds)) {
 						regionIds = [regionIds];
 					}
-					this.p.simpleCqrCellInfo(this.d.query, successCB, errorCB, regionIds, thid.d.regionFilter, regionExclusiveCells);
+					this.p.simpleCqrCellInfo(this.d.query, successCB, errorCB, regionIds, this.d.regionFilter, regionExclusiveCells);
 				},
 				//calls successCB with { cellId: [itemId] }
 				getCellItems: function(cellIds, successCB, errorCB, offset) {

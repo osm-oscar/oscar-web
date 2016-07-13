@@ -772,7 +772,7 @@ void CQRCompleter::cellInfo() {
 		
 		std::ostream & out = response().out();
 		if (!cqr.cellCount()) {
-			out << "[]";
+			out << "{}";
 		}
 		else {
 			out << "{\"" << regions.front() << "\":[" << cqr.cellId(0);

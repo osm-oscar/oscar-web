@@ -72,7 +72,10 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 		var cellInfo = data["cells"];
 		for(var regionId in cellInfo) {
 			var regionNode = state.dag.region(regionId);
-			var cells = cellInfo[parentId];
+			var cells = cellInfo[regionId];
+			if (cells !== undefined && !cells.length) {
+				regionNode.mayHaveItems = false;
+			}
 			for(var i in cells) {
 				var cellId = cells[i];
 				var cellNode;
@@ -164,25 +167,6 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	var regionCellExpander = oscar.IndexedDataStore();
 	//cellInfo is { cellId: bbox }
 	regionCellExpander.m_data = {
-		insert: function(parentId, cellInfo) {
-			var parentNode = state.dag.region(parentId);
-			for(var cellId in cellInfo) {
-				var childNode;
-				if (state.dag.hasCell(cellId)) {
-					childNode = state.dag.cell(cellId);
-				}
-				else {
-					childNode = state.dag.addNode(cellId, dag.NodeTypes.Cell);
-					childNode.bbox = cellInfo[cellId];
-					var tmp = [[childNode.bbox[0], childNode.bbox[2]], [childNode.bbox[1], childNode.bbox[3]]];
-					childNode.bbox = tmp;
-				}
-				state.dag.addEdge(parentNode, childNode);
-			}
-			if ($.isEmptyObject(cellInfo)) {
-				parentNode.mayHaveItems = false;
-			}
-		},
 		size: function() {
 			return state.dag.regionSize();
 		},
@@ -203,65 +187,47 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	regionCellExpander._requestFromStore = function(cb, parentIds) {
 		cb();
 	};
+	//data is of the form: { regionId: [cellId] }
+	regionCellExpander._insertData = function(dataIds, data) {
+		for(var i in dataIds) {
+			var regionId = dataIds[i];
+			var regionNode = state.dag.region(regionId);
+			var cells = data[regionId];
+			if (cells === undefined || cells.length === 0) {
+				regionNode.mayHaveItems = false;
+				continue;
+			}
+			for(var j in cells) {
+				var cellId = cells[j];
+				var cellNode;
+				if (state.dag.hasCell(cellId)) {
+					cellNode = state.dag.cell(cellId);
+				}
+				else {
+					cellNode = state.dag.addNode(cellId, dag.NodeTypes.Cell);
+					cellNode.bbox = oscar.cellInfoCache.at(cellId);
+					var tmp = [[cellNode.bbox[0], cellNode.bbox[2]], [cellNode.bbox[1], cellNode.bbox[3]]];
+					cellNode.bbox = tmp;
+				}
+				state.dag.addEdge(regionNode, cellNode);
+			}
+		}
+	},
 	regionCellExpander._getData = function(cb, remoteRequestId) {
 		var parentIds = this._remoteRequestDataIds(remoteRequestId);
-		var result = {}; // parentId -> { cellId: bbox }
-		var resultSize = 0;
-		
-		var myFinish = function() {
-			
-			var missingCellInfo = tools.SimpleSet();
-			
-			//the cells nodes are now in the dag
-			//let's get the bbox of cells that don't have one
-			var cellIds = [];
+		state.cqr.cells(parentIds, function(result) {
+			//result is of the form { regionId: [cellId] }
+			var tmp = tools.SimpleSet();
 			for(var regionId in result) {
 				var ri = result[regionId];
-				for(var cellId in ri) {
-					if (!state.dag.hasCell(cellId)) {
-						missingCellInfo.insert(cellId);
-					}
-					else {
-						console.assert(state.dag.cell(cellId).bbox !== undefined);
-					}
+				for(var i in ri) {
+					tmp.insert(ri[i]);
 				}
 			}
-			var missingCellInfo = missingCellInfo.toArray();
-			//cellInfo is of the form [[bounds]]
-			oscar.getCellInfo(missingCellInfo, function(cellInfo) {
-				var tmp = {};
-				for(var i in missingCellInfo) {
-					tmp[missingCellInfo[i]] = cellInfo[i];
-				}
-				
-				for(var regionId in result) {
-					var ri = result[regionId];
-					for(var cellId in ri) {
-						ri[cellId] = tmp[cellId]; //automatically sets existing cells to undefined
-					}
-				}
-				
+			oscar.fetchCellInfo(tmp.toArray(), function() {
 				cb(result, remoteRequestId);
 			}, tools.defErrorCB);
-		};
-		
-		var myWrapper = function(parentId) {
-			state.cqr.getRegionExclusiveCells(parentId, function(cellInfo) {
-				var tmp = {};
-				for(var i in cellInfo) {
-					tmp[cellInfo[i]] = undefined;
-				}
-				resultSize += 1;
-				result[parentId] = tmp;
-				if (resultSize == parentIds.length) {
-					myFinish();
-				}
-			}, tools.defErrorCB);
-		};
-		
-		for(var i in parentIds) {
-			myWrapper(parentIds[i]);
-		}
+		}, tools.defErrorCB, true);
 	};
 	
 	var cellItemExpander = oscar.IndexedDataStore();
