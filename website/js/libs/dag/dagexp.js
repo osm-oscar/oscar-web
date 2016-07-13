@@ -3,33 +3,14 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	
 	regionChildrenExpander.m_cfg = {
 		preloadShapes : true,
+		loadChildrenCells: false,
+		loadParentCells: true,
+		regionExclusiveCells: true
 	},
 	
-	//childrenInfo is:
-	//{ <childId> : { apxitems: <int>, name: name, bbox: bbox, clusterHint: hint}
+	//data is:
+	//{ childrenInfo: {<childId> : { apxitems: <int>, name: name, bbox: bbox, clusterHint: hint, cells: [cellId]} }, parentInfo: {cells: []} }
 	regionChildrenExpander.m_data = {
-		insert: function(parentId, childrenInfo) {
-			var parentNode = state.dag.region(parentId);
-			for(var childId in childrenInfo) {
-				var childNode;
-				if (state.dag.hasRegion(childId)) {
-					childNode = state.dag.region(childId);
-				}
-				else {
-					childNode = state.dag.addNode(childId, dag.NodeTypes.Region);
-					var ci = childrenInfo[childId];
-					childNode.count = ci["apxitems"];
-					childNode.name = ci["name"];
-					childNode.bbox = ci["bbox"];
-					childNode.isLeaf = ci["leaf"]; //either undefined, which is ok as well
-					childNode.clusterHint = ci["clusterHint"];
-				}
-				state.dag.addEdge(parentNode, childNode);
-			}
-			if ($.isEmptyObject(childrenInfo)) {
-				parentNode.isLeaf = true;
-			}
-		},
 		size: function() {
 			return state.dag.regionSize();
 		},
@@ -45,6 +26,69 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 			return;
 		}
 	};
+	// data is {
+	//    graph: { regionId: [childId]},
+	//    cells: { regionId: [cellId] },
+	//    regionInfo: { regionId: { apxitems: <int>, clusterHint: [[]], name: <string>, bbox: [[]] }}
+	// }
+	regionChildrenExpander._insertData = function(dataIds, data) {
+		//data is the same as the one retrieved by _getData
+		//Item information is added
+		
+		//first take care of the children nodes
+		//then add the edges
+		//then take care of the cells
+		var regionInfo = data["regionInfo"];
+		for(var regionId in regionInfo) {
+			if (state.dag.hasRegion(regionId)) {
+				continue;
+			}
+			var ci = regionInfo[regionId];
+			var node = state.dag.addNode(regionId, dag.NodeTypes.Region);
+			node.count = ci["apxitems"];
+			node.name = ci["name"];
+			node.bbox = ci["bbox"];
+			node.isLeaf = ci["leaf"]; //either undefined, which is ok as well
+			node.clusterHint = ci["clusterHint"];
+		}
+		
+		var graph = data["graph"];
+		for (var i in dataIds) {
+			var parentId = dataIds[i];
+			var parentNode = state.dag.region(parentId);
+			
+			if (graph[parentId] === undefined || !graph[parentId].length) {
+				parentNode.isLeaf = true;
+				continue;
+			}
+			
+			var children = graph[parentId];
+			for(var i in children) {
+				var childNode = state.dag.region(children[i]);
+				state.dag.addEdge(parentNode, childNode);
+			}
+		}
+		
+		var cellInfo = data["cells"];
+		for(var regionId in cellInfo) {
+			var regionNode = state.dag.region(regionId);
+			var cells = cellInfo[parentId];
+			for(var i in cells) {
+				var cellId = cells[i];
+				var cellNode;
+				if (state.dag.hasCell(cellId)) {
+					cellNode = state.dag.cell(cellId);
+				}
+				else {
+					cellNode = state.dag.addNode(cellId, dag.NodeTypes.Cell);
+					cellNode.bbox = oscar.cellInfoCache.at(cellId);
+					var tmp = [[cellNode.bbox[0], cellNode.bbox[2]], [cellNode.bbox[1], cellNode.bbox[3]]];
+					cellNode.bbox = tmp;
+				}
+				state.dag.addEdge(regionNode, cellNode);
+			}
+		}
+	};
 	//fetching stuff from store is not necessary,
 	//we only call the cb to tell that we're done
 	regionChildrenExpander._requestFromStore = function(cb, parentIds) {
@@ -53,45 +97,68 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	regionChildrenExpander._getData = function(cb, remoteRequestId) {
 		var parentIds = this._remoteRequestDataIds(remoteRequestId);
 		var me = this;
-		var myFinish = function(result, allChildIds) {
+		
+		var mySecondStage = function(result, childIds, cellIds) {
+
+			var myFinishCount = 0;
+			var myFinish = function() {
+				++myFinishCount;
+				if (myFinishCount === 2) {
+					cb(result, remoteRequestId);
+				}
+			};
+
 			//cache the shapes
 			if (me.m_cfg.preloadShapes) {
-				oscar.fetchShapes(allChildIds, function() {});
+				oscar.fetchShapes(childIds, function() {});
+			}
+			
+			if (cellIds.length) {
+				oscar.fetchCellInfo(cellIds, function() {
+					myFinish();
+				}, tools.defErrorCB);
+			}
+			else {
+				myFinish();
 			}
 			
 			//now get the item info for the name and the bbox
-			oscar.getItems(allChildIds,
+			oscar.getItems(childIds,
 				function (items) {
-					console.assert(items.length == allChildIds.length);
-					var tmp = {};
-					for (var i in items) {
+					console.assert(items.length == childIds.length);
+					var regionInfo = result["regionInfo"];
+					for(var i in items) {
 						var item = items[i];
-						tmp[item.id()] = { name: item.name(), bbox: item.bbox()};
+						var ri = regionInfo[item.id()];
+						ri["name"] = item.name();
+						ri["bbox"] = item.bbox();
 					}
-					for(var regionId in result) {
-						var ri = result[regionId];
-						for(var childId in ri) {
-							var ci = ri[childId];
-							ci["name"] = tmp[childId]["name"];
-							ci["bbox"] = tmp[childId]["bbox"];
-						}
-					}
-					cb(result, remoteRequestId);
+					myFinish();
 				}
 			);
 		};
 		// result is of the form
-		// regionId -> { childId -> {apxitems : <int>, cells: [], name: <string>, bbox: <bbox>, clusterHint: <hint>} }
-		//don't fetch cells! cells are fetched by reigonCellExpander
+		// { graph: { regionId: [childId]}, cells: { regionId: [cellId] }, regionInfo: { regionId: { apxitems: <int>, clusterHint}} }
 		state.cqr.multiRegionChildrenInfo(parentIds, function(result) {
-			var children = tools.SimpleSet();
-			for(var regionId in result) {
-				for(var childId in result[regionId]) {
-					children.insert(childId);
-				}
+			var children = [];
+			var cells = [];
+			var regionInfo = result["regionInfo"];
+			for(var regionId in regionInfo) {
+				children.push(regionId);
 			}
-			myFinish(result, children.toArray());
-		}, tools.defErrorCB, false, true);
+			if (result["cells"] !== undefined) {
+				var rc = result["cells"];
+				var tmp = tools.SimpleSet();
+				for(var regionId in rc) {
+					var rci = rc[regionId]; //this is the array
+					for(var i in rci) {
+						tmp.insert(rci[i]);
+					}
+				}
+				cells = tmp.toArray();
+			}
+			mySecondStage(result, children, cells);
+		}, tools.defErrorCB, true, this.m_cfg.loadChildrenCells, this.m_cfg.loadParentCells, this.m_cfg.regionExclusiveCells);
 	};
 	
 	var regionCellExpander = oscar.IndexedDataStore();

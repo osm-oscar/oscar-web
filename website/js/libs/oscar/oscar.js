@@ -759,15 +759,17 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                     }
                 },
 				//returns { parentId: { childId : {apxitems: <int>, cells: [cellId], clusterHint: [lat, lon]}}}
-				multiRegionChildrenInfo: function(which, successCB, errorCB, withCellIds, withClusterHints) {
+				multiRegionChildrenInfo: function(which, successCB, errorCB, withClusterHints, withChildrenCells, withParentCells, regionExclusiveCells) {
 					this.p.simpleCqrChildrenInfo(
 						this.d.query,
 						successCB,
 						errorCB,
 						which,
 						this.d.regionFilter,
-						withCellIds,
-						withClusterHints
+						withClusterHints,
+						withChildrenCells,
+						withParentCells,
+						regionExclusiveCells
 					);
 				},
                 hasResults: function () {
@@ -908,6 +910,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 		
 		getCellInfo: function(cellIds, successCB, errorCB) {
 			this.cellInfoCache.get(successCB, cellIds);
+		},
+	   
+		fetchCellInfo: function(cellIds, successCB, errorCB) {
+			this.cellInfoCache.fetch(successCB, cellIds);
 		},
 
         fetchIndexes: function (arrayOfIndexIds, successCB, errorCB) {
@@ -1138,18 +1144,24 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
         },
 		//returns the same as CQRCompleter::childrenWithCells:
 		//{parentId: { childId: {apxitems: <int>, clusterHint: [lat, lon], cells: []}}
-        simpleCqrChildrenInfo: function (query, successCB, errorCB, which, regionFilter, withCells, withClusterHints) {
+        simpleCqrChildrenInfo: function (query, successCB, errorCB, which, regionFilter, withClusterHints, withChildrenCells, withParentCells, regionExclusiveCells) {
             var params = {};
             params['q'] = query;
 			params['which'] = JSON.stringify( tools.toIntArray(which) );
             if (regionFilter !== undefined) {
                params['rf'] = regionFilter;
             }
-            if (withCells) {
-				params['withCells'] = "true";
-			}
 			if (withClusterHints) {
 				params['withClusterHints'] = "true";
+			}
+            if (withChildrenCells) {
+				params['withChildrenCells'] = "true";
+			}
+            if (withParentCells) {
+				params['withParentCells'] = "true";
+			}
+			if (regionExclusiveCells) {
+				params['regionExclusiveCells'] = "true";
 			}
             var qpath = this.completerBaseUrl + "/cqr/clustered/childreninfo";
             jQuery.ajax({

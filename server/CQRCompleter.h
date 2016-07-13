@@ -75,9 +75,11 @@ public:
 	  * q=<searchstring>
 	  * rf=<region filter>
 	  * which=[<regionId>]
-	  * withCells=true|false
+	  * withChildrenCells=true|FALSE
+	  * withParentCells=true|FALSE
+	  * regionExclusiveCells=true|FALSE
 	  * Return:
-	  * { regionInfo: { regionId: { apxitems: <int>, cells: [], clusterHint, leaf: <bool>}}, graph: { regionId: [childId]} }
+	  * { graph: { regionId: [childId]}, cells: { regionId: [cellId] }, regionInfo: { regionId: { apxitems: <int>, clusterHint, leaf: <bool>}} }
 	  */
 	void childrenInfo();
 	

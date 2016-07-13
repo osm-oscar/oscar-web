@@ -363,100 +363,96 @@ void CQRCompleter::children() {
 	writeLogStats("children", cqs, ttm, cqrSize, 0);
 }
 
-template<bool T_WITH_CELLS, bool T_WITH_CLUSTERHINTS>
+template<bool T_WITH_CLUSTERHINTS, bool T_WITH_CHILDREN_CELLS, bool T_WITH_PARENT_CELLS, bool T_REGION_EXCLUSIVE_CELLS>
 struct ChildrenInfoWriter {
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr NodePtr;
 
-	///interleaved: { <parentRegionId>: {<childId>: {apxitems: <int>, cells:[]}, ...}
-	static void writeInterleaved(std::ostream & out,
-		sserialize::Static::spatial::GeoHierarchy::SubSet & subSet,
-		const std::vector<uint32_t> & regions,
-		const std::unordered_map<uint32_t, std::pair<double, double> > & clusterHints)
-	{
-		if (!regions.size() || !subSet.cqr().cellCount()) {
-			out << "{}";
+	///prints the cellIds of rPtr as an json-array
+	static void printCells(std::ostream & out, const sserialize::spatial::GeoHierarchySubGraph & ghs, const sserialize::CellQueryResult & cqr, const NodePtr & rPtr) {
+		if (!rPtr->cellPositions().size()) {
+			out << "[]";
 			return;
 		}
-	
-		out.precision(10);
-		const auto & gh = subSet.cqr().geoHierarchy();
-		char sep = '{';
-		for(uint32_t regionId : regions) {
-			NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
-			if (!rPtr) {
-				continue;
+		if (T_REGION_EXCLUSIVE_CELLS) {
+			char mySep = '[';
+			sserialize::ItemIndex reCells( ghs.regionExclusiveCells( rPtr->ghId()) );
+			if (!reCells.size()) {
+				out << "[]";
+				return;
 			}
-			out << sep;
-			sep = ',';
-			out << '"' << regionId << "\":";
-			char mySep = '{';
-			for(const NodePtr & child : *rPtr) {
-				out << mySep;
-				mySep = ',';
-				out << '"' << gh.ghIdToStoreId( child->ghId() ) << "\":{\"apxitems\":" << child->maxItemsSize();
-				out << ",\"leaf\":" << (child->size() ? "false" : "true");
-				if (T_WITH_CLUSTERHINTS) {
-					const auto & p = clusterHints.at(child->ghId());
-					out << ",\"clusterHint\":[" << p.first << ',' << p.second << ']';
+			const auto & cellPositions = rPtr->cellPositions();
+			sserialize::ItemIndex::const_iterator reIt(reCells.begin()), reEnd(reCells.end());
+			for(uint32_t i(0), s(cellPositions.size()); i < s && reIt != reEnd;) {
+				uint32_t cqrCellId = cqr.cellId(i);
+				uint32_t reCellId = *reIt;
+				if (cqrCellId == reCellId) {
+					out << mySep;
+					mySep = ',';
+					out << reCellId;
+					++reIt;
+					++i;
 				}
-				if (T_WITH_CELLS) {
-					out << ",\"cells\":";
-					if (child->cellPositions().size()) {
-						char mySep = '[';
-						for(uint32_t cellPos : child->cellPositions()) {
-							uint32_t cellId = subSet.cqr().cellId(cellPos);
-							out << mySep;
-							mySep = ',';
-							out << cellId;
-						}
-						out << ']';
-					}
-					else {
-						out << "[]";
-					}
+				else if (cqrCellId < reCellId) {
+					++i;
 				}
 				else {
-					out << '}';
+					++reIt;
 				}
 			}
-			if (mySep == '{') {
+			
+			if (mySep == '[') {
 				out << mySep;
 			}
-			out << '}';
+			out << ']';
 		}
-		if (sep == '{') {
-			out << sep;
+		else {
+			const auto & cellPositions = rPtr->cellPositions();
+			out << '[' << cqr.cellId(cellPositions.at(0));
+			for(uint32_t i(1), s(cellPositions.size()); i < s; ++i) {
+				out << ',' << cqr.cellId(cellPositions.at(i));
+			}
+			out << ']';
 		}
-		out << '}';
 	}
-	///graph style: { graph: { regionId: [childId]}, regionInfo: { regionId: { apxitems: <int>, cells: [], clusterHint}} }
+	
+	///graph style: { graph: { regionId: [childId]}, cells: { regionId: [cellId] } regionInfo: { regionId: { apxitems: <int>, clusterHint}} }
 	static void writeGraph(std::ostream & out,
+		const sserialize::spatial::GeoHierarchySubGraph & ghs,
 		sserialize::Static::spatial::GeoHierarchy::SubSet & subSet,
 		const std::vector<uint32_t> & regions,
 		const std::unordered_map<uint32_t, std::pair<double, double> > & clusterHints)
 	{
-		std::unordered_map<uint32_t, NodePtr> children;
+		std::unordered_map<uint32_t, NodePtr> parents; //storeId -> NodePtr
+		std::unordered_map<uint32_t, NodePtr> children; //storeId -> NodePtr
 		out.precision(10);
 		const auto & gh = subSet.cqr().geoHierarchy();
 		out << '{' << "\"graph\":";
 		char sep = '{';
-		for(uint32_t regionId : regions) {
+		for(uint32_t regionId : regions) { //regionId is storeId
 			NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
-			if (!rPtr || !rPtr->size()) {
+			if (!rPtr) {
 				continue;
 			}
-			out << sep << gh.ghIdToStoreId( rPtr->ghId() ) << '[';
+			if (T_WITH_PARENT_CELLS) {
+				parents[regionId] = rPtr;
+			}
+			if (!rPtr->size()) {
+				continue;
+			}
+			out << sep << '"' << regionId << "\":[";
 			sep = ',';
 			auto cIt( rPtr->cbegin());
-			out << gh.ghIdToStoreId( (*cIt)->ghId() );
-			if (!children.count((*cIt)->ghId())) {
-				children[(*cIt)->ghId()] = *cIt;
+			uint32_t childStoreId = gh.ghIdToStoreId((*cIt)->ghId());
+			out << childStoreId;
+			if (!children.count(childStoreId)) {
+				children[childStoreId] = *cIt;
 			}
 			++cIt;
 			for(auto cEnd(rPtr->cend()); cIt != cEnd; ++cIt) {
-				out << ',' << gh.ghIdToStoreId( (*cIt)->ghId() );
-				if (!children.count((*cIt)->ghId())) {
-					children[(*cIt)->ghId()] = *cIt;
+				childStoreId = gh.ghIdToStoreId((*cIt)->ghId());
+				out << ',' << childStoreId;
+				if (!children.count(childStoreId)) {
+					children[childStoreId] = *cIt;
 				}
 			}
 			out << ']';
@@ -466,37 +462,47 @@ struct ChildrenInfoWriter {
 		}
 		out << '}'; // end of graph
 		
+		if (T_WITH_CHILDREN_CELLS || T_WITH_PARENT_CELLS) {
+			out << ",\"cells\":";
+			char mySep = '{';
+			
+			if (T_WITH_PARENT_CELLS) {
+				for(const auto & x : parents) {
+					out << mySep << '"' << x.first << '"' << ':';
+					mySep = ',';
+					printCells(out, ghs, subSet.cqr(), x.second);
+				}
+			}
+			if (T_WITH_CHILDREN_CELLS) {
+				for(const auto & x : children) {
+					out << mySep << '"' << x.first << '"' << ':';
+					mySep = ',';
+					printCells(out, ghs, subSet.cqr(), x.second);
+				}
+			}
+			
+			if (mySep == '{') {
+				out << mySep;
+			}
+			out << '}';
+		}
+		
 		//now take care of children
 		out << ", \"regionInfo\":";
 		sep = '{';
-		for(const auto & tmp : children) {
-			const auto & child = tmp.second;
+		for(const auto & x : children) {
+			const auto & child = x.second;
 			out << sep;
 			sep = ',';
-			out << '"' << gh.ghIdToStoreId( tmp.first ) << "\":{\"apxitems\":" << child->maxItemsSize();
+			out << '"' << x.first << "\":{\"apxitems\":" << child->maxItemsSize();
+			if (!child->size()) {
+				out << ",\"leaf\":true";
+			}
 			if (T_WITH_CLUSTERHINTS) {
-				const auto & p = clusterHints.at(tmp.first);
+				const auto & p = clusterHints.at(child->ghId());
 				out << ",\"clusterHint\":[" << p.first << ',' << p.second << ']';
 			}
-			if (T_WITH_CELLS) {
-				out << ",\"cells\":";
-				if (child->cellPositions().size()) {
-					char mySep = '[';
-					for(uint32_t cellPos : child->cellPositions()) {
-						uint32_t cellId = subSet.cqr().cellId(cellPos);
-						out << mySep;
-						mySep = ',';
-						out << cellId;
-					}
-					out << ']';
-				}
-				else {
-					out << "[]";
-				}
-			}
-			else {
-				out << '}';
-			}
+			out << '}';
 		}
 		if (sep == '{') {
 			out << '}';
@@ -506,11 +512,12 @@ struct ChildrenInfoWriter {
 		out << '}'; //end of outer object
 	}
 	static void write(std::ostream & out,
+		const sserialize::spatial::GeoHierarchySubGraph & ghs,
 		sserialize::Static::spatial::GeoHierarchy::SubSet & subSet,
 		const std::vector<uint32_t> & regions,
 		const std::unordered_map<uint32_t, std::pair<double, double> > & clusterHints)
 	{
-		writeInterleaved(out, subSet, regions, clusterHints);
+		writeGraph(out, ghs, subSet, regions, clusterHints);
 	}
 };
 
@@ -525,7 +532,9 @@ void CQRCompleter::childrenInfo() {
 	//params
 	std::string cqs = request().post("q");
 	std::string regionFilter = request().post("rf");
-	bool withCells = sserialize::toBool( request().post("withCells") );
+	bool withChildrenCells = sserialize::toBool( request().post("withChildrenCells") );
+	bool withParentCells = sserialize::toBool( request().post("withParentCells") );
+	bool regionExclusiveCells = sserialize::toBool( request().post("regionExclusiveCells") );
 	bool withClusterHints = sserialize::toBool( request().post("withClusterHints") );
 	std::vector<uint32_t> regions;
 	{
@@ -550,8 +559,8 @@ void CQRCompleter::childrenInfo() {
 	if (regions.size() == 1 && regions.front() != sserialize::Static::spatial::GeoHierarchy::npos) {
 		cqs = sserialize::toString("$region:", regions.front(), " (", cqs, ")");
 	}
-
-	uint32_t fullSubSetLimit = (withCells ? 0xFFFFFFFF : m_dataPtr->fullSubSetLimit);
+	
+	uint32_t fullSubSetLimit = (withChildrenCells ? 0xFFFFFFFF : m_dataPtr->fullSubSetLimit);
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
 		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), fullSubSetLimit, m_dataPtr->treedCQR);
@@ -559,24 +568,88 @@ void CQRCompleter::childrenInfo() {
 	else {
 		subSet = m_dataPtr->completer->clusteredComplete(cqs, fullSubSetLimit, m_dataPtr->treedCQR);
 	}
+	if (regionExclusiveCells) {
+	
+	}
 	
 	std::ostream & out = response().out();
 	std::unordered_map<uint32_t, std::pair<double, double> > ch;
-	if (withClusterHints) {
-		ch = getClusterCenters(subSet);
-		if (withCells) {
-			ChildrenInfoWriter<true, true>::write(out, subSet, regions, ch);
+	sserialize::spatial::GeoHierarchySubGraph ghs;
+
+	if (regionExclusiveCells) {
+		if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+			ghs = m_dataPtr->ghSubSetCreators.at(regionFilter);
 		}
 		else {
-			ChildrenInfoWriter<false, true>::write(out, subSet, regions, ch);
+			ghs = sserialize::spatial::GeoHierarchySubGraph(gh, m_dataPtr->completer->indexStore(), sserialize::spatial::GeoHierarchySubGraph::T_PASS_THROUGH);
 		}
 	}
-	else {
-		if (withCells) {
-			ChildrenInfoWriter<true, false>::write(out, subSet, regions, ch);
+
+	if (withClusterHints) {
+		ch = getClusterCenters(subSet);
+		if (withChildrenCells) {
+			if (withParentCells) {
+				if (regionExclusiveCells) {
+					ChildrenInfoWriter<true, true, true, true>::write(out, ghs, subSet, regions, ch);
+				}
+				else {
+					ChildrenInfoWriter<true, true, true, false>::write(out, ghs, subSet, regions, ch);
+				}
+			}
+			else {
+				if (regionExclusiveCells) {
+					ChildrenInfoWriter<true, true, false, true>::write(out, ghs, subSet, regions, ch);
+				}
+				else {
+					ChildrenInfoWriter<true, true, false, false>::write(out, ghs, subSet, regions, ch);
+				}
+			}
 		}
 		else {
-			ChildrenInfoWriter<false, false>::write(out, subSet, regions, ch);
+			if (withParentCells) {
+				if (regionExclusiveCells) {
+					ChildrenInfoWriter<true, false, true, true>::write(out, ghs, subSet, regions, ch);
+				}
+				else {
+					ChildrenInfoWriter<true, false, true, false>::write(out, ghs, subSet, regions, ch);
+				}
+			}
+			else {
+				ChildrenInfoWriter<true, false, false, false>::write(out, ghs, subSet, regions, ch);
+			}
+		}
+	}
+	else { //no clusterHints
+		if (withChildrenCells) {
+			if (withParentCells) {
+				if (regionExclusiveCells) {
+					ChildrenInfoWriter<false, true, true, true>::write(out, ghs, subSet, regions, ch);
+				}
+				else {
+					ChildrenInfoWriter<false, true, true, false>::write(out, ghs, subSet, regions, ch);
+				}
+			}
+			else {
+				if (regionExclusiveCells) {
+					ChildrenInfoWriter<false, true, false, true>::write(out, ghs, subSet, regions, ch);
+				}
+				else {
+					ChildrenInfoWriter<false, true, false, false>::write(out, ghs, subSet, regions, ch);
+				}
+			}
+		}
+		else { //no childrenCells
+			if (withParentCells) {
+				if (regionExclusiveCells) {
+					ChildrenInfoWriter<false, false, true, true>::write(out, ghs, subSet, regions, ch);
+				}
+				else {
+					ChildrenInfoWriter<false, false, true, false>::write(out, ghs, subSet, regions, ch);
+				}
+			}
+			else { //no parentCells = no cells at all
+				ChildrenInfoWriter<false, false, false, false>::write(out, ghs, subSet, regions, ch);
+			}
 		}
 	}
 	
