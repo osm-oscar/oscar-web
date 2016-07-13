@@ -76,11 +76,13 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 	//where data is of the form {dataId: dataEntry}
 	
 	//you can change the underlying storage by providing a new class
-	//This calss has to provide the following functions:
-	//at(id) -> data
+	//This class has to provide the following functions:
 	//size() -> <int>
 	//count(id) -> <bool>
-	//insert(id, data)
+	//Furthermore if you do not specialize _requestFromStore():
+	//at(id) -> data
+	//And if you do not specialize _insertData():
+	//insert(id, data) 
 
 	var IndexedDataStore = function() {
 		this.m_data = tools.SimpleHash(); //maps from id -> data
@@ -117,7 +119,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			return [];
 		};
 		
-		//you may overload this to change the underlying storage
+		//you may overload this to change the way a request is fullfilled
 		this._requestFromStore = function(cb, dataIds) {
 			res = [];
 			for(var i in dataIds) {
@@ -126,15 +128,24 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			cb(res);
 		};
 		
+		//dataIds is of the form [dataId]
+		//data is of the form {dataId: dataEntry}
+		//you may overload this to change the way data is inserted into the storage
+		this._insertData = function(dataIds, data) {
+			for(var i in dataIds) {
+				var dataId = dataIds[i];
+				this.m_data.insert(dataIds[i], data[dataId]);
+			}
+		},
+		
 		//data is of the form {dataId: dataEntry}
 		this._handleReturnedRemoteRequest = function(remoteRequestId, data) {
 			var myRemoteRequest = this.m_remoteRequests.at(remoteRequestId);
 			var dataIds = myRemoteRequest.dataIds;
 			//insert the data and remove it from in-flight cache
+			this._insertData(dataIds, data);
 			for(var i in dataIds) {
-				var dataId = dataIds[i];
-				this.m_data.insert(dataIds[i], data[dataId]);
-				this.m_inFlight.erase(dataId);
+				this.m_inFlight.erase(dataIds[i]);
 			}
 			//take care of all requests that depend on this remote request
 			var myRequestsIds = myRemoteRequest.deps;
