@@ -969,6 +969,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				map.itemMarkers.remove(itemId);
 				state.dag.item(itemId).displayState &= ~dag.DisplayStates.HasItemMarker;
 			});
+			if (missingIds.size()) {
+				oscar.fetchShapes(missingIds.toArray(), function() {}, tools.defErrorCB);
+			}
 			missingIds.each(function(itemId) {
 				map.itemMarkers.add(itemId);
 			});
