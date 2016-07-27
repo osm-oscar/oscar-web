@@ -1138,7 +1138,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				handleTabs: tools.timer("mapViewChanged::handleTabs"), 
 				tabUpdate: tools.timer("mapViewChanged::tabUpdate"),
 				tabRemove: tools.timer("mapViewChanged::tabRemove"),
-				tabAdd: tools.timer("mapViewChanged::tabAdd")
+				tabAdd: tools.timer("mapViewChanged::tabAdd"),
+				tabWorld: tools.timer("mapViewChanged::tabWorld")
 			};
 			
 			
@@ -1309,17 +1310,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					});
 				});
 			};
-			
-			timers.tabUpdate.start();
-			//check if the currently active tabs have all the items of the current cells
-			//and if there are any items that should not be there
-			for(var regionId in map.resultListTabs.values()) {
-				var wantCells = tools.SimpleSet();
-				for(var cellId in state.dag.region(regionId).cells.values()) {
-					if (state.dag.cell(cellId).displayState & dag.DisplayStates.InResultsTab) {
-						wantCells.insert(cellId);
-					}
-				}
+			//wantCells is tools.SimpleSet()
+			var handleAvailableTab = function(regionId, wantCells) {
 				var removedCells = tools.SimpleSet();
 				var missingCells = tools.SimpleSet();
 				tools.getMissing(wantCells, map.resultListTabs.cells(regionId), removedCells, missingCells);
@@ -1329,12 +1321,28 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					if (parseInt(regionId) == maxOverlapRegionId) {
 						map.resultListTabs.openTab(regionId);
 					}
-					continue;
+					return;
 				}
 				map.resultListTabs.setCells(regionId, wantCells);
 				
 				tabPopulate(wantCells, regionId, parseInt(regionId) == maxOverlapRegionId);
+			};
+			
+			timers.tabUpdate.start();
+			//check if the currently active tabs have all the items of the current cells
+			//and if there are any items that should not be there
+			var worldCells = tools.SimpleSet();
+			for(var regionId in map.resultListTabs.values()) {
+				var wantCells = tools.SimpleSet();
+				for(var cellId in state.dag.region(regionId).cells.values()) {
+					if (state.dag.cell(cellId).displayState & dag.DisplayStates.InResultsTab) {
+						worldCells.insert(cellId);
+						wantCells.insert(cellId);
+					}
+				}
+				handleAvailableTab(regionId, wantCells);
 			}
+			
 			timers.tabUpdate.stop();
 			
 			timers.tabAdd.start();
@@ -1345,6 +1353,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				var wantCells = tools.SimpleSet();
 				for(var cellId in state.dag.region(regionId).cells.values()) {
 					if (state.dag.cell(cellId).displayState & dag.DisplayStates.InResultsTab) {
+						worldCells.insert(cellId);
 						wantCells.insert(cellId);
 					}
 				}
@@ -1353,6 +1362,17 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				tabPopulate(wantCells, regionId, parseInt(regionId) == maxOverlapRegionId);
 			});
 			timers.tabAdd.stop();
+			
+			timers.tabWorld.start();
+			if (worldCells.size()) {
+				if (!map.resultListTabs.count(0xFFFFFFFF)) {
+					var rn = state.dag.region(0xFFFFFFFF);
+					map.resultListTabs.addRegion(0xFFFFFFFF, rn.name, rn.count);
+				}
+				handleAvailableTab(0xFFFFFFFF, worldCells);
+			}
+			timers.tabWorld.stop();
+			
 			timers.handleTabs.stop();
 			timers.mapUpdate.stop();
 			timers.complete.stop();
