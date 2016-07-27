@@ -338,8 +338,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			itemListHandler: function(regionId) {
 				return handler.m_regions.at(regionId).handler;
 			},
-			//adds a new region, returns an ItemListHandler
-			addRegion: function(regionId, regionName, itemCount) {
+			
+			//adds a new region, returns an ItemListHandler, if prepend == true, then the region will be added as the first element
+			addRegion: function(regionId, regionName, itemCount, prepend = false) {
 				if (handler.m_regions.count(regionId)) {
 					return handler.m_regions.at(regionId).handler;
 				}
@@ -348,7 +349,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				var tabContentId = tools.generateDocumentUniqueId();
 				var tabHeadHtml = '<li id="' + tabHeadId + '" regionid="' + regionId + '"><a href="#' + tabContentId + '">' + regionName + '</a><span class="badge">' + itemCount + '</span></li>';
 				var tabContentHtml = '<div id="' + tabContentId + '"></div>';
-				$(handler.m_domTabRoot).append(tabHeadHtml);
+				if (prepend) {
+					$(handler.m_domTabRoot).prepend(tabHeadHtml);
+				}
+				else {
+					$(handler.m_domTabRoot).append(tabHeadHtml);
+				}
 				$(handler.m_domRoot).append(tabContentHtml);
 				var tabContent = $('#' + tabContentId, handler.m_domRoot);
 				var itemListHandler = ItemListHandler(tabContent, handler.m_scrollContainer);
@@ -1367,7 +1373,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			if (worldCells.size()) {
 				if (!map.resultListTabs.count(0xFFFFFFFF)) {
 					var rn = state.dag.region(0xFFFFFFFF);
-					map.resultListTabs.addRegion(0xFFFFFFFF, rn.name, rn.count);
+					map.resultListTabs.addRegion(0xFFFFFFFF, rn.name, rn.count, true);
 				}
 				handleAvailableTab(0xFFFFFFFF, worldCells);
 			}
