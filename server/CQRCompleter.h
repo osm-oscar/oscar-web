@@ -1,5 +1,6 @@
 #ifndef OSCAR_WEB_CQR_COMPLETER_H
 #define OSCAR_WEB_CQR_COMPLETER_H
+#include <unordered_map>
 #include <cppcms/application.h>
 #include <sserialize/utility/debug.h>
 #include "types.h"
@@ -27,6 +28,8 @@ private:
 	void writeSubSet(std::ostream & out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
 	void writeDag(std::ostream & out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
 	void writeLogStats(const std::string & fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize);
+	///calulates cluster centers for the hierarchy, ids are ghIds!
+	std::unordered_map<uint32_t, std::pair<double, double> > getClusterCenters(sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
 public:
 	CQRCompleter(cppcms::service& srv, const CompletionFileDataPtr & dataPtr);
 	virtual ~CQRCompleter();
@@ -56,6 +59,8 @@ public:
 	  * array<uint32_t> : [item id]
 	  */
 	void items();
+	
+
 	/** return the region children for the query q:
 	  * q=<searchstring>
 	  * r=<regionid>
@@ -65,12 +70,46 @@ public:
 	  */
 	void children();
 	
+	/** return the region children for the query q:
+	  * call with POST
+	  * q=<searchstring>
+	  * rf=<region filter>
+	  * which=[<regionId>]
+	  * withChildrenCells=true|FALSE
+	  * withParentCells=true|FALSE
+	  * regionExclusiveCells=true|FALSE
+	  * Return:
+	  * { graph: { regionId: [childId]}, cells: { regionId: [cellId] }, regionInfo: { regionId: { apxitems: <int>, clusterHint, leaf: <bool>}} }
+	  */
+	void childrenInfo();
+	
+	/** return the region children for the query q:
+	  * call with POST
+	  * q=<searchstring>
+	  * rf=<region filter>
+	  * which=[<regionId>]
+	  * regionExclusiveCells=true|FALSE
+	  * Return:
+	  * { regionId: [cellId] }
+	  */
+	void cellInfo();
+	
 	/** return the cells for the query q:
 	  * q=<searchstring>
 	  * Return:
 	  * [cellId]
 	  */
 	void cells();
+	/** returns the top-k items of each cell for the query q:
+	  * call with POST
+	  * q=<searchstring>
+	  * k=<number_of_items>
+	  * o=<offset_in_items_result_list>
+	  * which=[cellId]
+	  * Return:
+	  * {<cellId> : [<itemId>]}
+	  */
+	void cellItems();
 	
 	/** return the maximum set of independet region children for the query q:
 	  * q=<searchstring>

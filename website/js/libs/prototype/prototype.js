@@ -6,8 +6,9 @@ define(["state", "oscar", "tools", "conf", "map", "leafletCluster"], function (s
      *    showing all sub-regions
      */
     L.MarkerCluster.prototype.on("mouseover", function (e) {
-        if (e.target.getChildCount() > 1 && e.target.getChildCount() <= config.maxNumSubClusters) {
+        if (e.target.getChildCount() > 1 && e.target.getChildCount() <= config.maxNumSubClusters && map.cfg.clusterShapes.display) {
 			var childRids = e.target.getChildClustersRegionIds();
+			oscar.fetchShapes(childRids, function() {}, tools.defErrorCB);
 			for(var i in childRids) {
 				map.clusterMarkerRegionShapes.add(childRids[i]);
 			}

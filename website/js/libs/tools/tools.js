@@ -61,6 +61,24 @@ define(["jquery"], function ($) {
 					cb(key);
 				}
 			};
+			ss.toArray = function() {
+				var tmp = [];
+				for(var i in this.values()) {
+					tmp.push(i);
+				}
+				return tmp;
+			};
+			ss.equal = function(other) {
+				if (this.size() != other.size()) {
+					return false;
+				}
+				for(var i in this.values()) {
+					if (!other.count(i)) {
+						return false;
+					}
+				}
+				return true;
+			};
 			return ss;
 		},
 		
@@ -145,6 +163,20 @@ define(["jquery"], function ($) {
                 }
             }
         },
+	   
+		AsyncCallBackHandler: function(targetCount, cb) {
+			return h = {
+				m_tc: targetCount,
+				m_cc: 0,
+				m_cb: cb,
+				inc: function() {
+					h.m_cc += 1;
+					if (h.m_cc >= h.m_tc) {
+						h.m_cb();
+					}
+				}
+			};
+		},
 
         /**
          * adds a string to the search input

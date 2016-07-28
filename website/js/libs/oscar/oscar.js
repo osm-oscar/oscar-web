@@ -74,6 +74,16 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 	//It tries to minimize the number of requests made by caching former results
 	//USAGE: derive from this and add a function _getData(callback=function(data, remoteRequestId), remoteRequestId) which does the request
 	//where data is of the form {dataId: dataEntry}
+	
+	//you can change the underlying storage by providing a new class
+	//This class has to provide the following functions:
+	//size() -> <int>
+	//count(id) -> <bool>
+	//Furthermore if you do not specialize _requestFromStore():
+	//at(id) -> data
+	//And if you do not specialize _insertData():
+	//insert(id, data) 
+
 	var IndexedDataStore = function() {
 		this.m_data = tools.SimpleHash(); //maps from id -> data
 		this.m_inFlight = tools.SimpleHash(); //maps from id -> remoteRequestId
@@ -108,6 +118,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			}
 			return [];
 		};
+		
+		//you may overload this to change the way a request is fullfilled
 		this._requestFromStore = function(cb, dataIds) {
 			res = [];
 			for(var i in dataIds) {
@@ -115,15 +127,25 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			}
 			cb(res);
 		};
+		
+		//dataIds is of the form [dataId]
+		//data is of the form {dataId: dataEntry}
+		//you may overload this to change the way data is inserted into the storage
+		this._insertData = function(dataIds, data) {
+			for(var i in dataIds) {
+				var dataId = dataIds[i];
+				this.m_data.insert(dataIds[i], data[dataId]);
+			}
+		},
+		
 		//data is of the form {dataId: dataEntry}
 		this._handleReturnedRemoteRequest = function(remoteRequestId, data) {
 			var myRemoteRequest = this.m_remoteRequests.at(remoteRequestId);
 			var dataIds = myRemoteRequest.dataIds;
 			//insert the data and remove it from in-flight cache
+			this._insertData(dataIds, data);
 			for(var i in dataIds) {
-				var dataId = dataIds[i];
-				this.m_data.insert(dataIds[i], data[dataId]);
-				this.m_inFlight.erase(dataId);
+				this.m_inFlight.erase(dataIds[i]);
 			}
 			//take care of all requests that depend on this remote request
 			var myRequestsIds = myRemoteRequest.deps;
@@ -397,6 +419,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			this.itemCache._itemFromJson = function(json) {
 				return me.Item(json, me);
 			};
+		},
+		
+		IndexedDataStore: function() {
+			return new IndexedDataStore();
 		},
 
         Item: function (d, parent) {
@@ -676,6 +702,14 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                         errorCB,
                         count, resultListOffset, this.d.regionFilter);
 				},
+				//calls successCB(regionId, cells)
+				queryRegionExclusiveCellIds: function (regionId, successCB, errorCB) {
+                    this.p.cells("$qec:1 ($rec:" + regionId + " (" + this.d.query + "))",
+                        function (cells) {
+                            successCB(regionId, cells);
+                        },
+                        errorCB, this.d.regionFilter);
+				},
                 rootRegionChildrenInfo: function () {
                     return this.d.regionInfo[0xFFFFFFFF];
                 },
@@ -690,9 +724,15 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                     }
                     this.p.simpleCqrMaxIndependentChildren(this.d.query, successCB, errorCB, regionId, maxOverlap, this.d.regionFilter);
                 },
-				getCells: function(regionId, successCB, errorCB) {
-					var myQ = "$region:" + regionId + " ( " + this.d.query + " )";
-					this.p.cells(myQ, successCB, errorCB);
+				cells: function(regionIds, successCB, errorCB, regionExclusiveCells) {
+					if (! $.isArray(regionIds)) {
+						regionIds = [regionIds];
+					}
+					this.p.simpleCqrCellInfo(this.d.query, successCB, errorCB, regionIds, this.d.regionFilter, regionExclusiveCells);
+				},
+				//calls successCB with { cellId: [itemId] }
+				getCellItems: function(cellIds, successCB, errorCB, offset) {
+					this.p.simpleCqrGetCellItems(this.d.query, successCB, errorCB, cellIds, offset);
 				},
                 //returning an array in successCB with objects={id : int, apxitems : int}
                 //returns rootRegionChildrenInfo if regionId is undefined
@@ -716,6 +756,20 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                             this.d.regionFilter);
                     }
                 },
+				//returns { parentId: { childId : {apxitems: <int>, cells: [cellId], clusterHint: [lat, lon]}}}
+				multiRegionChildrenInfo: function(which, successCB, errorCB, withClusterHints, withChildrenCells, withParentCells, regionExclusiveCells) {
+					this.p.simpleCqrChildrenInfo(
+						this.d.query,
+						successCB,
+						errorCB,
+						which,
+						this.d.regionFilter,
+						withClusterHints,
+						withChildrenCells,
+						withParentCells,
+						regionExclusiveCells
+					);
+				},
                 hasResults: function () {
                     var tmp = this.d.regionInfo[0xFFFFFFFF];
                     return tmp !== undefined && tmp.length > 0;
@@ -851,6 +905,14 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 				}
 			}, [itemId]);
         },
+		
+		getCellInfo: function(cellIds, successCB, errorCB) {
+			this.cellInfoCache.get(successCB, cellIds);
+		},
+	   
+		fetchCellInfo: function(cellIds, successCB, errorCB) {
+			this.cellInfoCache.fetch(successCB, cellIds);
+		},
 
         fetchIndexes: function (arrayOfIndexIds, successCB, errorCB) {
 			this.idxCache.fetch(successCB, arrayOfIndexIds);
@@ -1078,6 +1140,82 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 }
             });
         },
+		//returns the same as CQRCompleter::childrenInfo:
+		//{parentId: { childId: {apxitems: <int>, clusterHint: [lat, lon], cells: []}}
+        simpleCqrChildrenInfo: function (query, successCB, errorCB, which, regionFilter, withClusterHints, withChildrenCells, withParentCells, regionExclusiveCells) {
+            var params = {};
+            params['q'] = query;
+			params['which'] = JSON.stringify( tools.toIntArray(which) );
+            if (regionFilter !== undefined) {
+               params['rf'] = regionFilter;
+            }
+			if (withClusterHints) {
+				params['withClusterHints'] = "true";
+			}
+            if (withChildrenCells) {
+				params['withChildrenCells'] = "true";
+			}
+            if (withParentCells) {
+				params['withParentCells'] = "true";
+			}
+			if (regionExclusiveCells) {
+				params['regionExclusiveCells'] = "true";
+			}
+            var qpath = this.completerBaseUrl + "/cqr/clustered/childreninfo";
+            jQuery.ajax({
+                type: "POST",
+                url: qpath,
+                data: params,
+                mimeType: 'text/plain',
+                success: function (raw) {
+					var dec;
+					try {
+						dec = JSON.parse(raw);
+					}
+					catch(err) {
+						errorCB("Parsing the result failed with the following parameters: " + JSON.stringify(params), err);
+						return;
+					}
+                    successCB(dec);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    errorCB(textStatus, errorThrown);
+                }
+            });
+        },
+		//returns the same as CQRCompleter::cellInfo
+        simpleCqrCellInfo: function (query, successCB, errorCB, which, regionFilter, regionExclusiveCells) {
+            var params = {};
+            params['q'] = query;
+			params['which'] = JSON.stringify( tools.toIntArray(which) );
+            if (regionFilter !== undefined) {
+               params['rf'] = regionFilter;
+            }
+			if (regionExclusiveCells) {
+				params['regionExclusiveCells'] = "true";
+			}
+            var qpath = this.completerBaseUrl + "/cqr/clustered/cellinfo";
+            jQuery.ajax({
+                type: "POST",
+                url: qpath,
+                data: params,
+                mimeType: 'text/plain',
+                success: function (raw) {
+					var dec;
+					try {
+						dec = JSON.parse(raw);
+					}
+					catch(err) {
+						errorCB("Parsing the result failed with the following parameters: " + JSON.stringify(params), err);
+						return;
+					}
+                    successCB(dec);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    errorCB(textStatus, errorThrown);
+                }
+            });
+        },
         simpleCqrChildren: function (query, successCB, errorCB, selectedRegion, regionFilter) {
             var params = {};
             params['q'] = query;
@@ -1092,8 +1230,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 type: "GET",
                 url: qpath,
                 data: params,
-                dataType: 'arraybuffer',
-                mimeType: 'application/octet-stream',
+                mimeType: 'text/plain',
                 success: function (raw) {
                     praw = sserialize.asU32Array(raw);
                     var childrenInfo = [];
@@ -1138,6 +1275,33 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 }
             });
         },
+		simpleCqrGetCellItems: function(query, successCB, errorCB, cellIds, offset) {
+            var params = {};
+            params['q'] = query;
+			params['k'] = oscarObject.maxFetchItems;
+			params['o'] = offset;
+			params['which'] = JSON.stringify(tools.toIntArray(cellIds));
+            var qpath = this.completerBaseUrl + "/cqr/clustered/cellitems";
+            jQuery.ajax({
+                type: "POST",
+                url: qpath,
+                data: params,
+                mimeType: 'text/plain',
+                success: function (raw) {
+					var json;
+					try {
+						json = JSON.parse(raw);
+					}
+					catch (err) {
+						errorCB("Parsing the cells failed with the following parameters: " + JSON.stringify(params), err);
+					}
+                    successCB(json);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    errorCB(textStatus, errorThrown);
+                }
+            });
+		},
         cells: function (query, successCB, errorCB) {
             var params = {};
             params['q'] = query;
@@ -1148,6 +1312,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 data: params,
                 mimeType: 'text/plain',
                 success: function (plain) {
+					var json;
 					try {
 						json = JSON.parse(plain);
 					}

@@ -70,12 +70,12 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             $(".treeNodeSub").each(function (key, value) {
                 $(value).on("click", function () {
                     var id = $(this).attr("nodeId");
-                    state.mapHandler.expandDag(id, function () {
-						if (!state.dag.count(id)) {
+                    state.mapHandler.expandRegion(id, function () {
+						if (!state.dag.hasRegion(id)) {
 							return;
 						}
 						if ($("#onePath").is(':checked')) {
-							tree.onePath(state.dag.at(id));
+							tree.onePath(state.dag.region(id));
 						}
 						else if (state.visualizationActive) {
 							tree.refresh(id);
@@ -100,9 +100,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
                 $(value).on("click", function () {
                     var id = $(this).attr("nodeId");
 					state.mapHandler.zoomTo(id);
-					state.mapHandler.expandDagItems(id, function() {
-						state.mapHandler.mapViewChanged();
-					});
+					//loading items for the region is currently not supported
                 });
             });
         },
@@ -111,7 +109,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             if (node.name) {
                 this.graph.setNode(node.id, tree._nodeAttr(node));
                 for (var childId in node.children.values()) {
-					var child = state.dag.at(childId);
+					var child = state.dag.region(childId);
                     if (child.count) {
                         this.graph.setNode(child.id);
                         this.graph.setEdge(node.id, child.id, {
@@ -137,7 +135,6 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
 			if (!node.isLeaf && !node.children.size()) {
 				label += "<a nodeId='" + node.id+ "' class='treeNodeSub treeNodeLink' href='#'>Load children</a>";
 			}
-			label += "<a nodeId='" + node.id + "' class='treeNodeItems treeNodeLink' href='#'>Load items</a>";
 			label += "<a NodeId='" + node.id + "' class='treeNodeShow treeNodeLink' href='#'>Show</a>";
 			label += "</div>";
 			return label;
@@ -200,7 +197,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             var parents = this.graph.inEdges(id);
             this.graph.removeNode(id);
             //d3.select("svg").select("g").call(this.renderer, this.graph);
-            this.graph.setNode(id, {label: state.dag.at(id).name.toString(), labelStyle: "color: white"});
+            this.graph.setNode(id, {label: state.dag.region(id).name.toString(), labelStyle: "color: white"});
             for (var i in parents) {
                 this.graph.setEdge(parents[i].v, id, {
                     lineInterpolate: 'basis',
@@ -209,7 +206,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             }
 
             // update the subtree of the clicked node
-            this._recursiveAddToGraph(state.dag.at(id), this.graph);
+            this._recursiveAddToGraph(state.dag.region(id), this.graph);
             this._roundedNodes();
             d3.select("svg").select("g").call(this.renderer, this.graph);
             this._addInteractions();
@@ -228,7 +225,6 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             d3.selectAll(".node").on("mouseover", this._hoverNode.bind(this));
             d3.selectAll(".node").on("mouseout", this._deHoverNode.bind(this));
             this._addClickToLoadSubHierarchy();
-            this._addClickToLoadItems();
 			this._addClickToShowRegion();
         },
 
@@ -240,7 +236,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             function walker(node) {
                 var parentNode;
                 for (var parentId in node.parents.values()) {
-                    parentNode = state.dag.at(parentId);
+                    parentNode = state.dag.region(parentId);
                     if (!parentNode) {
                         continue;
                     }
@@ -263,14 +259,14 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
 
             walker(node);
 
-            var currentNode = state.dag.at(0xFFFFFFFF); // root
+            var currentNode = state.dag.region(0xFFFFFFFF); // root
             var childNode, nextNode, mostWalkers = 0;
 
             while (currentNode.id != node.id) {
                 this.graph.setNode(currentNode.id, tree._nodeAttr(currentNode));
 
                 for (var childId in currentNode.children.values()) {
-                    childNode = state.dag.at(childId);
+                    childNode = state.dag.region(childId);
                     this.graph.setNode(childNode.id, tree._nodeAttr(childNode));
                     this.graph.setEdge(currentNode.id, childNode.id, {
                         lineInterpolate: 'basis',
@@ -300,7 +296,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
         hideChildren: function (node) {
             var childNode;
             for (var childId in node.children.values()) {
-                childNode = state.dag.at(childId);
+                childNode = state.dag.region(childId);
                 tree.graph.removeNode(childNode.id);
             }
         }
