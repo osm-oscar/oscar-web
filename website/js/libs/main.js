@@ -280,7 +280,8 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             });
 
             $(window).bind('popstate', function (e) {
-                search.queryFromSearchLocation();
+				console.log(e);
+//                 search.queryFromSearchLocation();
             });
 
             //check if there's a query in our location string
