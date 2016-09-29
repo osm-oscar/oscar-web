@@ -130,6 +130,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				handler.m_itemIds.each(cb);
 			},
 			
+			active: function(cb) {
+				each(function(itemId) {
+					if (handler._domItemDetails(itemId).hasClass("in")) {
+						cb(itemId);
+					}
+				});
+			},
+	   
 			hasItem: function(itemId) {
 				return handler.m_itemIds.count(itemId);
 			},
@@ -223,6 +231,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				timer4.stop();
 			},
+			remove: function(itemId) {
+				if (!handler.count(itemId)) {
+					return;
+				}
+				handler.close(itemId);
+				handler._domItemRoot(itemId).each(function() {
+					$(this).remove();
+				});
+				handler.m_itemIds.erase(itemId);
+			},
 			//emits itemDetailsClosed on all open panels   
 			clear: function() {
 				$("div[class~='panel'] div[class~='panel-collapse']", handler.m_domRoot).each(function() {
@@ -238,6 +256,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$(handler.m_domRoot).empty();
 				handler.m_itemIds.clear();
 			},
+			
 			//destroy this list by removing the respective dom elements
 			//emits itemDetailsClosed on all open panels
 			destroy : function() {
@@ -340,7 +359,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			
 			//adds a new region, returns an ItemListHandler, if prepend == true, then the region will be added as the first element
-			addRegion: function(regionId, regionName, itemCount, prepend = false) {
+			addRegion: function(regionId, regionName, itemCount, prepend) {
+				if (prepend === undefined) {
+					prepend = false;
+				}
 				if (handler.m_regions.count(regionId)) {
 					return handler.m_regions.at(regionId).handler;
 				}
@@ -739,7 +761,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				threshold: 25 //maximum # root children to display shapes
 			},
 			resultList: {
-				bulkItemFetchCount: 100
+				bulkItemFetchCount: 100,
+				focusMaxOverlapTab: false
 			}
 		},
 	   
@@ -922,7 +945,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		onItemLinkClicked: function(e) {
 			var itemId = e.itemId;
 			state.items.activeItem = itemId;
-			
+		},
+		
+		//panel event handlers
+		onItemDetailsOpened: function(e) {
+			var itemId = e.itemId;
+			map.highlightItemShapes.addWithCallback(itemId, function() {
+				if (state.items.activeItem == itemId) {
+					map.highlightItemShapes.zoomTo(itemId);
+				}
+			});
 			if (map.itemMarkers.count(itemId)) {
 				var geopos = map.itemMarkers.coords(itemId);
 				var text = "";
@@ -938,16 +970,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					flickr.getImagesForLocation($.trim(text), geopos);
 				}
 			}
-		},
-		
-		//panel event handlers
-		onItemDetailsOpened: function(e) {
-			var itemId = e.itemId;
-			map.highlightItemShapes.addWithCallback(itemId, function() {
-				if (state.items.activeItem == itemId) {
-					map.highlightItemShapes.zoomTo(itemId);
-				}
-			});
 		},
 		onItemDetailsClosed: function(e) {
 			var itemId = e.itemId;
@@ -1012,7 +1034,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			var marker = map.clusterMarkers.layer(e.itemId);
 			L.popup({offset: new L.Point(0, -10)})
 				.setLatLng(coords)
-				.setContent(marker.name).openOn(state.map);
+				.setContent(e.itemId + ":" + marker.name).openOn(state.map);
 		},
 		onClusterMarkerMouseOut: function(e) {
 			map.closePopups();
@@ -1130,6 +1152,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				return;
 			}
 			map.locks.mapViewChanged.locked = true;
+			
+			var activeTabNeedsExtraRefresh = false;
 			
 			//callback handler
 			cbh = undefined;
@@ -1257,6 +1281,26 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 			}, dag.NodeTypes.Region);
 			
+			//only add the world tab if there are other tabs
+			if (wantTabListRegions.size()) {
+				//add the tab now so that it is the first one in the list
+				if (!map.resultListTabs.count(0xFFFFFFFF)) {
+					var rn = state.dag.region(0xFFFFFFFF);
+					map.resultListTabs.addRegion(0xFFFFFFFF, rn.name, rn.count, true);
+				}
+				wantTabListRegions.insert(0xFFFFFFFF);
+			}
+			
+			//make sure that the active region tab stays the same if it was set before
+			if (wantTabListRegions.count( map.resultListTabs.activeRegion() )) {
+				maxOverlapRegionId = map.resultListTabs.activeRegion();
+				activeTabNeedsExtraRefresh = true;
+			}
+			else if (!map.cfg.resultList.focusMaxOverlapTab) {
+				maxOverlapRegionId = 0xFFFFFFFF;
+				activeTabNeedsExtraRefresh = true;
+			}
+			
 			//now check for missing cluster markers etc.
 			var removedClusterMarkers = tools.SimpleSet();
 			var removedTabListRegions = tools.SimpleSet();
@@ -1285,7 +1329,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			});
 			timers.clusterUpdate.stop();
 			
-			
 			timers.handleTabs.start();
 			timers.tabRemove.start();
 			removedTabListRegions.each(function(key) {
@@ -1302,10 +1345,18 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						if (!map.resultListTabs.count(regionId) || !cells.equal(map.resultListTabs.cells(regionId))) {
 							return;
 						}
+						var itemIdSet = tools.SimpleSet();
+						itemIdSet.insertArray(itemIds);
 						var ilh = map.resultListTabs.itemListHandler(regionId);
-				
-						//TODO: add ability to remove single results
-						ilh.clear();
+						var itemsToRemove = [];
+						ilh.each(function(itemId) {
+							if (! itemIdSet.count(itemId) ) {
+								itemsToRemove.push(itemId);
+							}
+						});
+						for(var i in itemsToRemove) {
+							ilh.remove(itemsToRemove[i]);
+						}
 						ilh.insertItems(items);
 						if (map.resultListTabs.size() === 1) {
 							map.resultListTabs.emit_activeRegionChanged(regionId);
@@ -1339,6 +1390,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//and if there are any items that should not be there
 			var worldCells = tools.SimpleSet();
 			for(var regionId in map.resultListTabs.values()) {
+				//skip the world region, that one has to be handled below
+				if (regionId == 0xFFFFFFFF) {
+					continue;
+				}
 				var wantCells = tools.SimpleSet();
 				for(var cellId in state.dag.region(regionId).cells.values()) {
 					if (state.dag.cell(cellId).displayState & dag.DisplayStates.InResultsTab) {
@@ -1371,13 +1426,15 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			timers.tabWorld.start();
 			if (worldCells.size()) {
-				if (!map.resultListTabs.count(0xFFFFFFFF)) {
-					var rn = state.dag.region(0xFFFFFFFF);
-					map.resultListTabs.addRegion(0xFFFFFFFF, rn.name, rn.count, true);
-				}
+				//world tab is there if other tabs are there
 				handleAvailableTab(0xFFFFFFFF, worldCells);
 			}
 			timers.tabWorld.stop();
+			
+			//now all tabs are there, now make sure that the highlited tab refreshed the map
+			if (activeTabNeedsExtraRefresh) {
+				map.onActiveTabChanged();
+			}
 			
 			timers.handleTabs.stop();
 			timers.mapUpdate.stop();
@@ -1441,7 +1498,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	state.map.zoomControl.setPosition('topright');
 	state.sidebar = L.control.sidebar('sidebar').addTo(state.map);
 	var osmAttr = '&copy; <a target="_blank" href="http://www.openstreetmap.org">OpenStreetMap</a>';
-	L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: osmAttr}).addTo(state.map);
+// 	var tileURI = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+	var tileURI = 'http://tiles.fmi.uni-stuttgart.de/planet/{z}/{x}/{y}.png'
+	L.tileLayer(tileURI, {attribution: osmAttr, maxZoom: 20}).addTo(state.map);
 	
 	//init map module
 	map.init();

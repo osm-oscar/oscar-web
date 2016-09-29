@@ -56,6 +56,11 @@ define(["jquery"], function ($) {
 				}
 				this.m_values[key] = key;
 			};
+			ss.insertArray = function(arrayOfKeys) {
+				for(var i in arrayOfKeys) {
+					ss.insert(arrayOfKeys[i]);
+				}
+			};
 			ss.each = function(cb) {
 				for(var key in this.m_values) {
 					cb(key);
