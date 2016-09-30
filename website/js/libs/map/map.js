@@ -1239,10 +1239,29 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						}
 						cellNode.displayState &= ~dag.DisplayStates.InResultsTab;
 					}
+					//no cell is marked for this region
 					if (!ok) {
 						node.displayState &= ~dag.DisplayStates.InResultsTab;
+						//no cell is marked for this region this either means that all 
+						//cells were used by other regions or the cells are too small to be displayed
+						//if the former is the case then everything is fine
+						//but in the later case we should add a cluster marker for this region
+						ok = !node.cells.size();
+						for(var cellId in node.cells.values()) {
+							var cellNode = state.dag.cell(cellId);
+							var ds = cellNode.displayState & (dag.DisplayStates.HasClusterMarker | dag.DisplayStates.InResultsTab2);
+							ok = ok || ds;
+						}
+						if (!ok) { //no cell is covered by a tab or a cluster marker, so we add one
+							node.displayState |= dag.DisplayStates.HasClusterMarker;
+							for(var cellId in node.cells.values()) {
+								var cellNode = state.dag.cell(cellId);
+								cellNode.displayState |= dag.DisplayStates.HasClusterMarker;
+							}
+						}
 					}
-					if (ok && hasMaxOverlapCell) {
+					//this region has the cell with maximum overlap
+					else if (ok && hasMaxOverlapCell) {
 						maxOverlapRegionId = node.id;
 					}
 				}
