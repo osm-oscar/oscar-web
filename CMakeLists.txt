@@ -7,15 +7,14 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/vendor/sserialize/cmake/
 )
 
+add_subdirectory(vendor/liboscar liboscar)
+
 find_package(CPPCMS REQUIRED)
 find_package(LIBRT)
 
 include_directories(
-	${CMAKE_CURRENT_BINARY_DIR}
+	${LIBOSCAR_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/include/
-	${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/vendor/sserialize/include/
-	${CMAKE_SOURCE_DIR}
 )
 
 set(OSCAR_WEB_SOURCES_CPP
@@ -30,7 +29,7 @@ set(OSCAR_WEB_SOURCES_CPP
 )
 
 set(MY_C_FLAGS "-std=c99 -fopenmp")
-set(MY_CXX_FLAGS "-std=gnu++0x -fopenmp")
+set(MY_CXX_FLAGS "-std=gnu++14 -fopenmp")
 set(MY_DEBUG_FLAGS "-DWITH_SSERIALIZE_NORMAL_ASSERT")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MY_C_FLAGS}")
@@ -40,19 +39,12 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${MY_DEBUG_FLAGS}")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} ${MY_DEBUG_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${MY_DEBUG_FLAGS}")
 
-add_subdirectory(vendor/liboscar liboscar)
 
 SET(OSCAR_WEB_LINK_LIBS
-	${liboscar_BINARY_DIR}/libliboscar.so
-	${sserialize_BINARY_DIR}/libsserialize.a
+	${LIBOSCAR_LINK_LIBRARIES}
 	${LIBRT_LIBRARIES}
 	${CPPCMS_LIBRARY}
 	${BOOSTER_LIBRARY}
-	"CGAL"
-	"mpfr"
-	"gmp"
-	"boost_thread"
-	"boost_system"
 )
 
 add_executable(${PROJECT_NAME} ${OSCAR_WEB_SOURCES_CPP})
