@@ -16,7 +16,7 @@ define(["jquery", "search"], function ($, search) {
 
                 $("#tagsSearch").autocomplete({
                     source: function (request, response) {
-                        var service = "http://taginfo.openstreetmap.org/api/4/tags/popular?sortname=count_all&sortorder=desc&page=1&rp=8&query=" + request['term'];
+                        var service = "https://taginfo.openstreetmap.org/api/4/tags/popular?sortname=count_all&sortorder=desc&page=1&rp=8&query=" + request['term'];
                         var result = [];
 
                         $.getJSON(service, function (data) {
