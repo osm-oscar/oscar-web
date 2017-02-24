@@ -266,7 +266,7 @@ void ItemDB::multipleNames() {
 	std::string lang = request().post("lang");
 	rawIdxIds << request().post("which");
 	
-	uint32_t langNameId = sserialize::Static::StringTable::npos;
+	auto langNameId = sserialize::Static::StringTable::npos;
 	
 	
 	cppcms::json::value jsonIdxIds;
