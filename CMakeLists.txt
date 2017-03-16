@@ -18,14 +18,16 @@ include_directories(
 )
 
 set(OSCAR_WEB_SOURCES_CPP
-	server/oscarweb.cpp
-	server/MainHandler.cpp
-	server/IndexDB.cpp
-	server/ItemDB.cpp
+	server/ItemSerializer.cpp
 	server/GeoHierarchySubSetSerializer.cpp
-	server/CQRCompleter.cpp
 	server/CellQueryResultsSerializer.cpp
 	server/BinaryWriter.cpp
+	server/IndexDB.cpp
+	server/ItemDB.cpp
+	server/CQRCompleter.cpp
+	server/CQRItems.cpp
+	server/oscarweb.cpp
+	server/MainHandler.cpp
 )
 
 set(MY_C_FLAGS "-std=c99 -fopenmp")

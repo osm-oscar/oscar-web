@@ -1,8 +1,8 @@
 #ifndef OSCAR_WEB_ITEM_DB_H
 #define OSCAR_WEB_ITEM_DB_H
 #include <cppcms/application.h>
-#include <liboscar/OsmKeyValueObjectStore.h>
-#include <sserialize/strings/stringfunctions.h>
+
+#include "ItemSerializer.h"
 
 namespace oscar_web {
 /**
@@ -37,7 +37,7 @@ class ItemDB: public cppcms::application {
 private:
 	liboscar::Static::OsmKeyValueObjectStore m_store;
 	uint32_t m_maxPerRequest;
-	sserialize::JsonEscaper m_escaper;
+	ItemSerializer m_serializer;
 private:
 	void writeHeader(std::ostream & out);
 	void writeFooter(std::ostream & out);
