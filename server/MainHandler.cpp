@@ -10,6 +10,7 @@
 #include "IndexDB.h"
 #include "ItemDB.h"
 #include "CQRCompleter.h"
+#include "CQRItems.h"
 
 namespace oscar_web {
 
@@ -19,6 +20,7 @@ MainHandler::MainHandler(cppcms::service& srv, const oscar_web::CompletionFileDa
 	ItemDB * itemDB = new ItemDB(srv, m_data->completer->store());
 	IndexDB * indexDB = new IndexDB(srv, m_data->completer->indexStore(), m_data->completer->store().geoHierarchy());
 	CQRCompleter * cqrCompleter = new CQRCompleter(srv, data);
+	CQRItems * cqrItems = new CQRItems(srv, data);
 	
 	itemDB->setMaxPerRequest(m_data->maxItemDBReq);
 	indexDB->setMaxPerRequest(m_data->maxIndexDBReq);
@@ -26,6 +28,7 @@ MainHandler::MainHandler(cppcms::service& srv, const oscar_web::CompletionFileDa
 	attach(itemDB, "itemdb", "/itemdb{1}", "/itemdb(/(.*))?", 1);
 	attach(indexDB, "indexdb", "/indexdb{1}", "/indexdb(/(.*))?", 1);
 	attach(cqrCompleter, "cqr", "/cqr{1}", "/cqr(/(.*))?", 1);
+	attach(cqrItems, "items", "/items{1}", "/items(/(.*))?", 1);
 
 	dispatcher().assign("",&MainHandler::describe,this);
 	mapper().assign(""); // default URL

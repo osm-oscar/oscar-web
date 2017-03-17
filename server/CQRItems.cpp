@@ -13,7 +13,8 @@ CQRItems::CQRItems(cppcms::service& srv, const CompletionFileDataPtr& dataPtr):
 cppcms::application(srv),
 m_dataPtr(dataPtr)
 {
-	dispatcher().assign("/items/all", &CQRItems::all, this);
+	dispatcher().assign("/all", &CQRItems::all, this);
+	mapper().assign("all","/all");
 }
 
 CQRItems::~CQRItems() {}
