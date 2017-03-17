@@ -8,7 +8,7 @@
 
 namespace oscar_web {
 
-/** @brief This class gives access to the ItemIndexStore. It returns a binary representation of the requested ItemIndex an returns them as a special set
+/** @brief This class gives access to the ItemIndexStore. It returns a binary representation of the requested ItemIndex and returns them as a special set
   * The binary format is given in the following (parse it with the accompanying java script library):
   * All integers are given in little-endian
   * -----------------------------------------------------------------------------
