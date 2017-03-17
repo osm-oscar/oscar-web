@@ -13,13 +13,27 @@ public:
 	ItemSerializer();
 	~ItemSerializer();
 public:
-	void toJson(std::ostream & out, sserialize::Static::spatial::GeoPolygon::const_iterator it, sserialize::Static::spatial::GeoPolygon::const_iterator end);
-	void toJson(std::ostream & out, const sserialize::Static::spatial::GeoMultiPolygon::PolygonList & polys);
-	void toJson(std::ostream & out, const sserialize::Static::spatial::GeoShape & gs);
-	void toJson(std::ostream & out, const liboscar::Static::OsmKeyValueObjectStore::Item & item, bool withShape);
+	void toJson(std::ostream & out, sserialize::Static::spatial::GeoPolygon::const_iterator it, sserialize::Static::spatial::GeoPolygon::const_iterator end) const;
+	void toJson(std::ostream & out, const sserialize::Static::spatial::GeoMultiPolygon::PolygonList & polys) const;
+	void toJson(std::ostream & out, const sserialize::Static::spatial::GeoShape & gs) const;
+	void toJson(std::ostream & out, const liboscar::Static::OsmKeyValueObjectStore::Item & item, bool withShape) const;
+	template<typename T_ITERATOR>
+	void toJson(std::ostream & out,T_ITERATOR begin, const T_ITERATOR & end, bool withShape) const; 
 private:
 	sserialize::JsonEscaper m_escaper;
 };
+
+template<typename T_ITERATOR>
+void ItemSerializer::toJson(std::ostream& out, T_ITERATOR begin, const T_ITERATOR& end, bool withShape) const {
+	if (begin == end) {
+		return;
+	}
+	toJson(out, *begin, withShape);
+	for(++begin; begin != end; ++begin) {
+		out << ",";
+		toJson(out, *begin, withShape);
+	}
+}
 
 } //end namespace ItemSerializer
 

@@ -7,9 +7,9 @@ ItemSerializer::ItemSerializer() {}
 ItemSerializer::~ItemSerializer() {}
 
 void
-ItemSerializer::toJson(std::ostream & out,
-						sserialize::Static::spatial::GeoPolygon::const_iterator it,
-						sserialize::Static::spatial::GeoPolygon::const_iterator end)
+ItemSerializer::toJson(std::ostream& out,
+						sserialize::Static::spatial::DenseGeoPointVector::const_iterator it,
+						sserialize::Static::spatial::DenseGeoPointVector::const_iterator end) const
 {
 	sserialize::Static::spatial::GeoPoint gp(*it);
 	out << "[" << gp.lat() << "," << gp.lon() << "]";
@@ -20,8 +20,7 @@ ItemSerializer::toJson(std::ostream & out,
 }
 
 void
-ItemSerializer::toJson(std::ostream & out,
-						const sserialize::Static::spatial::GeoMultiPolygon::PolygonList & polys)
+ItemSerializer::toJson(std::ostream& out, const sserialize::Static::Array< sserialize::Static::spatial::GeoPolygon >& polys) const
 {
 	out << "[";
 	if (polys.size()) {
@@ -41,8 +40,7 @@ ItemSerializer::toJson(std::ostream & out,
 }
 
 void
-ItemSerializer::toJson(std::ostream & out,
-						const sserialize::Static::spatial::GeoShape & gs)
+ItemSerializer::toJson(std::ostream& out, const sserialize::Static::spatial::GeoShape& gs) const
 {
 	sserialize::spatial::GeoShapeType gst = gs.type();
 	out << "{\"t\":" << gst << ",\"v\":";
@@ -91,8 +89,7 @@ ItemSerializer::toJson(std::ostream & out,
 }
 
 void
-ItemSerializer::toJson(std::ostream & out,
-						const liboscar::Static::OsmKeyValueObjectStore::Item & item, bool withShape)
+ItemSerializer::toJson(std::ostream& out, const liboscar::Static::OsmKeyValueObjectStore::Item& item, bool withShape) const
 {
 	liboscar::Static::OsmKeyValueObjectStorePayload payload(item.payload());
 	sserialize::Static::spatial::GeoShape shape(payload.shape());
