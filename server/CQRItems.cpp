@@ -41,11 +41,12 @@ void CQRItems::all() {
 	sserialize::spatial::GeoHierarchySubGraph sg;
 	
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR);
+		sg = m_dataPtr->ghSubSetCreators.at(regionFilter);
 	}
 	else {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR);
+		sg = m_dataPtr->completer->ghsg();
 	}
+	cqr = m_dataPtr->completer->cqrComplete(cqs, sg, m_dataPtr->treedCQR);
 	uint32_t itemCount = 0;
 	
 	std::ostream & out = response().out();
