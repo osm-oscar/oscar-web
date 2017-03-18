@@ -1048,6 +1048,20 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 }
             });
         },
+		generateDownloadLink: function(query, regionFilter, withShapes, withParents) {
+				var ret = this.completerBaseUrl +
+							"/items/all?q=" + encodeURIComponent(query);
+				if (regionFilter != undefined) {
+					ret += "&rf=" + encodeURIComponent(regionFilter);
+				}
+				if (withShapes === true) {
+					ret += "&s=true";
+				}
+				if (withParents === true) {
+					ret += "&p=true";
+				}
+				return ret;
+		},
         /*
          on success: successCB is called with the sserialize/CellQueryResult
          on error: errorCB is called with (textStatus, errorThrown)
