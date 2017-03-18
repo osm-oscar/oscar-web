@@ -91,52 +91,68 @@ ItemSerializer::toJson(std::ostream& out, const sserialize::Static::spatial::Geo
 void
 ItemSerializer::toJson(std::ostream& out, const liboscar::Static::OsmKeyValueObjectStore::Item& item, bool withShape) const
 {
+	out << '{';
+	toJsonObjectMembers(out, item, withShape);
+	out << '}';
+}
+
+void
+ItemSerializer::toJson(std::ostream& out, const liboscar::Static::OsmKeyValueObjectStore::Item& item, bool withShape, const std::string & addData) const
+{
+	out << '{';
+	toJsonObjectMembers(out, item, withShape);
+	if (addData.size()) {
+		out << ',';
+		out << addData;
+	}
+	out << '}';
+}
+
+void
+ItemSerializer::toJsonObjectMembers(std::ostream& out, const liboscar::Static::OsmKeyValueObjectStore::Item& item, bool withShape) const
+{
 	liboscar::Static::OsmKeyValueObjectStorePayload payload(item.payload());
 	sserialize::Static::spatial::GeoShape shape(payload.shape());
-	if (shape.size() && item.strCount()) {
-		out << "{";
-		out << "\"id\":" << item.id() << ",";
-		out << "\"osmid\":" << item.osmId() << ",";
-		out << "\"type\":\"";
-		switch (payload.type()) {
+	out << "\"id\":" << item.id() << ",";
+	out << "\"osmid\":" << item.osmId() << ",";
+	out << "\"type\":\"";
+	switch (payload.type()) {
 
-		case liboscar::OSMIT_NODE:
-			out << "node";
-			break;
-		case liboscar::OSMIT_WAY:
-			out << "way";
-			break;
-		case liboscar::OSMIT_RELATION:
-			out << "relation";
-			break;
-		case liboscar::OSMIT_INVALID:
-		default:
-			out << "invalid";
-			break;
-		};
-		out << "\",";
-		out << "\"score\":" << payload.score() << ",";
-		sserialize::spatial::GeoRect bbox(shape.boundary());
-		out << "\"bbox\":[" << bbox.minLat() << "," << bbox.maxLat() << "," << bbox.minLon() << "," << bbox.maxLon() << "],";
-		out << "\"shape\":";
-		if (withShape) {
-			toJson(out, shape);
+	case liboscar::OSMIT_NODE:
+		out << "node";
+		break;
+	case liboscar::OSMIT_WAY:
+		out << "way";
+		break;
+	case liboscar::OSMIT_RELATION:
+		out << "relation";
+		break;
+	case liboscar::OSMIT_INVALID:
+	default:
+		out << "invalid";
+		break;
+	};
+	out << "\",";
+	out << "\"score\":" << payload.score() << ",";
+	sserialize::spatial::GeoRect bbox(shape.boundary());
+	out << "\"bbox\":[" << bbox.minLat() << "," << bbox.maxLat() << "," << bbox.minLon() << "," << bbox.maxLon() << "],";
+	out << "\"shape\":";
+	if (withShape && shape.size()) {
+		toJson(out, shape);
+	}
+	else {
+		out << "{\"t\":-1}";
+	}
+	if (item.size()) {
+		out << ",\"k\":[\"" << m_escaper.escape(item.key(0)) << "\"";
+		for(uint32_t i=1, s=item.size(); i < s; ++i) {
+			out << ",\"" << m_escaper.escape(item.key(i)) << "\"";
 		}
-		else {
-			out << "{\"t\":-1}";
+		out << "],\"v\":[\"" <<  m_escaper.escape(item.value(0)) << "\"";
+		for(uint32_t i=1, s=item.size(); i < s; ++i) {
+			out << ",\"" <<  m_escaper.escape(item.value(i)) << "\"";
 		}
-		if (item.size()) {
-			out << ",\"k\":[\"" << m_escaper.escape(item.key(0)) << "\"";
-			for(uint32_t i=1, s=item.size(); i < s; ++i) {
-				out << ",\"" << m_escaper.escape(item.key(i)) << "\"";
-			}
-			out << "],\"v\":[\"" <<  m_escaper.escape(item.value(0)) << "\"";
-			for(uint32_t i=1, s=item.size(); i < s; ++i) {
-				out << ",\"" <<  m_escaper.escape(item.value(i)) << "\"";
-			}
-			out << "]";
-		}
-		out << "}";
+		out << "]";
 	}
 }
 

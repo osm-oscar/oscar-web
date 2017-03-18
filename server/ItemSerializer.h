@@ -17,10 +17,15 @@ public:
 	void toJson(std::ostream & out, const sserialize::Static::spatial::GeoMultiPolygon::PolygonList & polys) const;
 	void toJson(std::ostream & out, const sserialize::Static::spatial::GeoShape & gs) const;
 	void toJson(std::ostream & out, const liboscar::Static::OsmKeyValueObjectStore::Item & item, bool withShape) const;
+	void toJson(std::ostream & out, const liboscar::Static::OsmKeyValueObjectStore::Item & item, bool withShape, const std::string & addData) const;
 	template<typename T_ITERATOR>
-	void toJson(std::ostream & out,T_ITERATOR begin, const T_ITERATOR & end, bool withShape) const;
+	void toJson(std::ostream & out, T_ITERATOR begin, const T_ITERATOR & end, bool withShape) const;
+	template<typename T_ITERATOR>
+	void toJson(std::ostream & out, T_ITERATOR begin, const T_ITERATOR & end, bool withShape, const std::string & addData) const;
 	template<typename T_ITERATOR>
 	void toJson(std::ostream & out,T_ITERATOR begin, uint32_t count, bool withShape) const; 
+private:
+	void toJsonObjectMembers(std::ostream & out, const liboscar::Static::OsmKeyValueObjectStore::Item & item, bool withShape) const;
 private:
 	sserialize::JsonEscaper m_escaper;
 };
@@ -34,6 +39,18 @@ void ItemSerializer::toJson(std::ostream& out, T_ITERATOR begin, const T_ITERATO
 	for(++begin; begin != end; ++begin) {
 		out << ",";
 		toJson(out, *begin, withShape);
+	}
+}
+
+template<typename T_ITERATOR>
+void ItemSerializer::toJson(std::ostream & out, T_ITERATOR begin, const T_ITERATOR & end, bool withShape, const std::string & addData) const {
+	if (begin == end) {
+		return;
+	}
+	toJson(out, *begin, withShape, addData);
+	for(++begin; begin != end; ++begin) {
+		out << ",";
+		toJson(out, *begin, withShape, addData);
 	}
 }
 
