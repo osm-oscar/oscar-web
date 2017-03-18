@@ -84,6 +84,22 @@ void CQRItems::all() {
 		if (haveParents && max_write_items > 0) { //now take care of the items
 			tmp.clear();
 			for(sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
+				std::string parentString;
+				{
+					auto cellParents = sg.cellParents(it.cellId());
+					std::stringstream ss;
+					ss << '[';
+					if (cellParents.size()) {
+						auto it = cellParents.begin();
+						auto end = cellParents.end();
+						ss << gh.ghIdToStoreId(*it);
+						for(++it; it != end; ++it) {
+							ss << ',' << gh.ghIdToStoreId(*it);
+						}
+					}
+					ss << ']';
+					parentString = ss.str();
+				}
 				for(uint32_t x : it.idx()) {
 					auto shapeType = store.geoShapeType(x);
 					if (shapeType != sserialize::spatial::GS_POINT) {
@@ -94,7 +110,7 @@ void CQRItems::all() {
 					}
 					auto item  = store.at(x);
 					out << ',';
-					m_serializer.toJson(out, item, withShapes);
+					m_serializer.toJson(out, item, withShapes, parentString);
 					max_write_items -= 1;
 					if (max_write_items <= 0) {
 						break;
