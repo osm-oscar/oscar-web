@@ -88,7 +88,7 @@ void CQRItems::all() {
 				{
 					auto cellParents = sg.cellParents(it.cellId());
 					std::stringstream ss;
-					ss << '[';
+					ss << "\"p\":[";
 					if (cellParents.size()) {
 						auto it = cellParents.begin();
 						auto end = cellParents.end();
