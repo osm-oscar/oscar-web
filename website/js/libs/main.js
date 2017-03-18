@@ -278,6 +278,22 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                     $('#spatialquery_radius_group').addClass('hidden');
                 }
             });
+			
+			$('#result_download_select').change(function(e) {
+				var dlelem = $("#result_download_link");
+				if (e.target.value === "items") {
+					dlelem.attr("href", dlelem.attr("data-base-href"));
+				}
+				else if (e.target.value === "items+parents") {
+					dlelem.attr("href", dlelem.attr("data-base-href")+"&p=true");
+				}
+				else if (e.target.value === "items+shapes") {
+					dlelem.attr("href", dlelem.attr("data-base-href")+"&s=true");
+				}
+				else if (e.target.value === "items+parents+shapes") {
+					dlelem.attr("href", dlelem.attr("data-base-href")+"&p=true&s=true");
+				}
+			});
 
             $(window).bind('popstate', function (e) {
 				console.log(e);

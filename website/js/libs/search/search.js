@@ -93,6 +93,10 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
                         state.cqr = cqr;
                         state.cqrRegExp = oscar.cqrRexExpFromQuery(cqr.query());
                         map.displayCqr(cqr);
+						var dllink = oscar.generateDownloadLink(cqr.query(), cqr.regionFilter());
+						var dlelem = $("#result_download_link");
+						dlelem.attr('data-base-href', dllink);
+						dlelem.attr('href', dllink);
                     }
                 },
                 function (jqXHR, textStatus, errorThrown) {
