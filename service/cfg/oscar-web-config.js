@@ -26,6 +26,7 @@
             "fullsubsetlimit" : 10000,
             "maxindexdbreq": 1000,
             "maxitemdbreq": 2000,
+			"maxresultdownloadsize" : 1000000,
             "itemstextcompleter" : 0,
             "geotextcompleter" : 0,
             "geocompleter" : 0,

@@ -135,6 +135,7 @@ int main(int argc, char **argv) {
 		data.fullSubSetLimit = dbfile.get<uint32_t>("fullsubsetlimit", 100);
 		data.maxIndexDBReq = dbfile.get<uint32_t>("maxindexdbreq", 10);
 		data.maxItemDBReq = dbfile.get<uint32_t>("maxitemdbreq", 10);
+		data.maxResultDownloadSize = dbfile.get<uint32_t>("maxresultdownloadsize", 1000);
 		data.textSearchers[liboscar::TextSearch::GEOCELL] = dbfile.get<uint32_t>("geocellcompleter", 0);
 		data.textSearchers[liboscar::TextSearch::OOMGEOCELL] = dbfile.get<uint32_t>("geocellcompleter", 0);
 		data.textSearchers[liboscar::TextSearch::ITEMS] = dbfile.get<uint32_t>("itemscompleter", 0);

@@ -32,6 +32,7 @@ struct CompletionFileData {
 	uint32_t fullSubSetLimit;
 	uint32_t maxIndexDBReq;
 	uint32_t maxItemDBReq;
+	uint32_t maxResultDownloadSize;
 	bool treedCQR;
 	std::unordered_map<uint8_t, uint8_t> textSearchers;
 	uint32_t geocompleter;

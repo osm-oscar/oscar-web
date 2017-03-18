@@ -54,6 +54,7 @@ void CQRItems::all() {
 	if (withParents) {
 		std::unordered_set<uint32_t> tmp;
 		bool haveParents = false;
+		int32_t max_write_items = m_dataPtr->maxResultDownloadSize;
 		{
 			for(sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
 				auto cellParents = sg.cellParents(it.cellId());
@@ -68,9 +69,19 @@ void CQRItems::all() {
 				}
 			}
 			haveParents = parents.size();
-			m_serializer.toJson(out, store.id2ItemIterator(parents.cbegin()), store.id2ItemIterator(parents.cend()), withShapes);
+			if (parents.size() > max_write_items) {
+				m_serializer.toJson(out,
+									store.id2ItemIterator(parents.cbegin()),
+									store.id2ItemIterator(parents.cend()+max_write_items),
+									withShapes);
+				max_write_items = 0;
+			}
+			else {
+				m_serializer.toJson(out, store.id2ItemIterator(parents.cbegin()), store.id2ItemIterator(parents.cend()), withShapes);
+				max_write_items -= parents.size();
+			}
 		}
-		if (haveParents) { //now take care of the items
+		if (haveParents && max_write_items > 0) { //now take care of the items
 			tmp.clear();
 			for(sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
 				for(uint32_t x : it.idx()) {
@@ -84,12 +95,24 @@ void CQRItems::all() {
 					auto item  = store.at(x);
 					out << ',';
 					m_serializer.toJson(out, item, withShapes);
+					max_write_items -= 1;
+					if (max_write_items <= 0) {
+						break;
+					}
+				}
+				if (max_write_items <= 0) {
+					break;
 				}
 			}
 		}
 		else {
 			sserialize::ItemIndex itemIds = cqr.flaten();
-			m_serializer.toJson(out, store.id2ItemIterator(itemIds.begin()), store.id2ItemIterator(itemIds.end()), withShapes);
+			if (max_write_items > itemIds.size()) {
+				m_serializer.toJson(out, store.id2ItemIterator(itemIds.begin()), store.id2ItemIterator(itemIds.end()), withShapes);
+			}
+			else {
+				m_serializer.toJson(out, store.id2ItemIterator(itemIds.begin()), max_write_items, withShapes);
+			}
 		}
 	}
 	else {
