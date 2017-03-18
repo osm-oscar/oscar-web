@@ -669,6 +669,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 query: function () {
                     return this.d.query;
                 },
+				regionFilter: function() {
+					return this.d.regionFilter;
+				},
                 regionItemIds: function (regionId, successCB, errorCB, resultListOffset, count) {
 					if (count === undefined) {
 						count = this.p.maxFetchItems;
