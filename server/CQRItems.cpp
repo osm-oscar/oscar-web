@@ -137,7 +137,15 @@ void CQRItems::all() {
 	}
 	else {
 		sserialize::ItemIndex itemIds = cqr.flaten();
-		m_serializer.toJson(out, store.id2ItemIterator(itemIds.begin()), store.id2ItemIterator(itemIds.end()), withShapes);
+		if (itemIds.size() > m_dataPtr->maxResultDownloadSize) {
+			sserialize::ItemIndex::const_iterator it(itemIds.cbegin());
+			for(uint32_t i(0), s(m_dataPtr->maxResultDownloadSize); i < s; ++i, ++it) {
+				m_serializer.toJson(out, store.at(*it), withShapes);
+			}
+		}
+		else {
+			m_serializer.toJson(out, store.id2ItemIterator(itemIds.begin()), store.id2ItemIterator(itemIds.end()), withShapes);
+		}
 	}
 	out << "]";
 	
