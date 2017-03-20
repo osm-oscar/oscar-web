@@ -70,6 +70,8 @@ void CQRItems::all() {
 			}
 			haveParents = parents.size();
 			if (parents.size() > max_write_items) {
+				using std::sort; //sort for improved disk-access pattern
+				sort(parents.begin(), parents.begin()+max_write_items);
 				m_serializer.toJson(out,
 									store.id2ItemIterator(parents.cbegin()),
 									store.id2ItemIterator(parents.cend()+max_write_items),
@@ -77,6 +79,8 @@ void CQRItems::all() {
 				max_write_items = 0;
 			}
 			else {
+				using std::sort; //sort for improved disk-access pattern
+				sort(parents.begin(), parents.end());
 				m_serializer.toJson(out, store.id2ItemIterator(parents.cbegin()), store.id2ItemIterator(parents.cend()), withShapes);
 				max_write_items -= parents.size();
 			}
