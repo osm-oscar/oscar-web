@@ -40,8 +40,6 @@ private:
 	ItemSerializer m_serializer;
 private:
 	void writeLogStats(const std::string & fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize);
-	template<typename T_IT>
-	void writeMultiple(std::ostream & out, T_IT begin, T_IT end, bool withShape);
 };
 
 
