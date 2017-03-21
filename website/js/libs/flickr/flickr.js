@@ -1,6 +1,6 @@
 define(["jquery", "jqueryui", "slimbox", "conf"], function ($, jqueryui, slimbox, config) {
     return {
-        _api_key: "46f7a6dce46471b81aa7c1592fcc9733",
+        _api_key: "99f32ce3df7f225cd12342b6924cf93b",
 
         /**
          * Queries the flickr-service to find available images for a location
