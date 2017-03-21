@@ -1156,7 +1156,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			var activeTabNeedsExtraRefresh = false;
 			
 			//callback handler
-			cbh = undefined;
+			var cbh = undefined;
 			
 			var timers = {
 				complete: tools.timer("mapViewChanged::complete"),
