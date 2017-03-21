@@ -76,12 +76,14 @@
                             </form>
                             <a href="#" id="graph" class="fa fa-sitemap" data-toggle="tooltip" data-placement="left" title="Show the region-hierarchy"></a>
                         </div>
-                        <span id="showCategories" mod="show"><a href="#">Hide categories</a></span>
-
                         <div id="search_container">
                             <div id="categorieWrapper">
                                 <div style="clear:both;"></div>
                                 <div id="advancedSearch">
+                                    <div class='form-group'>
+                                     <label for='tagsSearch' data-toggle='tooltip' data-placement='right' title='Search for tags not covered by the menu above'>Tagsearch:</label>
+                                        <input id='tagsSearch' placeholder='What tag are you looking for?'>
+                                    </div>
                                     <div class='form-group'>
                                         <div class="input-group">
                                             <span class="input-group-btn">
@@ -121,8 +123,6 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div id="categories"></div>
-                                <div id="subCategories"></div>
                             </div>
                         </div>
                         <div id="left_menu_parent" class="menu_parent">

@@ -29,7 +29,6 @@ requirejs.config({
         "slimbox": "slimbox/js/slimbox2",
         "tools": "tools/tools",
         "conf": "config/config",
-        "menu": "menu/menu",
         "flickr": "flickr/flickr",
         "manager": "connection/manager.min",
         "switch": "switch-button/jquery.switchButton",
@@ -55,7 +54,7 @@ requirejs.config({
     waitSeconds: 20
 });
 
-requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf", "menu", "tokenfield", "switch", "state", "map", "tree", "prototype", "query", "tools", "search"],
+requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf", "tokenfield", "switch", "state", "map", "tree", "prototype", "query", "tools", "search"],
     function () {
         var L = require("leaflet");
 		var jQuery = require("jquery");
@@ -64,7 +63,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 		var sidebar = require("sidebar");
 		var mustacheLoader = require("mustacheLoader");
 		var config = require("conf");
-		var menu = require("menu");
 		var tokenfield = require("tokenfield");
 		var switchButton = require("switch");
 		var state = require("state");
@@ -92,8 +90,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             });
         });
 
-        menu.displayCategories();
-
         $(document).ready(function () {
             $("#tree").resizable();
 
@@ -113,21 +109,24 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 e.preventDefault();
                 search.instantCompletion();
             });
+			
 
-            $("#showCategories a").click(function () {
-                if ($(this).attr('mod') == 'hide') {
-                    $('#categories').show(800);
-                    $('#subCategories').show(800);
-                    $(this).attr('mod', 'show');
-                    $(this).text("Hide categories");
-                } else {
-                    $('#categories').hide(800);
-                    $('#subCategories').hide(800);
-                    $(this).attr('mod', 'hide');
-                    $(this).text("Show categories");
+			$("#tagsSearch").autocomplete({
+				source: function (request, response) {
+					var service = "https://taginfo.openstreetmap.org/api/4/tags/popular?sortname=count_all&sortorder=desc&page=1&rp=8&query=" + request['term'];
+					var result = [];
 
-                }
-            });
+					$.getJSON(service, function (data) {
+						for (var suggestion in data.data) {
+							result.push("@" + data.data[suggestion].key + ":" + data.data[suggestion].value);
+						}
+						response(result);
+					});
+				},
+				select: function(event, ui){
+					$("#search_text").tokenfield('createToken', {value:  ui.item.value, label:  ui.item.value});
+				}
+			});
 
             $('#advancedToggle a').click(function () {
                 if ($(this).attr('mod') == 'hide') {
