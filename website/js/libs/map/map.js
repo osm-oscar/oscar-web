@@ -787,9 +787,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			//init the cluster markers
             var myClusterMarkerGroup = L.markerClusterGroup();
-            myClusterMarkerGroup.on('clusterclick', function (a) {
-                a.layer.zoomToBounds();
-            });
 			state.map.addLayer(myClusterMarkerGroup);
 			map.clusterMarkers = map.RegionMarkerHandler(myClusterMarkerGroup);
 			
@@ -804,6 +801,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.clusterMarkers).on("click", map.onClusterMarkerClicked);
 			$(map.clusterMarkers).on("mouseover", map.onClusterMarkerMouseOver);
 			$(map.clusterMarkers).on("mouseout", map.onClusterMarkerMouseOut);
+			myClusterMarkerGroup.on("clusterclick", map.onClusteredClusterMarkerClicked);
+			myClusterMarkerGroup.on("clustermouseover", map.onClusteredClusterMarkerMouseOver);
+			myClusterMarkerGroup.on("clustermouseout", map.onClusteredClusterMarkerMouseOut);
 		},
 		
 		clear: function() {
@@ -1039,6 +1039,38 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		onClusterMarkerMouseOut: function(e) {
 			map.closePopups();
 			map.clusterMarkerRegionShapes.remove(e.itemId)
+		},
+		onClusteredClusterMarkerClicked: function (e) {
+			e.layer.zoomToBounds();
+		},
+		onClusteredClusterMarkerMouseOut: function(e) {
+			map.closePopups();
+			map.clusterMarkerRegionShapes.clear();
+		},
+		onClusteredClusterMarkerMouseOver: function(e) {
+			var target = e.layer;
+			if (target.getChildCount() > 1 && target.getChildCount() <= config.maxNumSubClusters && map.cfg.clusterShapes.display) {
+				var childRids = target.getChildClustersRegionIds();
+				oscar.fetchShapes(childRids, function() {}, tools.defErrorCB);
+				for(var i in childRids) {
+					map.clusterMarkerRegionShapes.add(childRids[i]);
+				}
+			}
+			var names = target.getChildClustersNames();
+			var text = "";
+			if (names.length > 0) {
+				for (var i in names) {
+					if(i > config.maxNumSubClusters){
+						text += "...";
+						break;
+					}
+					text += names[i];
+					if (i < names.length - 1) {
+						text += ", ";
+					}
+				}
+				L.popup({offset: new L.Point(0, -10)}).setLatLng(e.latlng).setContent(text).openOn(state.map);
+			}
 		},
 
 		loadWholeTree: function () {
