@@ -1179,6 +1179,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		mapViewChanged: function() {
+			//this should remove those awfull long stacks
+			setTimeout(function() {
+				map._mapViewChanged();
+			}, 0);
+		},
+		_mapViewChanged: function() {
 			if (map.locks.mapViewChanged.locked) {
 				map.locks.mapViewChanged.queued = true;
 				return;
