@@ -11,12 +11,51 @@ L.MarkerClusterGroup = L.FeatureGroup.extend({
 
 	options: {
 		maxClusterRadius: 80, //A cluster will cover at most this many pixels from its center
-		iconCreateFunction: null,
+		iconCreateFunction: function (cluster) {
+                /* https://github.com/Leaflet/Leaflet.markercluster/issues/351
+                 required to use the preclustering by the server */
+                var count = 0;
+                if (cluster.count) { // custom call
+                    count = cluster.count;
+                }
+                else if (cluster.getAllChildMarkers) {
+                    var children = cluster.getAllChildMarkers();
+                    for (var i in children) {
+                        if (children[i].count) {
+                            count = Math.max(children[i].count, count);
+                        }
+                    }
+                }
+
+                // only true for real items
+                if (cluster.getAllChildMarkers().length == 1 && !cluster.getAllChildMarkers()[0].bbox) {
+                    return new L.Icon.Default();
+                }
+
+                var c = 'marker-cluster-';
+                var size;
+
+                if (count < 10) {
+                    c += 'small';
+                    size = 30;
+                } else if (count < 100) {
+                    c += 'medium';
+                    size = 50;
+                } else {
+                    c += 'large';
+                    size = 70;
+                }
+                return new L.DivIcon({
+                    html: '<div><span>' + count + '</span></div>',
+                    className: 'marker-cluster ' + c,
+                    iconSize: new L.Point(size, size)
+                })
+            },
 
 		spiderfyOnMaxZoom: true,
-		showCoverageOnHover: true,
+		showCoverageOnHover: false,
 		zoomToBoundsOnClick: true,
-		singleMarkerMode: false,
+		singleMarkerMode: true,
 
 		disableClusteringAtZoom: null,
 
@@ -1414,6 +1453,32 @@ L.MarkerCluster = L.Marker.extend({
 		}
 
 		return storageArray;
+	},
+	getChildClustersNames: function () {
+		var names = [];
+		var allChildClusters = this.getAllChildMarkers();
+
+		for (var i in allChildClusters) {
+			if (allChildClusters[i].name != undefined) {
+				names.push(allChildClusters[i].name);
+			}
+		}
+		return names;
+	},
+
+	getChildClustersRegionIds: function () {
+		var rids = [];
+		var allChildClusters = this.getAllChildMarkers();
+
+		for (var i in allChildClusters) {
+			if (allChildClusters[i].rid !== undefined) {
+				rids.push(allChildClusters[i].rid);
+			}
+		}
+		return rids;
+	},
+	setChildCnt: function (cnt) {
+		this._childCount = cnt;
 	},
 
 	//Returns the count of how many child markers we have
