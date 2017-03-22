@@ -13,7 +13,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
 
             // Set up an SVG group so that we can translate the final graph.
             $("#dag").empty();
-            var svg = d3.select("svg"),
+            var svg = d3.select("svg");
 			var svgGroup = svg.append("g");
 
             tree._initGraph(svg, svgGroup);
@@ -263,7 +263,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             }
 
             $("#dag").empty();
-            var svg = d3.select("svg"),
+            var svg = d3.select("svg");
             var svgGroup = svg.append("g");
             tree._initGraph(svg, svgGroup);
 
