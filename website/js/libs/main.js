@@ -141,7 +141,12 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             });
 
             $('#graph').click(function () {
-                $("#onePath").button();
+                $("#onePath").button().change(function() {
+					//we need to redraw the whole graph if the former state was onePath
+					if (state.dag.hasRegion(0xFFFFFFFF) && ! $(this).is(":checked") ) {
+						tree.visualizeDAG(state.dag.region(0xFFFFFFFF));
+					}
+				});
                 $("#wholeTree").button().click(function () {
                     map.loadWholeTree();
 					if (state.dag.hasRegion(0xFFFFFFFF)) {

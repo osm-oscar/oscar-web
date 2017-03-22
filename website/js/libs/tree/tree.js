@@ -104,6 +104,17 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
                 });
             });
         },
+		
+		_addClickToOnePath: function() {
+            $(".treeNodeOnePath").each(function (key, value) {
+                $(value).on("click", function () {
+                    var id = $(this).attr("nodeId");
+					$("#onePath").attr('checked', "checked");
+					$("#onePath").button("refresh");
+					tree.onePath(state.dag.region(id));
+                });
+            });
+		},
 
         _recursiveAddToGraph: function (node, graph) {
             if (node.name) {
@@ -135,7 +146,8 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
 			if (!node.isLeaf && !node.children.size()) {
 				label += "<a nodeId='" + node.id+ "' class='treeNodeSub treeNodeLink' href='#'>Load children</a>";
 			}
-			label += "<a NodeId='" + node.id + "' class='treeNodeShow treeNodeLink' href='#'>Show</a>";
+			label += "<a nodeId='" + node.id + "' class='treeNodeShow treeNodeLink' href='#'>Show</a>";
+			label += "<a nodeId='" + node.id + "' class='treeNodeOnePath treeNodeLink' href='#'>One Path</a>";
 			label += "</div>";
 			return label;
         },
@@ -226,6 +238,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             d3.selectAll(".node").on("mouseout", this._deHoverNode.bind(this));
             this._addClickToLoadSubHierarchy();
 			this._addClickToShowRegion();
+			this._addClickToOnePath();
         },
 
         /**
