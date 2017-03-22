@@ -824,7 +824,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 case 3://GeoPolygon
                     return L.polygon(shape.v);
                 case 4://geo multi polygon
-                    return L.multiPolygon(shape.v.outer);
+                    return L.polygon(shape.v.outer);
                 default:
                     throw Error("oscar::leafletItemFromShape: invalid shape");
                     return null;
