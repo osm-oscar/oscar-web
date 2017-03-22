@@ -529,6 +529,18 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				});
 			}
 		};
+		//this only affects layers added AFTER! calling this function
+		this.addSignalForward = function(sourceSignalName, mappedSignalName) {
+			if (this.m_forwardedSignals[sourceSignalName] !== undefined) {
+				if ($.inArray(mappedSignalName, this.m_forwardedSignals[sourceSignalName])) {
+					return;
+				}
+			}
+			else {
+				this.m_forwardedSignals[sourceSignalName] = [];
+			}
+			this.m_forwardedSignals[sourceSignalName].push(mappedSignalName);
+		},
 		this.domRoot = function() {
 			return this.m_domRoot;
 		};
