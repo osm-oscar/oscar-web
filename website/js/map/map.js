@@ -1518,22 +1518,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						if (!map.resultListTabs.count(regionId) || !cells.equal(map.resultListTabs.cells(regionId))) {
 							return;
 						}
-						var itemIdSet = tools.SimpleSet();
-						itemIdSet.insertArray(itemIds);
-						var ilh = map.resultListTabs.itemListHandler(regionId);
-						var itemsToRemove = [];
-						ilh.each(function(itemId) {
-							if (! itemIdSet.count(itemId) ) {
-								itemsToRemove.push(itemId);
-							}
-						});
-						for(var i in itemsToRemove) {
-							ilh.remove(itemsToRemove[i]);
-						}
-						ilh.insertItems(items);
-						if (map.resultListTabs.size() === 1) {
-							map.resultListTabs.emit_activeRegionChanged(regionId);
-						}
+						map.resultListTabs.assignItems(regionId, items);
 						if (focusAfterLoad) {
 							map.resultListTabs.openTab(regionId);
 						}
@@ -1604,7 +1589,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			timers.tabWorld.stop();
 			
-			//now all tabs are there, now make sure that the highlited tab refreshed the map
+			//now all tabs are there - this is wrong if tab populate does not return instantly (which we cannot assume)
+			//now make sure that the highlited tab refreshed the map
 			if (activeTabNeedsExtraRefresh) {
 				map.onActiveTabChanged();
 			}
