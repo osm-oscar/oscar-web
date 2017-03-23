@@ -816,6 +816,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			myClusterMarkerGroup.on("clusterclick", map.onClusteredClusterMarkerClicked);
 			myClusterMarkerGroup.on("clustermouseover", map.onClusteredClusterMarkerMouseOver);
 			myClusterMarkerGroup.on("clustermouseout", map.onClusteredClusterMarkerMouseOut);
+			myClusterMarkerGroup.on("layerremove", map.onClusterMarkerLayerRemoved);
 		},
 		
 		clear: function() {
@@ -1028,6 +1029,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.resultListTabs.activeTab().scrollTo(e.itemId);
 			map.showItemRelatives();
 		},
+		onClusterMarkerLayerRemoved: function(e) {
+			map.closePopups();
+			map.clusterMarkerRegionShapes.clear();
+		},
 		onClusterMarkerClicked: function(e) {
 			map.closePopups();
 			map.clusterMarkers.remove(e.itemId);
@@ -1048,12 +1053,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				.setLatLng(coords)
 				.setContent(e.itemId + ":" + marker.name).openOn(state.map);
 		},
-		onClusterMarkerMouseOut: function(e) {
-			map.closePopups();
-			map.clusterMarkerRegionShapes.remove(e.itemId)
-		},
 		onClusteredClusterMarkerClicked: function (e) {
 			e.layer.zoomToBounds();
+		},
+		onClusterMarkerMouseOut: function(e) {
+			map.closePopups();
+			map.clusterMarkerRegionShapes.clear();
 		},
 		onClusteredClusterMarkerMouseOut: function(e) {
 			map.closePopups();
