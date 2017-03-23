@@ -204,6 +204,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					handler.m_itemIds.insert(item.id());
 				}
 			},
+			//return number of inserted items
 			insertItems: function(items) {
 				var timer0 = tools.timer("ItemListHandler::insertItems::domFilterData for " + items.length + " items");
 				var itemData = [];
@@ -230,6 +231,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					handler.m_itemIds.insert(items[i].id());
 				}
 				timer4.stop();
+				return itemData.length;
 			},
 			remove: function(itemId) {
 				if (!handler.count(itemId)) {
@@ -240,6 +242,23 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					$(this).remove();
 				});
 				handler.m_itemIds.erase(itemId);
+			},
+			//returns number of added+removed items
+			assign: function(items) {
+				var itemIdSet = tools.SimpleSet();
+				for(i in items) {
+					itemIdSet.insertArray(items[i].id());
+				}
+				var itemsToRemove = [];
+				handler.each(function(itemId) {
+					if (! itemIdSet.count(itemId) ) {
+						itemsToRemove.push(itemId);
+					}
+				});
+				for(var i in itemsToRemove) {
+					handler.remove(itemsToRemove[i]);
+				}
+				return handler.insertItems(items) + itemsToRemove.length;
 			},
 			//emits itemDetailsClosed on all open panels   
 			clear: function() {
@@ -405,6 +424,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			insertItems: function(regionId, items) {
 				if (handler.m_regions.count(regionId)) {
 					handler.m_regions.at(regionId).handler.insertItems(items);
+				}
+			},
+			assignItems: function(regionId, items) {
+				if (handler.m_regions.count(regionId)) {
+					var changed = handler.m_regions.at(regionId).handler.assign(items);
+					if (changed && handler.activeRegion() == regionId) {
+						handler.emit_activeRegionChanged();
+					}
 				}
 			},
 			//removes a region (and it's tab), return true, if removal was successfull
