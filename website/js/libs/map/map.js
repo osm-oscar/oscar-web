@@ -529,6 +529,18 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				});
 			}
 		};
+		//this only affects layers added AFTER! calling this function
+		this.addSignalForward = function(sourceSignalName, mappedSignalName) {
+			if (this.m_forwardedSignals[sourceSignalName] !== undefined) {
+				if ($.inArray(mappedSignalName, this.m_forwardedSignals[sourceSignalName])) {
+					return;
+				}
+			}
+			else {
+				this.m_forwardedSignals[sourceSignalName] = [];
+			}
+			this.m_forwardedSignals[sourceSignalName].push(mappedSignalName);
+		},
 		this.domRoot = function() {
 			return this.m_domRoot;
 		};
@@ -787,9 +799,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			//init the cluster markers
             var myClusterMarkerGroup = L.markerClusterGroup();
-            myClusterMarkerGroup.on('clusterclick', function (a) {
-                a.layer.zoomToBounds();
-            });
 			state.map.addLayer(myClusterMarkerGroup);
 			map.clusterMarkers = map.RegionMarkerHandler(myClusterMarkerGroup);
 			
@@ -804,6 +813,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.clusterMarkers).on("click", map.onClusterMarkerClicked);
 			$(map.clusterMarkers).on("mouseover", map.onClusterMarkerMouseOver);
 			$(map.clusterMarkers).on("mouseout", map.onClusterMarkerMouseOut);
+			myClusterMarkerGroup.on("clusterclick", map.onClusteredClusterMarkerClicked);
+			myClusterMarkerGroup.on("clustermouseover", map.onClusteredClusterMarkerMouseOver);
+			myClusterMarkerGroup.on("clustermouseout", map.onClusteredClusterMarkerMouseOut);
+			myClusterMarkerGroup.on("layerremove", map.onClusterMarkerLayerRemoved);
 		},
 		
 		clear: function() {
@@ -1016,6 +1029,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.resultListTabs.activeTab().scrollTo(e.itemId);
 			map.showItemRelatives();
 		},
+		onClusterMarkerLayerRemoved: function(e) {
+			map.closePopups();
+			map.clusterMarkerRegionShapes.clear();
+		},
 		onClusterMarkerClicked: function(e) {
 			map.closePopups();
 			map.clusterMarkers.remove(e.itemId);
@@ -1036,9 +1053,41 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				.setLatLng(coords)
 				.setContent(e.itemId + ":" + marker.name).openOn(state.map);
 		},
+		onClusteredClusterMarkerClicked: function (e) {
+			e.layer.zoomToBounds();
+		},
 		onClusterMarkerMouseOut: function(e) {
 			map.closePopups();
-			map.clusterMarkerRegionShapes.remove(e.itemId)
+			map.clusterMarkerRegionShapes.clear();
+		},
+		onClusteredClusterMarkerMouseOut: function(e) {
+			map.closePopups();
+			map.clusterMarkerRegionShapes.clear();
+		},
+		onClusteredClusterMarkerMouseOver: function(e) {
+			var target = e.layer;
+			if (target.getChildCount() > 1 && target.getChildCount() <= config.maxNumSubClusters && map.cfg.clusterShapes.display) {
+				var childRids = target.getChildClustersRegionIds();
+				oscar.fetchShapes(childRids, function() {}, tools.defErrorCB);
+				for(var i in childRids) {
+					map.clusterMarkerRegionShapes.add(childRids[i]);
+				}
+			}
+			var names = target.getChildClustersNames();
+			var text = "";
+			if (names.length > 0) {
+				for (var i in names) {
+					if(i > config.maxNumSubClusters){
+						text += "...";
+						break;
+					}
+					text += names[i];
+					if (i < names.length - 1) {
+						text += ", ";
+					}
+				}
+				L.popup({offset: new L.Point(0, -10)}).setLatLng(e.latlng).setContent(text).openOn(state.map);
+			}
 		},
 
 		loadWholeTree: function () {
@@ -1147,6 +1196,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		mapViewChanged: function() {
+			//this should remove those awfull long stacks
+			setTimeout(function() {
+				map._mapViewChanged();
+			}, 0);
+		},
+		_mapViewChanged: function() {
 			if (map.locks.mapViewChanged.locked) {
 				map.locks.mapViewChanged.queued = true;
 				return;

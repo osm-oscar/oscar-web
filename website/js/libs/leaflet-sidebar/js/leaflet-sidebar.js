@@ -1,18 +1,19 @@
-L.Control.Sidebar = L.Control.extend({
+/**
+ * @name Sidebar
+ * @class L.Control.Sidebar
+ * @extends L.Control
+ * @param {string} id - The id of the sidebar element (without the # character)
+ * @param {Object} [options] - Optional options object
+ * @param {string} [options.position=left] - Position of the sidebar: 'left' or 'right'
+ * @see L.control.sidebar
+ */
+L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
     includes: L.Mixin.Events,
 
     options: {
         position: 'left'
     },
 
-    /**
-     * Create a new sidebar on this jQuery object.
-     *
-     * @constructor
-     * @param {string} id - The id of the sidebar element (without the # character)
-     * @param {Object} [options] - Optional options object
-     * @param {string} [options.position=left] - Position of the sidebar: 'left' or 'right'
-     */
     initialize: function (id, options) {
         var i, child;
 
@@ -62,7 +63,7 @@ L.Control.Sidebar = L.Control.extend({
      * Add this sidebar to the specified map.
      *
      * @param {L.Map} map
-     * @returns {L.Control.Sidebar}
+     * @returns {Sidebar}
      */
     addTo: function (map) {
         var i, child;
@@ -71,9 +72,12 @@ L.Control.Sidebar = L.Control.extend({
 
         for (i = this._tabitems.length - 1; i >= 0; i--) {
             child = this._tabitems[i];
-            L.DomEvent
-                .on(child.querySelector('a'), 'click', L.DomEvent.preventDefault )
-                .on(child.querySelector('a'), 'click', this._onClick, child);
+            var sub = child.querySelector('a');
+            if (sub.hasAttribute('href') && sub.getAttribute('href').slice(0,1) == '#') {
+                L.DomEvent
+                    .on(sub, 'click', L.DomEvent.preventDefault )
+                    .on(sub, 'click', this._onClick, child);
+            }
         }
 
         for (i = this._closeButtons.length - 1; i >= 0; i--) {
@@ -85,12 +89,23 @@ L.Control.Sidebar = L.Control.extend({
     },
 
     /**
+     * @deprecated - Please use remove() instead of removeFrom(), as of Leaflet 0.8-dev, the removeFrom() has been replaced with remove()
+     * Removes this sidebar from the map.
+     * @param {L.Map} map
+     * @returns {Sidebar}
+     */
+     removeFrom: function(map) {
+         console.log('removeFrom() has been deprecated, please use remove() instead as support for this function will be ending soon.');
+         this.remove(map);
+     },
+
+    /**
      * Remove this sidebar from the map.
      *
      * @param {L.Map} map
-     * @returns {L.Control.Sidebar}
+     * @returns {Sidebar}
      */
-    removeFrom: function (map) {
+    remove: function (map) {
         var i, child;
 
         this._map = null;
@@ -121,10 +136,8 @@ L.Control.Sidebar = L.Control.extend({
             child = this._panes[i];
             if (child.id == id)
                 L.DomUtil.addClass(child, 'active');
-            else if (L.DomUtil.hasClass(child, 'active')) {
+            else if (L.DomUtil.hasClass(child, 'active'))
                 L.DomUtil.removeClass(child, 'active');
-				this.fire('tab-closed', {"id": child.id });
-			}
         }
 
         // remove old active highlights and set new highlight
@@ -136,7 +149,7 @@ L.Control.Sidebar = L.Control.extend({
                 L.DomUtil.removeClass(child, 'active');
         }
 
-		this.fire('tab-opened', { "id": id });
+        this.fire('content', { id: id });
 
         // open sidebar (if necessary)
         if (L.DomUtil.hasClass(this._sidebar, 'collapsed')) {
@@ -154,10 +167,8 @@ L.Control.Sidebar = L.Control.extend({
         // remove old active highlights
         for (var i = this._tabitems.length - 1; i >= 0; i--) {
             var child = this._tabitems[i];
-            if (L.DomUtil.hasClass(child, 'active')) {
+            if (L.DomUtil.hasClass(child, 'active'))
                 L.DomUtil.removeClass(child, 'active');
-				this.fire('tab-closed', {"id": child.id });
-			}
         }
 
         // close sidebar
@@ -188,7 +199,7 @@ L.Control.Sidebar = L.Control.extend({
 });
 
 /**
- * Create a new sidebar on this jQuery object.
+ * Creates a new sidebar.
  *
  * @example
  * var sidebar = L.control.sidebar('sidebar').addTo(map);
@@ -196,7 +207,7 @@ L.Control.Sidebar = L.Control.extend({
  * @param {string} id - The id of the sidebar element (without the # character)
  * @param {Object} [options] - Optional options object
  * @param {string} [options.position=left] - Position of the sidebar: 'left' or 'right'
- * @returns {L.Control.Sidebar} A new sidebar instance
+ * @returns {Sidebar} A new sidebar instance
  */
 L.control.sidebar = function (id, options) {
     return new L.Control.Sidebar(id, options);
