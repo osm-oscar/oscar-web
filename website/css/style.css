@@ -365,3 +365,17 @@ g.node > rect{
 label{
     margin-bottom: 0px;
 }
+
+.result-list-key {
+	width: 40%;
+}
+
+.result-list-value {
+	width: 60%;
+}
+
+.break-word {
+	word-wrap: break-word;
+	word-break: break-all;
+	overflow-wrap: break-word;
+}
