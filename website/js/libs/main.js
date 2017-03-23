@@ -53,7 +53,7 @@ requirejs.config({
     waitSeconds: 20
 });
 
-requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf", "tokenfield", "switch", "state", "map", "tree", "prototype", "query", "tools", "search"],
+requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf", "tokenfield", "switch", "state", "map", "tree", "query", "tools", "search"],
     function () {
         var L = require("leaflet");
 		var jQuery = require("jquery");
