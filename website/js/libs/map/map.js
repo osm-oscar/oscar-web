@@ -740,6 +740,78 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return handler;
 	};
 	
+	var clusterMarkerOptions = {
+		maxClusterRadius: 120, //A cluster will cover at most this many pixels from its center
+		iconCreateFunction: function (cluster) {
+			/* https://github.com/Leaflet/Leaflet.markercluster/issues/351
+				required to use the preclustering by the server */
+			var count = 0;
+			if (cluster.count) { // custom call
+				count = cluster.count;
+			}
+			else if (cluster.getAllChildMarkers) {
+				var children = cluster.getAllChildMarkers();
+				for (var i in children) {
+					if (children[i].count) {
+						count = Math.max(children[i].count, count);
+					}
+				}
+			}
+
+			// only true for real items
+			if (cluster.getAllChildMarkers().length == 1 && !cluster.getAllChildMarkers()[0].bbox) {
+				return new L.Icon.Default();
+			}
+
+			var c = 'marker-cluster-';
+			var size;
+
+			if (count < 100) {
+				c += 'small';
+				size = 30 + count/100.0 * 20;
+			}
+			else if (count < 1000) {
+				c += 'medium';
+				size = 50 + count/1000.0 * 20;
+			}
+			else {
+				c += 'large';
+				size = Math.min(100, 70 + count/10000.0);
+			}
+			return new L.DivIcon({
+				html: '<div><span>' + count + '</span></div>',
+				className: 'marker-cluster ' + c,
+				iconSize: new L.Point(size, size)
+			})
+		},
+		showCoverageOnHover: false,
+		singleMarkerMode: true
+	};
+	
+	L.MarkerCluster.prototype["getChildClustersNames"] = function () {
+		var names = [];
+		var allChildClusters = this.getAllChildMarkers();
+
+		for (var i in allChildClusters) {
+			if (allChildClusters[i].name != undefined) {
+				names.push(allChildClusters[i].name);
+			}
+		}
+		return names;
+	};
+
+	L.MarkerCluster.prototype["getChildClustersRegionIds"] = function () {
+		var rids = [];
+		var allChildClusters = this.getAllChildMarkers();
+
+		for (var i in allChildClusters) {
+			if (allChildClusters[i].rid !== undefined) {
+				rids.push(allChildClusters[i].rid);
+			}
+		}
+		return rids;
+	};
+
     var map = {
 		ItemListHandler: ItemListHandler,
 		RegionItemListTabHandler: RegionItemListTabHandler,
@@ -798,7 +870,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 
 			
 			//init the cluster markers
-            var myClusterMarkerGroup = L.markerClusterGroup();
+            var myClusterMarkerGroup = L.markerClusterGroup(clusterMarkerOptions);
 			state.map.addLayer(myClusterMarkerGroup);
 			map.clusterMarkers = map.RegionMarkerHandler(myClusterMarkerGroup);
 			
