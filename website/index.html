@@ -9,18 +9,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="description" content="A simple search engine for OpenStreetMap">
         <meta name="author" content="Daniel Bahrdt">
-        <link rel="stylesheet" href="js/libs/leaflet/leaflet.css">
-        <link rel="stylesheet" media="screen" href="js/libs/twitter-bootstrap/css/bootstrap.css">
-        <link rel="stylesheet" href="js/libs/jquery-ui/jquery-ui.min.css">
-        <link rel="stylesheet" href="css/style.css">
-        <link rel="stylesheet" href="js/libs/switch-button/jquery.switchButton.css">
-        <link rel="stylesheet" href="js/libs/slimbox/css/slimbox2.css" type="text/css" media="screen"/>
-        <link rel="stylesheet" href="css/loadingspinner.css">
+        <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+        <link rel="stylesheet" href="vendor/twitter-bootstrap/css/bootstrap.css" media="screen" >
+        <link rel="stylesheet" href="vendor/jquery-ui/jquery-ui.min.css">
+        <link rel="stylesheet" href="vendor/switch-button/jquery.switchButton.css">
+        <link rel="stylesheet" href="vendor/slimbox/css/slimbox2.css" type="text/css" media="screen"/>
+        <link rel='stylesheet' href='vendor/leaflet-markercluster/MarkerCluster.css'/>
+        <link rel='stylesheet' href='vendor/leaflet-markercluster/MarkerCluster.Default.css'/>
+        <link rel="stylesheet" href="vendor/leaflet-sidebar/css/leaflet-sidebar.min.css"/>
+        <link rel="stylesheet" href="vendor/tokenfield/bootstrap-tokenfield.min.css"/>
         <link rel='stylesheet' href='css/MarkerCluster.css'/>
         <link rel='stylesheet' href='css/MarkerCluster.Default.css'/>
-        <link rel='stylesheet' href="css/font-awesome.min.css"/>
-        <link rel="stylesheet" href="css/leaflet-sidebar.css"/>
-        <link rel="stylesheet" href="css/bootstrap-tokenfield.min.css"/>
+		<link rel='stylesheet' href="css/font-awesome.min.css"/>
+		<link rel="stylesheet" href="css/loadingspinner.css">
+		<link rel="stylesheet" href="css/style.css">
     </head>
 
     <body>
@@ -215,7 +217,7 @@
             </div>
             <div id="map"></div>
         </div>
-        <script type="text/javascript" data-main="js/libs/main.js"
-        src="js/libs/require.js/require.js"></script>
+        <script type="text/javascript" data-main="js/main.js"
+        src="vendor/require.js/require.js"></script>
     </body>
 </html>

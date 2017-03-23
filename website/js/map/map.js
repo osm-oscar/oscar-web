@@ -741,7 +741,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	};
 	
 	var clusterMarkerOptions = {
-		maxClusterRadius: 120, //A cluster will cover at most this many pixels from its center
+		maxClusterRadius: 90, //A cluster will cover at most this many pixels from its center
 		iconCreateFunction: function (cluster) {
 			/* https://github.com/Leaflet/Leaflet.markercluster/issues/351
 				required to use the preclustering by the server */
@@ -776,7 +776,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			else {
 				c += 'large';
-				size = Math.min(100, 70 + count/10000.0);
+				size = Math.min(90, 70 + count/10000.0);
 			}
 			return new L.DivIcon({
 				html: '<div><span>' + count + '</span></div>',
