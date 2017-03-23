@@ -37,7 +37,6 @@ requirejs.config({
         "tree": "tree/tree",
         "tokenfield": "tokenfield/bootstrap-tokenfield",
         "map": "map/map",
-        "prototype": "prototype/prototype",
         "state": "state/manager",
         "query": "query/query",
         "search": "search/search",
