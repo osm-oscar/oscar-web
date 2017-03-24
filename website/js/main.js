@@ -192,6 +192,18 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 				map.reloadShapeConfig();
 			});
 			
+			$('#display_item_shapes_checkbox').click(function() {
+				var enabled = $(this).is(':checked');
+				map.cfg.resultList.showItemShapes = enabled;
+				map.mapViewChanged();
+			});
+			
+			$('#display_item_markers_checkbox').click(function() {
+				var enabled = $(this).is(':checked');
+				map.cfg.resultList.showItemMarkers = enabled;
+				map.mapViewChanged();
+			});
+			
 			state.sidebar.on('tab-closed', function(e) {
 			});
 			

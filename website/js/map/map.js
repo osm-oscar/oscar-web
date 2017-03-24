@@ -873,7 +873,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			resultList: {
 				bulkItemFetchCount: 100,
-				focusMaxOverlapTab: false
+				focusMaxOverlapTab: false,
+				showItemShapes: false,
+				showItemMarkers: true
 			}
 		},
 	   
@@ -895,7 +897,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			map.itemMarkers = map.ItemMarkerHandler(state.map);
 
-			
 			//init the cluster markers
             var myClusterMarkerGroup = L.markerClusterGroup(clusterMarkerOptions);
 			state.map.addLayer(myClusterMarkerGroup);
@@ -1096,7 +1097,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//Note: there may be no active region present!
 		onActiveTabChanged: function(e) {
 			var wantItemMarkers;
-			if (!map.resultListTabs.size()) {
+			if (!map.resultListTabs.size() || !map.cfg.resultList.showItemMarkers) {
 				wantItemMarkers = tools.SimpleSet();
 			}
 			else {
@@ -1120,6 +1121,26 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			for(var itemId in tmp) {
 				state.dag.item(itemId).displayState |= dag.DisplayStates.HasItemMarker;
 			}
+			
+			if (map.resultListTabs.size() && map.cfg.resultList.showItemShapes) {
+				wantItemMarkers = map.resultListTabs.activeTab();
+				var removedIds = tools.SimpleSet();
+				var missingIds = tools.SimpleSet();
+				tools.getMissing(wantItemMarkers, map.itemShapes, removedIds, missingIds);
+				removedIds.each(function(itemId) {
+					map.itemShapes.remove(itemId);
+				});
+				if (missingIds.size()) {
+					oscar.fetchShapes(missingIds.toArray(), function() {}, tools.defErrorCB);
+				}
+				missingIds.each(function(itemId) {
+					map.itemShapes.add(itemId);
+				});
+			}
+			else {
+				map.itemShapes.clear();
+			}
+			
 		},
 	   
 		onItemMarkerClicked: function(e) {
