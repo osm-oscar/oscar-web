@@ -129,11 +129,11 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
 		
 		///@response array of suggestions
 		tagInfoComplete: function(query, response) {
-			query = query.slice(1);
-			if (query.length < 3) {
+			if (query.length < 3 || query[0] != '@') {
 				setTimeout(function() { response([]) }, 0);
 				return;
 			}
+			query = query.slice(1);
 			var settings = {
 				type: "GET",
 				mimeType: 'text/plain',

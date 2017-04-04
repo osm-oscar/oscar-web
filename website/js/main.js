@@ -124,23 +124,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 			});
             search_text.bind('change', search.delayedCompletion).bind('keyup', search.delayedCompletion);
 
-			$("#tagsSearch").autocomplete({
-				source: function (request, response) {
-					var service = "https://taginfo.openstreetmap.org/api/4/tags/popular?sortname=count_all&sortorder=desc&page=1&rp=8&query=" + request['term'];
-					var result = [];
-
-					$.getJSON(service, function (data) {
-						for (var suggestion in data.data) {
-							result.push("@" + data.data[suggestion].key + ":" + data.data[suggestion].value);
-						}
-						response(result);
-					});
-				},
-				select: function(event, ui){
-					$("#search_text").tokenfield('createToken', {value:  ui.item.value, label:  ui.item.value});
-				}
-			});
-
             $('#advancedToggle a').click(function () {
                 if ($(this).attr('mod') == 'hide') {
                     $('#advancedSearch').hide(800);
