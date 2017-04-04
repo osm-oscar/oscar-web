@@ -15,6 +15,8 @@ requirejs.config({
         "jqueryui": "vendor/jquery-ui/jquery-ui.min",
         "bootstrap": "vendor/twitter-bootstrap/js/bootstrap.min",
         "tokenfield": "vendor/tokenfield/bootstrap-tokenfield",
+		"typeahead" : "vendor/typeahead/typeahead.jquery",
+		"bloodhound" : "vendor/typeahead/bloodhound",
         "leaflet": "vendor/leaflet/leaflet-src",
         "leafletCluster": "vendor/leaflet-markercluster/leaflet.markercluster-src",
         "sidebar": "vendor/leaflet-sidebar/js/leaflet-sidebar.min",
@@ -28,7 +30,7 @@ requirejs.config({
         "dagre-d3": "vendor/dagre-d3/dagre-d3.min",
         "jdataview": "vendor/jdataview/jdataview",
         "jbinary": "vendor/jbinary/jbinary",
-		
+		//and now our own stuff
         "spinner": "js/spinner/spinner",
         "sserialize": "js/sserialize/sserialize",
         "oscar": "js/oscar/oscar",
@@ -53,7 +55,7 @@ requirejs.config({
     waitSeconds: 20
 });
 
-requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf", "tokenfield", "switch", "state", "map", "tree", "query", "tools", "search"],
+requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf", "tokenfield", "switch", "state", "map", "tree", "query", "tools", "search", "typeahead", "bloodhound"],
     function () {
         var L = require("leaflet");
 		var jQuery = require("jquery");
@@ -70,6 +72,8 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         var query = require("query");
 		var tools = require("tools");
         var search = require("search");
+		var typeahead = require("typeahead");
+		var bloodhound = require("bloodhound");
 		
 		//set the map handler
 		state.mapHandler = map;
@@ -95,20 +99,87 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             $('[data-toggle="tooltip"]').tooltip();
 
             var search_form = $("#search_form");
-            var search_text = $('#search_text');
             search_form.click(function () {
                 if (!$('#categories').is(":visible")) {
                     $("#showCategories a").click();
                 }
             });
-            search_text.tokenfield({minWidth: 250, delimiter: "|"});
             $(search_form[0].children).css("width", "100%");
-            search_text.bind('change', search.delayedCompletion).bind('keyup', search.delayedCompletion);
             search_form.bind('submit', function (e) {
                 e.preventDefault();
                 search.instantCompletion();
             });
+
+			var autoCompleteEngine = new Bloodhound({
+				local: [],
+				datumTokenizer: Bloodhound.tokenizers.whitespace,
+				queryTokenizer: function(query) {
+					if (query.length > 3 && query[0] === '@') {
+						return [ query.slice(1) ];
+					}
+					return [];
+				},
+				remote: {
+					url: "scheisse",
+					prepare: function(query, settings) {
+						query = query.slice(1);
+						if (query.length < 3) {
+							return undefined;
+						}
+						data = {
+							"sortname" : "count_all",
+							"sortorder" : "desc",
+							"page": "1",
+							"rp" : "10"
+						};
+						var idx = query.indexOf(":");
+						var key = (idx >= 0 ? query.slice(0, idx) : query);
+						var value = (idx >= 0 ? query.slice(idx+1) : "");
+						if (value.length) {
+							settings.url = "https://taginfo.openstreetmap.org/api/4/key/values";
+							data["key"] = key
+							data["query"] = value
+						}
+						else {
+							settings.url = "https://taginfo.openstreetmap.org/api/4/tags/popular";
+							data["query"] = key;
+						}
+						settings["data"] = data;
+						return settings;
+					},
+					transform: function(data) {
+						var result = [];
+						for (var suggestion in data.data) {
+							result.push("@" + data.data[suggestion].key + ":" + data.data[suggestion].value);
+						}
+						return result;
+					}
+				}
+			});
+			autoCompleteEngine.initialize();
 			
+			var autoCompleteJqUi = {
+				source: function (request, response) {
+					var service = "https://taginfo.openstreetmap.org/api/4/tags/popular?sortname=count_all&sortorder=desc&page=1&rp=8&query=" + request['term'].slice(1);
+					var result = [];
+
+					$.getJSON(service, function (data) {
+						for (var suggestion in data.data) {
+							result.push("@" + data.data[suggestion].key + ":" + data.data[suggestion].value);
+						}
+						response(result);
+					})
+				}
+			};
+			
+            var search_text = $('#search_text');
+            search_text.tokenfield({
+				minWidth: 250, 
+				delimiter: "|",
+				autocomplete: autoCompleteJqUi
+// 				typeahead: [null, { source: autoCompleteEngine.ttAdapter() }]
+			});
+            search_text.bind('change', search.delayedCompletion).bind('keyup', search.delayedCompletion);
 
 			$("#tagsSearch").autocomplete({
 				source: function (request, response) {
