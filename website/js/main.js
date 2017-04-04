@@ -55,7 +55,7 @@ requirejs.config({
     waitSeconds: 20
 });
 
-requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf", "tokenfield", "switch", "state", "map", "tree", "query", "tools", "search", "typeahead", "bloodhound"],
+requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf", "tokenfield", "switch", "state", "map", "tree", "query", "tools", "search"],
     function () {
         var L = require("leaflet");
 		var jQuery = require("jquery");
@@ -72,8 +72,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         var query = require("query");
 		var tools = require("tools");
         var search = require("search");
-		var typeahead = require("typeahead");
-		var bloodhound = require("bloodhound");
 		
 		//set the map handler
 		state.mapHandler = map;
@@ -110,74 +108,19 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 search.instantCompletion();
             });
 
-			var autoCompleteEngine = new Bloodhound({
-				local: [],
-				datumTokenizer: Bloodhound.tokenizers.whitespace,
-				queryTokenizer: function(query) {
-					if (query.length > 3 && query[0] === '@') {
-						return [ query.slice(1) ];
-					}
-					return [];
-				},
-				remote: {
-					url: "scheisse",
-					prepare: function(query, settings) {
-						query = query.slice(1);
-						if (query.length < 3) {
-							return undefined;
-						}
-						data = {
-							"sortname" : "count_all",
-							"sortorder" : "desc",
-							"page": "1",
-							"rp" : "10"
-						};
-						var idx = query.indexOf(":");
-						var key = (idx >= 0 ? query.slice(0, idx) : query);
-						var value = (idx >= 0 ? query.slice(idx+1) : "");
-						if (value.length) {
-							settings.url = "https://taginfo.openstreetmap.org/api/4/key/values";
-							data["key"] = key
-							data["query"] = value
-						}
-						else {
-							settings.url = "https://taginfo.openstreetmap.org/api/4/tags/popular";
-							data["query"] = key;
-						}
-						settings["data"] = data;
-						return settings;
-					},
-					transform: function(data) {
-						var result = [];
-						for (var suggestion in data.data) {
-							result.push("@" + data.data[suggestion].key + ":" + data.data[suggestion].value);
-						}
-						return result;
-					}
-				}
-			});
-			autoCompleteEngine.initialize();
-			
-			var autoCompleteJqUi = {
-				source: function (request, response) {
-					var service = "https://taginfo.openstreetmap.org/api/4/tags/popular?sortname=count_all&sortorder=desc&page=1&rp=8&query=" + request['term'].slice(1);
-					var result = [];
-
-					$.getJSON(service, function (data) {
-						for (var suggestion in data.data) {
-							result.push("@" + data.data[suggestion].key + ":" + data.data[suggestion].value);
-						}
-						response(result);
-					})
-				}
-			};
-			
             var search_text = $('#search_text');
             search_text.tokenfield({
 				minWidth: 250, 
 				delimiter: "|",
-				autocomplete: autoCompleteJqUi
-// 				typeahead: [null, { source: autoCompleteEngine.ttAdapter() }]
+				autocomplete: {
+					source: function(request, response) {
+						search.tagInfoComplete(request["term"], response);
+					},
+					delay: 200
+				}
+			});
+			search_text.on("tokenfield:createdtoken", function() {
+				$("#search_text-tokenfield").autocomplete("close");
 			});
             search_text.bind('change', search.delayedCompletion).bind('keyup', search.delayedCompletion);
 

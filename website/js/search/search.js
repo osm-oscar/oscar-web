@@ -125,6 +125,63 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
 				tools.setQuery(myQ);
                 search.instantCompletion();
 			}
+		},
+		
+		///@response array of suggestions
+		tagInfoComplete: function(query, response) {
+			query = query.slice(1);
+			if (query.length < 3) {
+				setTimeout(function() { response([]) }, 0);
+				return;
+			}
+			var settings = {
+				type: "GET",
+				mimeType: 'text/plain',
+				data : {
+					"sortname" : "count_all",
+					"sortorder" : "desc",
+					"page": "1",
+					"rp" : "10"
+				}
+			};
+			var idx = query.indexOf(":");
+			var key = (idx >= 0 ? query.slice(0, idx) : query);
+			var value = (idx >= 0 ? query.slice(idx+1) : "");
+			if (value.length) {
+				settings.url = "https://taginfo.openstreetmap.org/api/4/key/values";
+				settings.data["key"] = key
+				settings.data["query"] = value
+			}
+			else {
+				settings.url = "https://taginfo.openstreetmap.org/api/4/tags/popular";
+				settings.data["query"] = key;
+			}
+			settings["success"] = function (plain) {
+				var data;
+				try {
+					data = JSON.parse(plain);
+				}
+				catch (err) {
+					tools.defErrorCB("Parsing Json Failed", err);
+					return;
+				}
+				var result = [];
+				if (value.length) {
+					for (var suggestion in data.data) {
+						result.push("@" + key + ":" + data.data[suggestion].value);
+					}
+				}
+				else {
+					for (var suggestion in data.data) {
+						result.push("@" + data.data[suggestion].key + ":" + data.data[suggestion].value);
+					}
+				}
+				response( result );
+			};
+			settings["error"] = function (jqXHR, textStatus, errorThrown) {
+				tools.defErrorCB(textStatus, errorThrown);
+			}
+			jQuery.ajax(settings);
 		}
     };
 });
