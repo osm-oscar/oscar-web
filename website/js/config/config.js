@@ -33,6 +33,7 @@ define([], function() {
                 },
                 items: {
                     normal: {color: 'blue', stroke: true, fill: false, opacity: 0.8},
+					inspected: {color: 'blue', stroke: true, fill: true, opacity: 1.0},
                     highlight: {color: 'red', stroke: true, fill: false, opacity: 1.0}
                 },
                 relatives: {
@@ -109,7 +110,8 @@ define([], function() {
 				bulkItemFetchCount: 100,
 				focusMaxOverlapTab: false,
 				showItemShapes: false,
-				showItemMarkers: true
+				showItemMarkers: true,
+				regionTabs: false
 			}
 		},
 		maxBufferedItems: 350, // buffered locations

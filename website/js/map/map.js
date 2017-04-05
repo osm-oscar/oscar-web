@@ -846,6 +846,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return rids;
 	};
 
+	var RESULTS_TAB_ID = 0xFFFFFFFF;
+	var INSPECTION_TAB_ID = RESULTS_TAB_ID-1;
+	
     var map = {
 		ItemListHandler: ItemListHandler,
 		ItemListTabHandler: ItemListTabHandler,
@@ -860,10 +863,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		itemShapes: undefined,
 		relativesShapes: undefined,
 		highlightItemShapes: undefined,
+		inspectedItemShapes: undefined,
 		clusterMarkerRegionShapes: undefined,
 		
 		//markers
 		itemMarkers: ItemMarkerHandler(state.map),
+		inspectedItemMarkers: ItemMarkerHandler(state.map),
 		clusterMarkers: undefined,
 		
 		//dag handling
@@ -884,6 +889,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			//init the map layers
 			map.itemShapes = map.ItemShapeHandler(state.map, config.styles.shapes.items.normal);
+			map.inspectedItemShapes = map.ItemShapeHandler(state.map, config.styles.shapes.items.inspected);
 			map.relativesShapes = map.ItemShapeHandler(state.map, config.styles.shapes.relatives.normal);
 			map.highlightItemShapes = map.ItemShapeHandler(state.map, config.styles.shapes.activeItems);
 			map.clusterMarkerRegionShapes = map.ItemShapeHandler(state.map, config.styles.shapes.regions.highlight);
@@ -899,7 +905,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.resultListTabs).on("itemLinkClicked", map.onItemLinkClicked);
 			$(map.resultListTabs).on("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).on("itemDetailsClosed", map.onItemDetailsClosed);
-			$(map.resultListTabs).on("activeTabChanged", map.onActiveTabChanged);
 			
 			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
 			
@@ -1135,7 +1140,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			
 		},
-	   
+		
 		onItemMarkerClicked: function(e) {
 			state.items.activeItem = e.itemId;
 			map.resultListTabs.openItem(e.itemId);
@@ -1246,7 +1251,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}, offset);
 		},
 	   
-		//this is recursive function, you have to clear the displayState of the dag before calling
+		//this is a recursive function, you have to clear the displayState of the dag before calling
 		//childrenToFetch should be of type tools.SimpleSet() and will contain the nodes that should be expanded
 		//cellsToFetch will contain the nodes whose cells are needed
 		updateDag: function(node, childrenToFetch, cellsToFetch) {
@@ -1314,46 +1319,20 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				map._mapViewChanged();
 			}, 0);
 		},
-		_mapViewChanged: function() {
-			if (map.locks.mapViewChanged.locked) {
-				map.locks.mapViewChanged.queued = true;
-				return;
-			}
-			map.locks.mapViewChanged.locked = true;
-			
-			var activeTabNeedsExtraRefresh = false;
-			
-			//callback handler
-			var cbh = undefined;
-			
-			var timers = {
-				complete: tools.timer("mapViewChanged::complete"),
-				dagClear: tools.timer("mapViewChanged::dagClear"),
-				updateDag: tools.timer("mapViewChanged::updateDag"),
-				viewDiff: tools.timer("mapViewChanged::viewDiff"),
-				mapUpdate: tools.timer("mapViewChanged::mapUpdate"),
-				clusterUpdate: tools.timer("mapViewChanged::clusterUpdate"),
-				handleTabs: tools.timer("mapViewChanged::handleTabs"), 
-				tabUpdate: tools.timer("mapViewChanged::tabUpdate"),
-				tabRemove: tools.timer("mapViewChanged::tabRemove"),
-				tabAdd: tools.timer("mapViewChanged::tabAdd"),
-				tabWorld: tools.timer("mapViewChanged::tabWorld")
-			};
-			
-			
-			state.dag.clearDisplayState();
-			timers.dagClear.stop();
-			
-			map.closePopups();
-			
-			timers.updateDag.start();
+		
+		//function to calculate the dag state from our current mapview
+		_dagStateFromMapView: function() {
+			var cbh;
 			var childrenToFetch = tools.SimpleSet();
 			var cellsToFetch = tools.SimpleSet();
+			
+			state.dag.clearDisplayState();
+			
 			map.updateDag(state.dag.region(0xFFFFFFFF), childrenToFetch, cellsToFetch);
 			
 			//get the children and the cells of regions that expand their cells
 			if (childrenToFetch.size() || cellsToFetch.size()) {
-				cbh = tools.AsyncCallBackHandler(3, function() {
+				cbh = tools.AsyncCallBackHandler(2, function() {
 					map.mapViewChanged();
 				});
 				var myWrapper = function(regionsToExpand, regionCellsToExpand, cbh) {
@@ -1450,33 +1429,65 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//cells now hold the correct display state (either InResultsTab or HasClusterMarker)
 			//regions now hold the correct display state as well
 			timers.updateDag.stop();
+		},
+		_assignClusterMarkers: function(wantClusterMarkers) {
+			var removedClusterMarkers = tools.SimpleSet();
+			var missingClusterMarkers = tools.SimpleSet();
+			tools.getMissing(wantClusterMarkers, map.clusterMarkers, removedClusterMarkers, missingClusterMarkers);
+		
+			removedClusterMarkers.each(function(key) {
+				map.clusterMarkers.remove(key);
+			});
+			missingClusterMarkers.each(function(key) {
+				map.clusterMarkers.add(key, state.dag.region(key).count);
+			});
+		},
+		//cells are tools.SimpleSet
+		_assignTabContentFromRegion: function(cells, regionId, focusAfterLoad) {
 			
-			//the dag now holds the state the gui should have
-			//let's get them synchronized
-			//recycle as many markers, tabs etc. as possible
-			//remove disabled markers/tabs etc
-			//add new markers/tabs etc.
-			timers.viewDiff.start();
-			var wantTabListRegions = tools.SimpleSet();
-			var wantClusterMarkers = tools.SimpleSet();
-			state.dag.dfs(state.dag.region(0xFFFFFFFF), function(node) {
-				if (node.displayState & dag.DisplayStates.HasClusterMarker) {
-					wantClusterMarkers.insert(node.id);
+			if (map.resultListTabs.count(regionid)) {
+				var removedCells = tools.SimpleSet();
+				var missingCells = tools.SimpleSet();
+				tools.getMissing(cells, map.resultListTabs.cells(regionId), removedCells, missingCells);
+				
+				//nothing to change
+				if (!missingCells.size() && ! removedCells.size()) {
+					if (focusAfterLoad) {
+						map.resultListTabs.openTab(regionId);
+					}
+					return;
 				}
-				if(node.displayState & dag.DisplayStates.InResultsTab) {
-					wantTabListRegions.insert(node.id);
-				}
-			}, dag.NodeTypes.Region);
+				map.resultListTabs.setCells(regionId, cells);
+			}
 			
+			map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, cells.toArray(), function(itemIds) {
+				//this should return instantly since the items are in the cache
+				oscar.getItems(itemIds, function(items) {
+					console.assert(itemIds.length == items.length);
+					if (!map.resultListTabs.count(regionId) || !cells.equal(map.resultListTabs.cells(regionId))) {
+						return;
+					}
+					map.resultListTabs.assignItems(regionId, items);
+					if (focusAfterLoad) {
+						map.resultListTabs.openTab(regionId);
+					}
+				});
+			});
+		},
+		
+	   //@param wantTabListRegions tools.SimpleSet
+		_assignTabs: function(wantTabListRegions, maxOverlapRegionId) {
 			//only add the world tab if there are other tabs
 			if (wantTabListRegions.size()) {
-				//add the tab now so that it is the first one in the list
 				if (!map.resultListTabs.count(0xFFFFFFFF)) {
 					var rn = state.dag.region(0xFFFFFFFF);
 					map.resultListTabs.addTab(0xFFFFFFFF, rn.name, rn.count, true);
 				}
 				wantTabListRegions.insert(0xFFFFFFFF);
 			}
+			
+			var worldCells = tools.SimpleSet();
+			var activeTabNeedsExtraRefresh = undefined;
 			
 			//make sure that the active region tab stays the same if it was set before
 			if (wantTabListRegions.count( map.resultListTabs.activeTabId() )) {
@@ -1488,120 +1499,48 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				activeTabNeedsExtraRefresh = true;
 			}
 			
-			//now check for missing cluster markers etc.
-			var removedClusterMarkers = tools.SimpleSet();
-			var removedTabListRegions = tools.SimpleSet();
-			var missingClusterMarkers = tools.SimpleSet();
-			var missingTabListRegions = tools.SimpleSet();
-			tools.getMissing(wantTabListRegions, map.resultListTabs, removedTabListRegions, missingTabListRegions);
-			tools.getMissing(wantClusterMarkers, map.clusterMarkers, removedClusterMarkers, missingClusterMarkers);
-			timers.viewDiff.stop();
-			
-			console.log("mapViewChanged::ClusterMarkers haveCount=" + map.clusterMarkers.size() +
-				", removeCount=" + removedClusterMarkers.size() +
-				", missingCount=" + missingClusterMarkers.size()
-			);
-			console.log("mapViewChanged::Tabs haveCount=" + map.resultListTabs.size() +
-				", removeCount=" + removedTabListRegions.size() +
-				", missingCount=" + missingTabListRegions.size()
-			);
-			
-			timers.mapUpdate.start();
-			timers.clusterUpdate.start();
-			removedClusterMarkers.each(function(key) {
-				map.clusterMarkers.remove(key);
-			});
-			missingClusterMarkers.each(function(key) {
-				map.clusterMarkers.add(key, state.dag.region(key).count);
-			});
-			timers.clusterUpdate.stop();
-			
-			timers.handleTabs.start();
-			timers.tabRemove.start();
-			removedTabListRegions.each(function(key) {
-				map.resultListTabs.removeTab(key);
-			});
-			timers.tabRemove.stop();
-			
-			//cells are tools.SimpleSet()
-			var tabPopulate = function(cells, regionId, focusAfterLoad) {
-				map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, cells.toArray(), function(itemIds) {
-					//this should return instantly since the items are in the cache
-					oscar.getItems(itemIds, function(items) {
-						console.assert(itemIds.length == items.length);
-						if (!map.resultListTabs.count(regionId) || !cells.equal(map.resultListTabs.cells(regionId))) {
-							return;
-						}
-						map.resultListTabs.assignItems(regionId, items);
-						if (focusAfterLoad) {
-							map.resultListTabs.openTab(regionId);
-						}
-					});
-				});
-			};
-			//wantCells is tools.SimpleSet()
-			var handleAvailableTab = function(regionId, wantCells) {
-				var removedCells = tools.SimpleSet();
-				var missingCells = tools.SimpleSet();
-				tools.getMissing(wantCells, map.resultListTabs.cells(regionId), removedCells, missingCells);
-				
-				//nothing to change
-				if (!missingCells.size() && ! removedCells.size()) {
-					if (parseInt(regionId) == maxOverlapRegionId) {
-						map.resultListTabs.openTab(regionId);
+			if (map.cfg.resultList.regionTabs) {
+				var removedTabs = [];
+				for(var tabId in map.resultListTabs.values()) {
+					if (!wantTabListRegions.count(tabId)) {
+						removedTabs.push(tabId);
 					}
+				}
+				for(var i in removedTabs) {
+					map.resultListTabs.removeTab(removedTabs[i]);
+				}
+			}
+
+			wantTabListRegions.each(function(regionId) {
+				if (regionId == 0xFFFFFFFF) {
 					return;
 				}
-				map.resultListTabs.setCells(regionId, wantCells);
-				
-				tabPopulate(wantCells, regionId, parseInt(regionId) == maxOverlapRegionId);
-			};
-			
-			timers.tabUpdate.start();
-			//check if the currently active tabs have all the items of the current cells
-			//and if there are any items that should not be there
-			var worldCells = tools.SimpleSet();
-			for(var regionId in map.resultListTabs.values()) {
-				//skip the world region, that one has to be handled below
-				if (regionId == 0xFFFFFFFF) {
-					continue;
-				}
-				var wantCells = tools.SimpleSet();
-				for(var cellId in state.dag.region(regionId).cells.values()) {
-					if (state.dag.cell(cellId).displayState & dag.DisplayStates.InResultsTab) {
-						worldCells.insert(cellId);
-						wantCells.insert(cellId);
+				if (map.cfg.resultList.regionTabs) {
+					var wantCells = tools.SimpleSet();
+					state.dag.region(regionId).cells.each(function(cellId) {
+						if (state.dag.cell(cellId).displayState & dag.DisplayStates.InResultsTab) {
+							worldCells.insert(cellId);
+							wantCells.insert(cellId);
+						}
+					});
+					if (!map.resultListTabs.count(regionId)) {
+						var rn = state.dag.region(regionId);
+						map.resultListTabs.addTab(regionId, rn.name, rn.count);
 					}
+					map._assignTabContentFromRegion(wantCells, regionId, parseInt(regionId) == maxOverlapRegionId);
 				}
-				handleAvailableTab(regionId, wantCells);
-			}
-			
-			timers.tabUpdate.stop();
-			
-			timers.tabAdd.start();
-			missingTabListRegions.each(function(regionId) {
-				var rn = state.dag.region(regionId);
-				map.resultListTabs.addTab(regionId, rn.name, rn.count);
-				
-				var wantCells = tools.SimpleSet();
-				for(var cellId in state.dag.region(regionId).cells.values()) {
-					if (state.dag.cell(cellId).displayState & dag.DisplayStates.InResultsTab) {
-						worldCells.insert(cellId);
-						wantCells.insert(cellId);
-					}
+				else {
+					state.dag.region(regionId).cells.each(function(cellId) {
+						if (state.dag.cell(cellId).displayState & dag.DisplayStates.InResultsTab) {
+							worldCells.insert(cellId);
+						}
+					});
 				}
-				map.resultListTabs.setCells(regionId, wantCells);
-				
-				tabPopulate(wantCells, regionId, parseInt(regionId) == maxOverlapRegionId);
 			});
-			timers.tabAdd.stop();
-			
-			timers.tabWorld.start();
+
 			if (worldCells.size()) {
-				//world tab is there if other tabs are there
-				handleAvailableTab(0xFFFFFFFF, worldCells);
+				map._assignTabContentFromRegion(0xFFFFFFFF, worldCells);
 			}
-			timers.tabWorld.stop();
 			
 			//now all tabs are there - this is wrong if tab populate does not return instantly (which we cannot assume)
 			//now make sure that the highlited tab refreshed the map
@@ -1609,12 +1548,62 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				map.onActiveTabChanged();
 			}
 			
-			timers.handleTabs.stop();
-			timers.mapUpdate.stop();
-			timers.complete.stop();
-			if(cbh !== undefined) {
-				cbh.inc();
+		},
+		
+		_mapViewChanged: function() {
+			if (map.locks.mapViewChanged.locked) {
+				map.locks.mapViewChanged.queued = true;
+				return;
 			}
+			map.locks.mapViewChanged.locked = true;
+			
+			var timers = {
+				complete: tools.timer("mapViewChanged::complete"),
+				updateDag: tools.timer("mapViewChanged::updateDag"),
+				clusterUpdate: tools.timer("mapViewChanged::clusterUpdate"),
+				tabUpdate: tools.timer("mapViewChanged::tabUpdate")
+			};
+			
+			map.closePopups();
+			
+			
+			timers.updateDag.start();
+			{
+				map._dagStateFromMapView();
+			}
+			timers.updateDag.stop();
+
+			
+			//the dag now holds the state the gui should have
+			//let's get them synchronized
+			//recycle as many markers, tabs etc. as possible
+			//remove disabled markers/tabs etc
+			//add new markers/tabs etc.
+
+			var wantTabListRegions = tools.SimpleSet();
+			var wantClusterMarkers = tools.SimpleSet();
+			state.dag.each(function(node) {
+				if (node.displayState & dag.DisplayStates.HasClusterMarker) {
+					wantClusterMarkers.insert(node.id);
+				}
+				if(node.displayState & dag.DisplayStates.InResultsTab) {
+					wantTabListRegions.insert(node.id);
+				}
+			}, dag.NodeTypes.Region);
+			
+			timers.clusterUpdate.start();
+			{
+				map._assignClusterMarkers(wantClusterMarkers);
+			}
+			timers.clusterUpdate.stop();
+			
+			timers.tabUpdate.start();
+			{
+				map._assignTabs(wantTabListRegions);
+			}
+			timers.tabUpdate.stop();
+
+			timers.complete.stop();
 			if (map.locks.mapViewChanged.queued) {
 				//this is guaranteed to be running before any other call to mapViewChanged
 				//due to the lock that is NOT released yet
