@@ -388,7 +388,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				//add a new tab
 				var tabHeadId = tools.generateDocumentUniqueId();
 				var tabContentId = tools.generateDocumentUniqueId();
-				var tabHeadHtml = '<li id="' + tabHeadId + '" tabid="' + tabId + '"><a href="#' + tabContentId + '">' + tabName + '</a><span class="badge">' + itemCount + '</span></li>';
+				var tabItemCount = "";
+				if (itemCount !== undefined && itemCount >= 0) {
+					tabItemCount = '&nbsp;<span class="badge">' + itemCount + '</span>';
+				}
+				var tabHeadHtml = '<li id="' + tabHeadId + '" tabid="' + tabId + '">'
+									+ '<a href="#' + tabContentId + '">' + tabName
+									+ tabItemCount
+									+ '</a></li>';
 				var tabContentHtml = '<div id="' + tabContentId + '"></div>';
 				if (prepend) {
 					$(handler.m_domTabRoot).prepend(tabHeadHtml);
