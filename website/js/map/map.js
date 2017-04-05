@@ -287,9 +287,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return handler;
 	};
 	
-	//handles item lists of multiple regions as tab groups
+	//handles multiple item lists as tab groups
 	//emits multiple signals on it self:
-	var RegionItemListTabHandler = function(parent, scrollContainer) {
+	var ItemListTabHandler = function(parent, scrollContainer) {
 		if (scrollContainer === undefined) {
 			scrollContainer = parent;
 		}
@@ -297,13 +297,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			m_domRoot : undefined,
 			m_domTabRoot : undefined,
 			m_scrollContainer: $(scrollContainer),
-			//maps from regionId=<int> ->
+			//maps from tabId=<int> ->
 			//{ handler : ItemListHandler,
 			//  tabContentId: <string>,
 			//  tabHeadId: <string>,
 			//  cells: tools.SimpleSet()
 			//}
-			m_regions : tools.SimpleHash(), 
+			m_tabs : tools.SimpleHash(), 
 			//signals
 			emit_itemDetailsOpened: function(itemId) {
 				$(handler).triggerHandler({type:"itemDetailsOpened", itemId : itemId});
@@ -316,16 +316,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			
 			//if no tab is active, then rid=-1
-			emit_activeRegionChanged: function(newRegionId) {
+			emit_activeTabChanged: function(newTabId) {
 				$(handler).triggerHandler({
-					type: "activeRegionChanged",
-					rid: newRegionId,
-					newRegionId: newRegionId
+					type: "activeTabChanged",
+					newTabId: newTabId,
+					tid: newTabId
 				});
 			},
 			
-			_slot_activeRegionChanged: function() {
-				handler.emit_activeRegionChanged(handler.activeRegion());
+			_slot_activeTabChanged: function() {
+				handler.emit_activeTabChanged(handler.activeTabId());
 			},
 			
 			_init: function (parent) {
@@ -340,55 +340,55 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				handler.m_domRoot.tabs();
 				//register events
 				handler.m_domRoot.on("tabsactivate", function(event, ui) {
-					handler._slot_activeRegionChanged();
+					handler._slot_activeTabChanged();
 				});
 			},
 	   
-			//Do not use this except for iterating over all available regions
+			//Do not use this except for iterating over all available tabs
 			values: function() {
-				return handler.m_regions.values();
+				return handler.m_tabs.values();
 			},
 	   
-			cells: function(regionId) {
-				return handler.m_regions.at(regionId).cells;
+			cells: function(tabId) {
+				return handler.m_tabs.at(tabId).cells;
 			},
 			
 			///cells must be of type tools.SimpleSet()
-			setCells: function(regionId, cells) {
-				if (handler.hasRegion(regionId)) {
-					handler.m_regions.at(regionId).cells = cells;
+			setCells: function(tabId, cells) {
+				if (handler.hasTab(tabId)) {
+					handler.m_tabs.at(tabId).cells = cells;
 				}
 			},
 	   
 			size: function() {
-				return handler.m_regions.size();
+				return handler.m_tabs.size();
 			},
 			
 			domRoot: function() {
 				return handler.m_domRoot;
 			},
-			hasRegion: function(regionId) {
-				return handler.m_regions.count(regionId);
+			hasTab: function(tabId) {
+				return handler.m_tabs.count(tabId);
 			},
-			count: function(regionId) {
-				return handler.hasRegion(regionId);
+			count: function(tabId) {
+				return handler.hasTab(tabId);
 			},
-			itemListHandler: function(regionId) {
-				return handler.m_regions.at(regionId).handler;
+			itemListHandler: function(tabId) {
+				return handler.m_tabs.at(tabId).handler;
 			},
 			
-			//adds a new region, returns an ItemListHandler, if prepend == true, then the region will be added as the first element
-			addRegion: function(regionId, regionName, itemCount, prepend) {
+			//adds a new tab, returns an ItemListHandler, if prepend == true, then the tab will be added as the first element
+			addTab: function(tabId, tabName, itemCount, prepend) {
 				if (prepend === undefined) {
 					prepend = false;
 				}
-				if (handler.m_regions.count(regionId)) {
-					return handler.m_regions.at(regionId).handler;
+				if (handler.m_tabs.count(tabId)) {
+					return handler.m_tabs.at(tabId).handler;
 				}
 				//add a new tab
 				var tabHeadId = tools.generateDocumentUniqueId();
 				var tabContentId = tools.generateDocumentUniqueId();
-				var tabHeadHtml = '<li id="' + tabHeadId + '" regionid="' + regionId + '"><a href="#' + tabContentId + '">' + regionName + '</a><span class="badge">' + itemCount + '</span></li>';
+				var tabHeadHtml = '<li id="' + tabHeadId + '" tabid="' + tabId + '"><a href="#' + tabContentId + '">' + tabName + '</a><span class="badge">' + itemCount + '</span></li>';
 				var tabContentHtml = '<div id="' + tabContentId + '"></div>';
 				if (prepend) {
 					$(handler.m_domTabRoot).prepend(tabHeadHtml);
@@ -399,7 +399,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$(handler.m_domRoot).append(tabContentHtml);
 				var tabContent = $('#' + tabContentId, handler.m_domRoot);
 				var itemListHandler = ItemListHandler(tabContent, handler.m_scrollContainer);
-				handler.m_regions.insert(regionId, {
+				handler.m_tabs.insert(tabId, {
 					handler : itemListHandler,
 					tabHeadId : tabHeadId,
 					tabContentId : tabContentId,
@@ -409,59 +409,59 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$(itemListHandler).on("itemDetailsOpened", function(e) { handler.emit_itemDetailsOpened(e.itemId); });
 				$(itemListHandler).on("itemDetailsClosed", function(e) { handler.emit_itemDetailsClosed(e.itemId); });
 				$(itemListHandler).on("itemLinkClicked", function(e) { handler.emit_itemLinkClicked(e.itemId); });
-				var myActiveRegionId = handler.activeRegion();
+				var myActiveTabId = handler.activeTabId();
 				handler.refresh();
-				if (myActiveRegionId !== -1) {
-					handler.openTab(myActiveRegionId);
+				if (myActiveTabId !== -1) {
+					handler.openTab(myActiveTabId);
 				}
-				return handler.m_regions.at(regionId).handler;
+				return handler.m_tabs.at(tabId).handler;
 			},
-			insertItem: function(regionId, item) {
-				if (handler.m_regions.count(regionId)) {
-					handler.m_regions.at(regionId).handler.insertItem(item);
-				}
-			},
-			insertItems: function(regionId, items) {
-				if (handler.m_regions.count(regionId)) {
-					handler.m_regions.at(regionId).handler.insertItems(items);
+			insertItem: function(tabId, item) {
+				if (handler.m_tabs.count(tabId)) {
+					handler.m_tabs.at(tabId).handler.insertItem(item);
 				}
 			},
-			assignItems: function(regionId, items) {
-				if (handler.m_regions.count(regionId)) {
-					var changed = handler.m_regions.at(regionId).handler.assign(items);
-					if (changed && handler.activeRegion() == regionId) {
-						handler.emit_activeRegionChanged();
+			insertItems: function(tabId, items) {
+				if (handler.m_tabs.count(tabId)) {
+					handler.m_tabs.at(tabId).handler.insertItems(items);
+				}
+			},
+			assignItems: function(tabId, items) {
+				if (handler.m_tabs.count(tabId)) {
+					var changed = handler.m_tabs.at(tabId).handler.assign(items);
+					if (changed && handler.activeTabId() == tabId) {
+						handler.emit_activeTabChanged();
 					}
 				}
 			},
-			//removes a region (and it's tab), return true, if removal was successfull
-			removeRegion: function(regionId) {
-				if (handler.m_regions.count(regionId)) {
-					var myActiveRegionId = handler.activeRegion();
-					var v = handler.m_regions.at(regionId);
+			//removes a tab return true, if removal was successfull
+			removeTab: function(tabId) {
+				if (handler.m_tabs.count(tabId)) {
+					var myActiveTabId = handler.activeTabId();
+					var v = handler.m_tabs.at(tabId);
 					v.handler.destroy();
 					$("#" + v.tabHeadId ).remove();
 					$("#" + v.tabContentId ).remove();
-					handler.m_regions.erase(regionId);
+					handler.m_tabs.erase(tabId);
 					handler.refresh();
-					if (regionId !== myActiveRegionId && myActiveRegionId !== -1) {
-						handler.openTab(myActiveRegionId);
+					if (tabId !== myActiveTabId && myActiveTabId !== -1) {
+						handler.openTab(myActiveTabId);
 					}
-					//check if this was the last region we have,
-					//since then there will be no new active region
+					//check if this was the last tab we have,
+					//since then there will be no new active tab
 					if (!handler.size()) {
-						handler.emit_activeRegionChanged(-1);
+						handler.emit_activeTabChanged(-1);
 					}
 					return true;
 				}
 				return false;
 			},
 			
-			openTab: function(regionId) {
-				if (!handler.hasRegion(regionId)) {
+			openTab: function(tabId) {
+				if (!handler.hasTab(tabId)) {
 					return;
 				}
-				var index = $("#" + handler.m_regions.at(regionId).tabHeadId).index();
+				var index = $("#" + handler.m_tabs.at(tabId).tabHeadId).index();
 				handler.m_domRoot.tabs("option", "active", index);
 			},
 			
@@ -473,34 +473,34 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					handler.activeTab().open(itemId);
 				}
 				else {
-					for(var i in handler.m_regions.values()) {
-						if (handler.m_regions.at(i).handler.hasItem(itemId)) {
+					for(var i in handler.m_tabs.values()) {
+						if (handler.m_tabs.at(i).handler.hasItem(itemId)) {
 							handler.openTab(i);
-							handler.m_regions.at(i).handler.open(itemId);
+							handler.m_tabs.at(i).handler.open(itemId);
 							break;
 						}
 					}
 				}
 			},
 	   
-			activeRegion: function() {
-				if (!handler.m_regions.size()) {
+			activeTabId: function() {
+				if (!handler.m_tabs.size()) {
 					return -1;
 				}
 				var index = handler.m_domRoot.tabs("option", "active");
 				var li = handler.m_domTabRoot.children().eq(index);
-				var regionIdStr = li.attr("regionid");
-				var regionId = parseInt(regionIdStr);
-				return regionId;
+				var tabIdStr = li.attr("tabid");
+				var tabId = parseInt(tabIdStr);
+				return tabId;
 			},
 	   
 			//return handler of the active tab
 			activeTab: function() {
-				var regionId = handler.activeRegion();
-				if (regionId < 0) {
+				var tabId = handler.activeTabId();
+				if (tabId < 0) {
 					return undefined;
 				}
-				return handler.m_regions.at(regionId).handler;
+				return handler.m_tabs.at(tabId).handler;
 			},
 			
 			refresh: function () {
@@ -509,8 +509,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 
 			clear: function() {
-				for(var i in handler.m_regions.values()) {
-					var info = handler.m_regions.at(i);
+				for(var i in handler.m_tabs.values()) {
+					var info = handler.m_tabs.at(i);
 					info.handler.destroy();
 					$('#' + info.tabContentId).remove();
 					$('#' + info.tabHeadId).remove();
@@ -841,7 +841,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 
     var map = {
 		ItemListHandler: ItemListHandler,
-		RegionItemListTabHandler: RegionItemListTabHandler,
+		ItemListTabHandler: ItemListTabHandler,
 		ItemShapeHandler: ItemShapeHandler,
 		ItemMarkerHandler: ItemMarkerHandler,
 		RegionMarkerHandler: RegionMarkerHandler,
@@ -871,7 +871,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		//this has to be called prior usage
 		init: function() {
-			map.resultListTabs = map.RegionItemListTabHandler('#left_menu_parent', '#sidebar-content');
+			map.resultListTabs = map.ItemListTabHandler('#left_menu_parent', '#sidebar-content');
 			map.relativesTab.activeItemHandler = map.ItemListHandler($('#activeItemsList'));
 			map.relativesTab.relativesHandler = map.ItemListHandler($('#relativesList'));
 			
@@ -892,7 +892,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.resultListTabs).on("itemLinkClicked", map.onItemLinkClicked);
 			$(map.resultListTabs).on("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).on("itemDetailsClosed", map.onItemDetailsClosed);
-			$(map.resultListTabs).on("activeRegionChanged", map.onActiveTabChanged);
+			$(map.resultListTabs).on("activeTabChanged", map.onActiveTabChanged);
 			
 			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
 			
@@ -1466,14 +1466,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				//add the tab now so that it is the first one in the list
 				if (!map.resultListTabs.count(0xFFFFFFFF)) {
 					var rn = state.dag.region(0xFFFFFFFF);
-					map.resultListTabs.addRegion(0xFFFFFFFF, rn.name, rn.count, true);
+					map.resultListTabs.addTab(0xFFFFFFFF, rn.name, rn.count, true);
 				}
 				wantTabListRegions.insert(0xFFFFFFFF);
 			}
 			
 			//make sure that the active region tab stays the same if it was set before
-			if (wantTabListRegions.count( map.resultListTabs.activeRegion() )) {
-				maxOverlapRegionId = map.resultListTabs.activeRegion();
+			if (wantTabListRegions.count( map.resultListTabs.activeTabId() )) {
+				maxOverlapRegionId = map.resultListTabs.activeTabId();
 				activeTabNeedsExtraRefresh = true;
 			}
 			else if (!map.cfg.resultList.focusMaxOverlapTab) {
@@ -1512,7 +1512,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			timers.handleTabs.start();
 			timers.tabRemove.start();
 			removedTabListRegions.each(function(key) {
-				map.resultListTabs.removeRegion(key);
+				map.resultListTabs.removeTab(key);
 			});
 			timers.tabRemove.stop();
 			
@@ -1574,7 +1574,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			timers.tabAdd.start();
 			missingTabListRegions.each(function(regionId) {
 				var rn = state.dag.region(regionId);
-				map.resultListTabs.addRegion(regionId, rn.name, rn.count);
+				map.resultListTabs.addTab(regionId, rn.name, rn.count);
 				
 				var wantCells = tools.SimpleSet();
 				for(var cellId in state.dag.region(regionId).cells.values()) {
