@@ -1428,7 +1428,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			//cells now hold the correct display state (either InResultsTab or HasClusterMarker)
 			//regions now hold the correct display state as well
-			timers.updateDag.stop();
 		},
 		_assignClusterMarkers: function(wantClusterMarkers) {
 			var removedClusterMarkers = tools.SimpleSet();
@@ -1445,7 +1444,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//cells are tools.SimpleSet
 		_assignTabContentFromRegion: function(cells, regionId, focusAfterLoad) {
 			
-			if (map.resultListTabs.count(regionid)) {
+			if (map.resultListTabs.count(regionId)) {
 				var removedCells = tools.SimpleSet();
 				var missingCells = tools.SimpleSet();
 				tools.getMissing(cells, map.resultListTabs.cells(regionId), removedCells, missingCells);
@@ -1539,7 +1538,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			});
 
 			if (worldCells.size()) {
-				map._assignTabContentFromRegion(0xFFFFFFFF, worldCells);
+				map._assignTabContentFromRegion(worldCells, 0xFFFFFFFF);
 			}
 			
 			//now all tabs are there - this is wrong if tab populate does not return instantly (which we cannot assume)
