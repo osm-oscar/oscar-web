@@ -96,7 +96,22 @@ define([], function() {
 			bboxOverlap: 0.4, // threshold for overlap of a bbox with viewport
 			shapeOverlap: 0.1 // threshold for overlap of a bbox with viewport if the shape is within the viewport
 		},
-		
+		//map options
+		map : {
+			//call map.reloadShapeConfig() after changing stuff
+			clusterShapes: {
+				auto: true,
+				display: true,
+				preload: true,
+				threshold: 25 //maximum # root children to display shapes
+			},
+			resultList: {
+				bulkItemFetchCount: 100,
+				focusMaxOverlapTab: false,
+				showItemShapes: false,
+				showItemMarkers: true
+			}
+		},
 		maxBufferedItems: 350, // buffered locations
 		maxNumSubClusters: 10,
 		spinnerOpts: {
@@ -120,6 +135,14 @@ define([], function() {
 			, shadow: false // Whether to render a shadow
 			, hwaccel: false // Whether to use hardware acceleration
 			, position: 'absolute' // Element positioning
+		},
+		
+		//functions
+		loadFromURI: function() {
+			
+		},
+		storeToURI: function() {
+			
 		}
 	}
     return cfg;

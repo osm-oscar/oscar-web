@@ -314,6 +314,8 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 
             //check if there's a query in our location string
             search.queryFromSearchLocation();
+			
+			//store some config options
 
         });
     });

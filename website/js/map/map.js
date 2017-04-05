@@ -863,25 +863,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		dagExpander: dagexp.dagExpander(),
 		
 		//cfg
-		cfg: {
-			//call reloadShapeConfig() after changing stuff
-			clusterShapes: {
-				auto: true,
-				display: true,
-				preload: true,
-				threshold: 25 //maximum # root children to display shapes
-			},
-			resultList: {
-				bulkItemFetchCount: 100,
-				focusMaxOverlapTab: false,
-				showItemShapes: false,
-				showItemMarkers: true
-			}
+		cfg: config.map,
+		
+		locks: {
+			mapViewChanged: {locked: false, queued: false}
 		},
-	   
-	   locks: {
-		   mapViewChanged: {locked: false, queued: false}
-	   },
 		
 		//this has to be called prior usage
 		init: function() {
