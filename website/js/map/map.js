@@ -471,6 +471,15 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				var index = $("#" + handler.m_tabs.at(tabId).tabHeadId).index();
 				handler.m_domRoot.tabs("option", "active", index);
 			},
+				
+			activateTab: function(tabId) {
+				if (handler.activeTabId() === tabId) {
+					handler.emit_activeTabChanged(tabId);
+				}
+				else {
+					handler.openTab(tabId);
+				}
+			},
 			
 			openItem: function(itemId) {
 				if (!handler.size()) {
@@ -504,10 +513,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//return handler of the active tab
 			activeTab: function() {
 				var tabId = handler.activeTabId();
-				if (tabId < 0) {
-					return undefined;
+				if (parseInt(tabId) >= 0) {
+					return handler.m_tabs.at(tabId).handler;
 				}
-				return handler.m_tabs.at(tabId).handler;
+				return undefined;
 			},
 			
 			refresh: function () {
@@ -516,6 +525,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 
 			clear: function() {
+				if (!handler.size()) {
+					return;
+				}
 				for(var i in handler.m_tabs.values()) {
 					var info = handler.m_tabs.at(i);
 					info.handler.destroy();
@@ -523,6 +535,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					$('#' + info.tabHeadId).remove();
 				}
 				handler.refresh();
+				handler.emit_activeTabChanged(-1);
 			},
 
 			destroy: function () {
@@ -846,8 +859,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return rids;
 	};
 
-	var RESULTS_TAB_ID = 0xFFFFFFFF;
-	var INSPECTION_TAB_ID = RESULTS_TAB_ID-1;
+	var WORLD_TAB_ID = 0xFFFFFFFF;
+	var INSPECTION_TAB_ID = WORLD_TAB_ID-1;
 	
     var map = {
 		ItemListHandler: ItemListHandler,
@@ -905,6 +918,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.resultListTabs).on("itemLinkClicked", map.onItemLinkClicked);
 			$(map.resultListTabs).on("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).on("itemDetailsClosed", map.onItemDetailsClosed);
+			$(map.resultListTabs).on("activeTabChanged", map.onActiveTabChanged);
 			
 			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
 			
@@ -1095,11 +1109,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//Note: there may be no active region present!
 		onActiveTabChanged: function(e) {
 			var wantItemMarkers;
-			if (!map.resultListTabs.size() || !map.cfg.resultList.showItemMarkers) {
-				wantItemMarkers = tools.SimpleSet();
+			if (map.resultListTabs.activeTabId() >= 0 && map.cfg.resultList.showItemMarkers) {
+				wantItemMarkers = map.resultListTabs.activeTab();
 			}
 			else {
-				wantItemMarkers = map.resultListTabs.activeTab();
+				wantItemMarkers = tools.SimpleSet();
 			}
 			var removedIds = tools.SimpleSet();
 			var missingIds = tools.SimpleSet();
@@ -1443,21 +1457,17 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		//cells are tools.SimpleSet
 		_assignTabContentFromRegion: function(cells, regionId, focusAfterLoad) {
-			
-			if (map.resultListTabs.count(regionId)) {
-				var removedCells = tools.SimpleSet();
-				var missingCells = tools.SimpleSet();
-				tools.getMissing(cells, map.resultListTabs.cells(regionId), removedCells, missingCells);
-				
-				//nothing to change
-				if (!missingCells.size() && ! removedCells.size()) {
-					if (focusAfterLoad) {
-						map.resultListTabs.openTab(regionId);
-					}
-					return;
+			var removedCells = tools.SimpleSet();
+			var missingCells = tools.SimpleSet();
+			tools.getMissing(cells, map.resultListTabs.cells(regionId), removedCells, missingCells);
+			//nothing to change
+			if (!missingCells.size() && !removedCells.size()) {
+				if (focusAfterLoad) {
+					map.resultListTabs.activateTab(regionId);
 				}
-				map.resultListTabs.setCells(regionId, cells);
+				return;
 			}
+			map.resultListTabs.setCells(regionId, cells);
 			
 			map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, cells.toArray(), function(itemIds) {
 				//this should return instantly since the items are in the cache
@@ -1468,7 +1478,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 					map.resultListTabs.assignItems(regionId, items);
 					if (focusAfterLoad) {
-						map.resultListTabs.openTab(regionId);
+						map.resultListTabs.activateTab(regionId);
 					}
 				});
 			});
@@ -1484,18 +1494,33 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				wantTabListRegions.insert(0xFFFFFFFF);
 			}
+			else { //check if we need to remove some tabs
+				//inspection tab is there, so we have to remove the other tabs explicitly
+				if (!map.cfg.resultList.regionTabs && map.resultListTabs.count(INSPECTION_TAB_ID)) {
+					var tabs2Remove = [];
+					for(var tabId in map.resultListTabs.values()) {
+						if (tabId != INSPECTION_TAB_ID) {
+							tabs2Remove.push(tabId);
+						}
+					}
+					for(var i in tabs2Remove) {
+						map.resultListTabs.removeTab(tabs2Remove[i]);
+					}
+				}
+				else {
+					map.resultListTabs.clear();
+				}
+				return;
+			}
 			
 			var worldCells = tools.SimpleSet();
-			var activeTabNeedsExtraRefresh = undefined;
 			
 			//make sure that the active region tab stays the same if it was set before
 			if (wantTabListRegions.count( map.resultListTabs.activeTabId() )) {
 				maxOverlapRegionId = map.resultListTabs.activeTabId();
-				activeTabNeedsExtraRefresh = true;
 			}
 			else if (!map.cfg.resultList.focusMaxOverlapTab) {
 				maxOverlapRegionId = 0xFFFFFFFF;
-				activeTabNeedsExtraRefresh = true;
 			}
 			
 			if (map.cfg.resultList.regionTabs) {
@@ -1511,7 +1536,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 
 			wantTabListRegions.each(function(regionId) {
-				if (regionId == 0xFFFFFFFF) {
+				if (parseInt(regionId) === 0xFFFFFFFF) {
 					return;
 				}
 				if (map.cfg.resultList.regionTabs) {
@@ -1538,15 +1563,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			});
 
 			if (worldCells.size()) {
-				map._assignTabContentFromRegion(worldCells, 0xFFFFFFFF);
+				map._assignTabContentFromRegion(worldCells, 0xFFFFFFFF, maxOverlapRegionId === WORLD_TAB_ID);
 			}
-			
-			//now all tabs are there - this is wrong if tab populate does not return instantly (which we cannot assume)
-			//now make sure that the highlited tab refreshed the map
-			if (activeTabNeedsExtraRefresh) {
-				map.onActiveTabChanged();
-			}
-			
 		},
 		
 		_mapViewChanged: function() {
@@ -1585,7 +1603,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (node.displayState & dag.DisplayStates.HasClusterMarker) {
 					wantClusterMarkers.insert(node.id);
 				}
-				if(node.displayState & dag.DisplayStates.InResultsTab) {
+				if (node.displayState & dag.DisplayStates.InResultsTab) {
 					wantTabListRegions.insert(node.id);
 				}
 			}, dag.NodeTypes.Region);
