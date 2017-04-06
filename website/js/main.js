@@ -80,7 +80,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         window.Mustache = mustache;
 
         // load template files
-        $.Mustache.load('template/itemListEntryTemplate.mst');
         $.Mustache.load('template/arrayItemListEntryTemplate.mst');
         $.Mustache.load('template/spatialQueryTableRowTemplate.mst');
         $.Mustache.load('template/treeTemplate.mst');

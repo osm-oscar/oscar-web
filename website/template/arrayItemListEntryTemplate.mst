@@ -7,6 +7,9 @@
                     <a data-item-id="{{{itemId}}}" class="accordion-toggle accordion-toggle-link {{{matchingTagClass}}}" href="#" aria-expanded="true">
                         <b>{{itemName}}</b>{{#street}}, {{postcode}} {{city}} {{street}} {{housenumber}}{{/street}}
                     </a>
+                    {{#closelink}}
+                    <span class="pull-right">&#91;<a href="#" class="accordion-close-link"><i class="fa fa-times" aria-hidden="true"></i></a>&#93;</span>
+                    {{/closelink}}
                 </h5>
             </div>
         </div>

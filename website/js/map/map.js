@@ -87,10 +87,19 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				detC.unbind(myClickNS).bind(myClickNS, handler.m_eventHandlers.itemIdQuery);
 				actC.unbind(myClickNS).bind(myClickNS, handler.m_eventHandlers.itemLinkClicked);
 			},
-			_renderItem: function(item) {
-				var itemTemplateData = state.resultListTemplateDataFromItem(item);
-				var rendered = $.Mustache.render('itemListEntryHtmlTemplate', itemTemplateData);
+			_item2RenderData: function(item) {
+				return state.resultListTemplateDataFromItem(item);
+			},
+			_renderItems: function(items) {
+				var itemData = [];
+				for(var i in items) {
+					itemData.push(handler._item2RenderData(items[i]));
+				}
+				var rendered = $.Mustache.render('arrayItemListEntryHtmlTemplate', {wrappedarray: itemData});
 				return rendered;
+			},
+			_renderItem: function(item) {
+				return handler._renderItems([item]);
 			},
 			//returns jquery object of the inserted dom item element
 			_appendItem: function(item) {
@@ -206,32 +215,19 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			//return number of inserted items
 			insertItems: function(items) {
-				var timer0 = tools.timer("ItemListHandler::insertItems::domFilterData for " + items.length + " items");
-				var itemData = [];
+				var missingItems = [];
 				for(var i in items) {
-					if (!handler.hasItem(items[i].id())) {
-						itemData.push(state.resultListTemplateDataFromItem(items[i]));
+					var itemId = items[i].id();
+					if (!handler.hasItem(itemId)) {
+						missingItems.push(items[i]);
+						handler.m_itemIds.insert(itemId);
 					}
 				}
-				timer0.stop();
-				var timer1 = tools.timer("ItemListHandler::insertItems::domRender for " + items.length + " items");
-				var toInsert = $($.Mustache.render('arrayItemListEntryHtmlTemplate', {wrappedarray: itemData}));
-				timer1.stop();
-				
-				var timer2 = tools.timer("ItemListHandler::insertItems::domInsert for " + items.length + " items");
-				var inserted = $($(toInsert).appendTo(this.m_domRoot));
-				timer2.stop();
-				
-				var timer3 = tools.timer("ItemListHandler::insertItems::domAddEventHandlers for " + items.length + " items");
+				var toInsert = handler._renderItems(missingItems);
+				$(toInsert).appendTo(handler.m_domRoot);
 				handler._addEventHandlers(handler.m_domRoot);
-				timer3.stop();
-				
-				var timer4 = tools.timer("ItemListHandler::insertItems::idUpdate for " + items.length + " items");
-				for(var i in items) {
-					handler.m_itemIds.insert(items[i].id());
-				}
-				timer4.stop();
-				return itemData.length;
+
+				return missingItems.length;
 			},
 			remove: function(itemId) {
 				if (!handler.count(itemId)) {
@@ -285,6 +281,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		};
 		handler._init(parent);
 		return handler;
+	};
+	
+	var InspectionItemListHandler = function(parent, scrollContainer) {
+		var ilh = ItemListHandler(parent, scrollContainer);
+		ilh._item2RenderData = function(item) {
+			return state.resultListTemplateDataFromItem(item, true);
+		}
+		return ilh;
 	};
 	
 	//handles multiple item lists as tab groups
@@ -378,13 +382,18 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			
 			//adds a new tab, returns an ItemListHandler, if prepend == true, then the tab will be added as the first element
-			addTab: function(tabId, tabName, itemCount, prepend) {
-				if (prepend === undefined) {
-					prepend = false;
-				}
+			addTab: function(tabId, tabName, itemCount, prepend, itemListHandlerCreator) {
 				if (handler.m_tabs.count(tabId)) {
 					return handler.m_tabs.at(tabId).handler;
 				}
+				
+				if (prepend === undefined) {
+					prepend = false;
+				}
+				if (itemListHandlerCreator === undefined) {
+					itemListHandlerCreator = ItemListHandler;
+				}
+				
 				//add a new tab
 				var tabHeadId = tools.generateDocumentUniqueId();
 				var tabContentId = tools.generateDocumentUniqueId();
@@ -405,7 +414,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				$(handler.m_domRoot).append(tabContentHtml);
 				var tabContent = $('#' + tabContentId, handler.m_domRoot);
-				var itemListHandler = ItemListHandler(tabContent, handler.m_scrollContainer);
+				var itemListHandler = itemListHandlerCreator(tabContent, handler.m_scrollContainer);
 				handler.m_tabs.insert(tabId, {
 					handler : itemListHandler,
 					tabHeadId : tabHeadId,
