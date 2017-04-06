@@ -247,7 +247,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			assign: function(items) {
 				var itemIdSet = tools.SimpleSet();
 				for(i in items) {
-					itemIdSet.insertArray(items[i].id());
+					itemIdSet.insert(items[i].id());
 				}
 				var itemsToRemove = [];
 				handler.each(function(itemId) {
