@@ -534,6 +534,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					$('#' + info.tabContentId).remove();
 					$('#' + info.tabHeadId).remove();
 				}
+				handler.m_tabs.clear();
 				handler.refresh();
 				handler.emit_activeTabChanged(-1);
 			},
@@ -934,19 +935,22 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		clear: function() {
 			state.map.off("zoomend dragend", map.viewChanged);
 			
-			state.dag.clear();
-			
-			map.resultListTabs.clear();
-			map.relativesTab.activeItemHandler.clear();
-			map.relativesTab.relativesHandler.clear();
-			
+			state.dag.clearDisplayState();
+
 			map.itemShapes.clear();
 			map.relativesShapes.clear();
 			map.highlightItemShapes.clear();
+			map.inspectedItemShapes.clear();
 			map.clusterMarkerRegionShapes.clear();
 			
 			map.itemMarkers.clear();
 			map.clusterMarkers.clear();
+
+			map.resultListTabs.clear();
+			map.relativesTab.activeItemHandler.clear();
+			map.relativesTab.relativesHandler.clear();
+			
+			state.dag.clear();
 		},
 	   
 		//call this after changing options regarding shape handling
