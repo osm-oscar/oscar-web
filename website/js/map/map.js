@@ -883,6 +883,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//markers
 		itemMarkers: ItemMarkerHandler(state.map),
 		inspectedItemMarkers: ItemMarkerHandler(state.map),
+		clusterMarkerGroup: undefined,
 		clusterMarkers: undefined,
 		
 		//dag handling
@@ -911,11 +912,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.itemMarkers = map.ItemMarkerHandler(state.map);
 
 			//init the cluster markers
-            var myClusterMarkerGroup = L.markerClusterGroup(clusterMarkerOptions);
-			state.map.addLayer(myClusterMarkerGroup);
-			map.clusterMarkers = map.RegionMarkerHandler(myClusterMarkerGroup);
+            map.clusterMarkerGroup = L.markerClusterGroup(clusterMarkerOptions);
+			state.map.addLayer(map.clusterMarkerGroup);
+			map.clusterMarkers = map.RegionMarkerHandler(map.clusterMarkerGroup);
 			
-			//register slots
+		},
+	   
+		_attachEventHandlers: function() {
 			$(map.resultListTabs).on("itemLinkClicked", map.onItemLinkClicked);
 			$(map.resultListTabs).on("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).on("itemDetailsClosed", map.onItemDetailsClosed);
@@ -926,16 +929,34 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.clusterMarkers).on("click", map.onClusterMarkerClicked);
 			$(map.clusterMarkers).on("mouseover", map.onClusterMarkerMouseOver);
 			$(map.clusterMarkers).on("mouseout", map.onClusterMarkerMouseOut);
-			myClusterMarkerGroup.on("clusterclick", map.onClusteredClusterMarkerClicked);
-			myClusterMarkerGroup.on("clustermouseover", map.onClusteredClusterMarkerMouseOver);
-			myClusterMarkerGroup.on("clustermouseout", map.onClusteredClusterMarkerMouseOut);
-			myClusterMarkerGroup.on("layerremove", map.onClusterMarkerLayerRemoved);
+			map.clusterMarkerGroup.on("clusterclick", map.onClusteredClusterMarkerClicked);
+			map.clusterMarkerGroup.on("clustermouseover", map.onClusteredClusterMarkerMouseOver);
+			map.clusterMarkerGroup.on("clustermouseout", map.onClusteredClusterMarkerMouseOut);
+			map.clusterMarkerGroup.on("layerremove", map.onClusterMarkerLayerRemoved);
+		},
+	   
+		_detachEventHandlers: function() {
+			$(map.resultListTabs).off("itemLinkClicked", map.onItemLinkClicked);
+			$(map.resultListTabs).off("itemDetailsOpened", map.onItemDetailsOpened);
+			$(map.resultListTabs).off("itemDetailsClosed", map.onItemDetailsClosed);
+			$(map.resultListTabs).off("activeTabChanged", map.onActiveTabChanged);
+			
+			$(map.itemMarkers).off("click", map.onItemMarkerClicked);
+			
+			$(map.clusterMarkers).off("click", map.onClusterMarkerClicked);
+			$(map.clusterMarkers).off("mouseover", map.onClusterMarkerMouseOver);
+			$(map.clusterMarkers).off("mouseout", map.onClusterMarkerMouseOut);
+			map.clusterMarkerGroup.off("clusterclick", map.onClusteredClusterMarkerClicked);
+			map.clusterMarkerGroup.off("clustermouseover", map.onClusteredClusterMarkerMouseOver);
+			map.clusterMarkerGroup.off("clustermouseout", map.onClusteredClusterMarkerMouseOut);
+			map.clusterMarkerGroup.off("layerremove", map.onClusterMarkerLayerRemoved);
 		},
 		
 		clear: function() {
 			state.map.off("zoomend dragend", map.viewChanged);
+			map._detachEventHandlers();
 			
-			state.dag.clearDisplayState();
+			state.dag.clear();
 
 			map.itemShapes.clear();
 			map.relativesShapes.clear();
@@ -950,7 +971,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.relativesTab.activeItemHandler.clear();
 			map.relativesTab.relativesHandler.clear();
 			
-			state.dag.clear();
+			map._attachEventHandlers();
 		},
 	   
 		//call this after changing options regarding shape handling
