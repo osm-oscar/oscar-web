@@ -17,6 +17,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		var handler = {
 			m_domRoot : undefined,
 			m_scrollContainer: scrollContainer,
+			m_inFlightItems: tools.SimpleSet(),
 			m_itemIds: tools.SimpleSet(),
 			m_eventHandlers : {
 				itemIdQuery: function(e) {
@@ -204,8 +205,60 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				handler.m_scrollContainer.animate({scrollTop: scrollPos});
 				//container.animate({scrollTop: itemPanelRootDiv.position().top + $("itemsList").position().top});
 			},
-			insert: function(item) {
-				handler.insertItem(item);
+			//a multi purpous insert function,
+			insert: function(data) {
+				if (typeof data === "string" || typeof data === "number") {
+					handler.insertItemId(data);
+				}
+				else if (data instanceof Array) {
+					if (!data.length) {
+						return;
+					}
+					if (typeof data[0] === "string" || typeof data[0] === "number") {
+						handler.insertItemIds(data);
+					}
+					else {
+						handler.insertItems(data);
+					}
+				}
+				else {
+					handler.insertItem(item);
+				}
+			},
+			insertItemIds: function(itemIds) {
+				var needItemIds = [];
+				for(var i in itemIds) {
+					if (!handler.count(itemIds[i]) && !handler.m_inFlightItems.count(itemIds[i])) {
+						needItemIds.insert(itemIds[i]);
+					}
+				}
+				handler.m_inFlightItems.insertArray(needItemIds);
+				oscar.getItems(needItemIds, function(items) {
+					var needItems = [];
+					for(var i in items) {
+						if (handler.m_inFlightItems.count(items[i].id())) {
+							needItems.push(items[i]);
+						}
+					}
+					if (needItems.length) {
+						handler.insertItems(needItems);
+					}
+					for (var i in needItemIds) {
+						handler.m_inFlightItems.erase(needItemIds[i]);
+					}
+				});
+			},
+			insertItemId: function(itemId) {
+				if (handler.count(itemId)) {
+					return;
+				}
+				handler.m_inFlightItems.insert(itemId);
+				oscar.getItem(itemId, function(item) {
+					if (handler.m_inFlightItems.count(item.id())) {
+						handler.insertItem(item);
+					}
+					handler.m_inFlightItems.erase(itemId);
+				});
 			},
 			insertItem: function(item) {
 				if (!handler.hasItem(item.id())) {
@@ -230,14 +283,17 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				return missingItems.length;
 			},
 			remove: function(itemId) {
-				if (!handler.count(itemId)) {
+				if (handler.m_inFlightItems.count(itemId)) {
+					handler.m_inFlightItems.erase(itemId);
 					return;
 				}
-				handler.close(itemId);
-				handler._domItemRoot(itemId).each(function() {
-					$(this).remove();
-				});
-				handler.m_itemIds.erase(itemId);
+				else if (handler.count(itemId)) {
+					handler.close(itemId);
+					handler._domItemRoot(itemId).each(function() {
+						$(this).remove();
+					});
+					handler.m_itemIds.erase(itemId);
+				}
 			},
 			//returns number of added+removed items
 			assign: function(items) {
@@ -270,6 +326,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				});
 				$(handler.m_domRoot).empty();
 				handler.m_itemIds.clear();
+				handler.m_inFlightItems.clear();
 			},
 			
 			//destroy this list by removing the respective dom elements
