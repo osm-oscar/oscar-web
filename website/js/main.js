@@ -200,14 +200,8 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 				map.mapViewChanged();
 			});
 			
-			state.sidebar.on('tab-closed', function(e) {
-			});
-			
-			state.sidebar.on('tab-opened', function(e) {
-				if (e.id !== "item_relatives") {
-					return;
-				}
-			});
+// 			state.sidebar.on('tab-closed', function(e) {});
+// 			state.sidebar.on('tab-opened', function(e) {});
 
             $('#spatialquery_selectbutton').click(function() {
                 if (state.spatialquery.selectButtonState === 'select') {
