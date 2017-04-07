@@ -39,6 +39,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster
         shownBoundaries: [],
 		items : {
 			activeItem: undefined,
+			inspectItem: undefined
 		},
 		//e = {type : type, id : internalId, name : name}
 		spatialQueryTableRowTemplateDataFromSpatialObject: function(e) {

@@ -344,6 +344,28 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		var ilh = ItemListHandler(parent, scrollContainer);
 		ilh._item2RenderData = function(item) {
 			return state.resultListTemplateDataFromItem(item, true);
+		};
+		ilh.m_eventHandlers["itemCloseLinkClicked"] = function(e) {
+			var me = $(this);
+			var itemIdStr = me.attr("data-item-id");
+			var itemId = parseInt(itemIdStr);
+			ilh._slot_itemCloseLinkClicked(itemId);
+		};
+		ilh["_slot_itemCloseLinkClicked"] = function(itemId) {
+			ilh.close(itemId);
+			ilh.emit_itemCloseLinkClicked(itemId);
+			ilh.remove(itemId);
+		};
+		ilh["emit_itemCloseLinkClicked"] = function(itemId) {
+			$(ilh).triggerHandler({type:"itemCloseLinkClicked", itemId : itemId});
+		};
+		ilh["_o_ItemListHandler_addEventHandlers"] = ilh._addEventHandlers;
+		ilh._addEventHandlers = function(elements) {
+			ilh._o_ItemListHandler_addEventHandlers(elements);
+			var aclC = $(".accordion-close-link", elements);
+			
+			var myClickNS = "click.iilhevh";
+			aclC.unbind(myClickNS).bind(myClickNS, ilh.m_eventHandlers.itemCloseLinkClicked);
 		}
 		return ilh;
 	};
@@ -931,12 +953,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	
     var map = {
 		ItemListHandler: ItemListHandler,
+		InspectionItemListHandler: InspectionItemListHandler,
 		ItemListTabHandler: ItemListTabHandler,
 		ItemShapeHandler: ItemShapeHandler,
 		ItemMarkerHandler: ItemMarkerHandler,
 		RegionMarkerHandler: RegionMarkerHandler,
 
 		resultListTabs: undefined,
+		inspectionItemListHandler: undefined,
 		relativesTab: { activeItemHandler: undefined, relativesHandler: undefined },
 		
 		//map shapes
@@ -947,8 +971,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		clusterMarkerRegionShapes: undefined,
 		
 		//markers
-		itemMarkers: ItemMarkerHandler(state.map),
-		inspectedItemMarkers: ItemMarkerHandler(state.map),
+		itemMarkers: undefined,
+		inspectedItemMarkers: undefined,
 		clusterMarkerGroup: undefined,
 		clusterMarkers: undefined,
 		
@@ -965,6 +989,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//this has to be called prior usage
 		init: function() {
 			map.resultListTabs = map.ItemListTabHandler('#left_menu_parent', '#sidebar-content');
+			map.inspectionItemListHandler = map.InspectionItemListHandler($('#inspectItemsList'));
 			map.relativesTab.activeItemHandler = map.ItemListHandler($('#activeItemsList'));
 			map.relativesTab.relativesHandler = map.ItemListHandler($('#relativesList'));
 			
@@ -976,6 +1001,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.clusterMarkerRegionShapes = map.ItemShapeHandler(state.map, config.styles.shapes.regions.highlight);
 			
 			map.itemMarkers = map.ItemMarkerHandler(state.map);
+			map.inspectedItemMarkers = map.ItemMarkerHandler(state.map);
 
 			//init the cluster markers
             map.clusterMarkerGroup = L.markerClusterGroup(clusterMarkerOptions);
@@ -989,6 +1015,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.resultListTabs).on("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).on("itemDetailsClosed", map.onItemDetailsClosed);
 			$(map.resultListTabs).on("activeTabChanged", map.onActiveTabChanged);
+
+			$(map.inspectionItemListHandler).on("itemLinkClicked", map.onInspectItemLinkClicked);
+			$(map.inspectionItemListHandler).on("itemDetailsOpened", map.onInspectItemDetailsOpened);
+			$(map.inspectionItemListHandler).on("itemDetailsClosed", map.onInspectItemDetailsClosed);
+			$(map.inspectionItemListHandler).on("itemCloseLinkClicker", map.onInspectItemCloseLinkClicked);
 			
 			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
 			
@@ -1006,6 +1037,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.resultListTabs).off("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).off("itemDetailsClosed", map.onItemDetailsClosed);
 			$(map.resultListTabs).off("activeTabChanged", map.onActiveTabChanged);
+			
+			$(map.inspectionItemListHandler).off("itemLinkClicked", map.onInspectItemLinkClicked);
+			$(map.inspectionItemListHandler).off("itemDetailsOpened", map.onInspectItemDetailsOpened);
+			$(map.inspectionItemListHandler).off("itemDetailsClosed", map.onInspectItemDetailsClosed);
+			$(map.inspectionItemListHandler).off("itemCloseLinkClicked", map.onInspectItemCloseLinkClicked)
 			
 			$(map.itemMarkers).off("click", map.onItemMarkerClicked);
 			
@@ -1034,6 +1070,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.clusterMarkers.clear();
 
 			map.resultListTabs.clear();
+			map.inspectionItemListHandler.clear();
 			map.relativesTab.activeItemHandler.clear();
 			map.relativesTab.relativesHandler.clear();
 			
@@ -1158,9 +1195,40 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}, tools.defErrorCB);
 		},
 	   
+		addToInspection: function(itemId) {
+			map.inspectionItemListHandler.insertItemId(itemId);
+		},
+		
+		removeFromInspection: function(itemId) {
+			map.inspectionItemListHandler.remove(itemId);
+		},
+		
+		onInspectItemLinkClicked: function(e) {
+			var itemId = e.itemId;
+			state.items.inspectItem = itemId;
+		},
+		
+		onInspectItemDetailsOpened: function(e) {
+			var itemId = e.itemId;
+			map.inspectedItemShapes.addWithCallback(itemId, function() {
+				if (state.items.inspectItem == itemId) {
+					map.highlightItemShapes.zoomTo(itemId);
+				}
+			});
+		},
+		
+		onInspectItemDetailsClosed: function(e) {
+			var itemId = e.itemId;
+			if (state.items.inspectItem === itemId) {
+				state.items.inspectItem = -1;
+			}
+			map.inspectedItemShapes.remove(itemId);
+		},
+	   
 		onItemLinkClicked: function(e) {
 			var itemId = e.itemId;
 			state.items.activeItem = itemId;
+			map.addToInspection(itemId);
 		},
 		
 		//panel event handlers
@@ -1250,6 +1318,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			state.items.activeItem = e.itemId;
 			map.resultListTabs.openItem(e.itemId);
 			map.resultListTabs.activeTab().scrollTo(e.itemId);
+			map.addToInspection(e.itemId);
 			map.showItemRelatives();
 		},
 		onClusterMarkerLayerRemoved: function(e) {
@@ -1602,6 +1671,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					map.resultListTabs.clear();
 				}
 				return;
+			}
+			///keep the inspection tab if it is there
+			if (map.resultListTabs.count(INSPECTION_TAB_ID)) {
+				wantTabListRegions.insert(INSPECTION_TAB_ID);
 			}
 			
 			var worldCells = tools.SimpleSet();

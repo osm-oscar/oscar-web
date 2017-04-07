@@ -122,6 +122,14 @@ body {
     overflow-y: hidden;
 }
 
+#inspect_parent {
+    height: fit-content;
+    width: 100%;
+    padding: 5px 0 0 0;
+    background-color: #FFFFFF;
+    overflow-y: hidden;
+}
+
 #options_parent {
     height: fit-content;
 }

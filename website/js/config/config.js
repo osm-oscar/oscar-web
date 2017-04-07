@@ -33,7 +33,7 @@ define([], function() {
                 },
                 items: {
                     normal: {color: 'blue', stroke: true, fill: false, opacity: 0.8},
-					inspected: {color: 'blue', stroke: true, fill: true, opacity: 1.0},
+					inspected: {color: 'green', stroke: true, fill: true, opacity: 1.0},
                     highlight: {color: 'red', stroke: true, fill: false, opacity: 1.0}
                 },
                 relatives: {
