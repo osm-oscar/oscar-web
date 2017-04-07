@@ -1,4 +1,4 @@
-define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "leafletCluster", "dag"], function ($, mustache, tools, L, spinner, config) {
+define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], function ($, mustache, tools, L, spinner, config) {
 	var dag = require("dag");
     var state = {
         map: undefined,

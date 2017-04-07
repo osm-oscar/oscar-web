@@ -1,5 +1,5 @@
 //This module handles most stuff associated with the map-gui. It HAS to be a singleton!
-define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner", "leaflet", "dag", "dagexp"],
+define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner", "leaflet", "leafletCluster", "awesomeMarkers", "dag", "dagexp"],
 function (require, state, $, config, oscar, flickr, tools, tree) {
     var spinner = require("spinner");
 	var L = require("leaflet");
@@ -813,6 +813,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			var l = this.layer(itemId);
 			return l.getLatLng();
 		};
+		handler["color"] = "blue"
+		handler["icon_options"] = {
+			icon: "circle",
+			prefix : 'fa',
+			markerColor: handler.color
+		}
 		
 		return handler;
 	};
@@ -821,22 +827,49 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		var handler = MarkerHandler(target);
 		handler.m_forwardedSignals = {"click": ["click"]};
 		handler._fetchLayer = function(cb, itemId) {
-			oscar.getShape(itemId, function(shape) {
-				if (shape.t === oscar.ShapeTypes.MultiPolygon) {
-					geopos = shape.v.outer[0][0];
-				}
-				else if (shape.t === oscar.ShapeTypes.Polygon) {
-					geopos = shape.v[0];
-				}
-				else if (shape.t === oscar.ShapeTypes.Way) {
-					geopos = shape.v[0];
-				}
-				else {
-					geopos = shape.v;
-				}
-				var marker = L.marker(geopos);
-				cb(marker);
-			}, tools.defErrorCB);
+			oscar.getItem(itemId, function(item) {
+				oscar.getShape(itemId, function(shape) {
+					if (shape.t === oscar.ShapeTypes.MultiPolygon) {
+						geopos = shape.v.outer[0][0];
+					}
+					else if (shape.t === oscar.ShapeTypes.Polygon) {
+						geopos = shape.v[0];
+					}
+					else if (shape.t === oscar.ShapeTypes.Way) {
+						geopos = shape.v[0];
+					}
+					else {
+						geopos = shape.v;
+					}
+					var icon = undefined;
+					for(var i=0, s=item.size(); i < s; ++i) {
+						var key = item.key(i)
+						if (config.styles.markers[key] !== undefined) {
+							var value = item.value(i);
+							if (config.styles.markers[key][value] !== undefined) {
+								icon = L.AwesomeMarkers.icon({
+									icon: config.styles.markers[key][value],
+									prefix : 'fa',
+									markerColor: handler.color
+								});
+								break;
+							}
+						}
+					}
+					if (icon === undefined) {
+						cb(
+							L.marker(geopos,
+								{ 
+									icon: L.AwesomeMarkers.icon(handler.icon_options)
+								}
+							)
+						);
+					}
+					else {
+						cb( L.marker(geopos, {icon: icon}) );
+					}
+				}, tools.defErrorCB);
+			});
 		};
 		return handler;
 	};

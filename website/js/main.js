@@ -19,6 +19,7 @@ requirejs.config({
 		"bloodhound" : "vendor/typeahead/bloodhound",
         "leaflet": "vendor/leaflet/leaflet-src",
         "leafletCluster": "vendor/leaflet-markercluster/leaflet.markercluster-src",
+		"awesomeMarkers" : "vendor/leaflet-awesome-markers/leaflet.awesome-markers.min",
         "sidebar": "vendor/leaflet-sidebar/js/leaflet-sidebar.min",
         "spin": "vendor/spin/spin.min",
         "mustache": "vendor/mustache/mustache.min",

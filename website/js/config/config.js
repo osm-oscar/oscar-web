@@ -57,6 +57,44 @@ define([], function() {
                     highlight: {color: '#00BFFF', stroke: true, fill: false, opacity: 1.0}
                 }
             },
+			markers: { //maps from tag to marker type
+				"amenity" : {
+					"pharmacy" : "medkit",
+					"hospital" : "hospital-o",
+					"doctors" : "user-md",
+					"fast_food" : "cutlery",
+					"restaurant" : "cutlery",
+					"post_box" : "envelope-o",
+					"post_office" : "envelope-o",
+					"waste_basket" : "trash-o",
+					"recycling" : "recycle",
+					"atm" : "credit-card",
+					"university" : "university",
+					"pub" : "beer",
+					"cafe" : "coffee",
+					"bar" : "glass",
+					"bus_station" : "bus",
+					"airport" : "plane",
+					"port" : "ship"
+				},
+				"tourism" : {
+					"information" : "info-circle",
+					"hotel" : "bed",
+// 					"attraction" : "",
+					"viewpoint" : "eye",
+					"picnic_site" : "apple",
+// 					"guest_house" : "",
+// 					"camp_site" : "",
+// 					"museum" : ""
+				},
+				"aeroway" : {
+					"aerodrome" : "plane"
+				},
+				"shop" : {
+					"convenience" : "shopping-cart",
+					"supermarket" : "shopping-cart"
+				}
+			},
             menu: {
                 fadeopacity: 0.9
             },
