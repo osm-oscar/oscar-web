@@ -708,6 +708,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				this.m_target.addLayer(this.m_layers.at(itemId).layer);
 			}
 		};
+		this.insert = function(itemId, extraArguments) {
+			this.add(itemId, extraArguments);
+		};
 		this.add = function(itemId, extraArguments) {
 			this.addWithCallback(itemId, undefined, extraArguments);
 		};
@@ -813,11 +816,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			var l = this.layer(itemId);
 			return l.getLatLng();
 		};
-		handler["color"] = "blue"
 		handler["icon_options"] = {
 			icon: "circle",
 			prefix : 'fa',
-			markerColor: handler.color
+			markerColor: "blue"
 		}
 		
 		return handler;
@@ -844,14 +846,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					var icon = undefined;
 					for(var i=0, s=item.size(); i < s; ++i) {
 						var key = item.key(i)
-						if (config.styles.markers[key] !== undefined) {
+						if (config.styles.markers.icons[key] !== undefined) {
 							var value = item.value(i);
-							if (config.styles.markers[key][value] !== undefined) {
-								icon = L.AwesomeMarkers.icon({
-									icon: config.styles.markers[key][value],
-									prefix : 'fa',
-									markerColor: handler.color
-								});
+							if (config.styles.markers.icons[key][value] !== undefined) {
+								var opts = Object.assign({}, handler.icon_options);
+								opts["icon"] = config.styles.markers.icons[key][value];
+								opts["prefix"] = 'fa';
+								icon = L.AwesomeMarkers.icon(opts);
 								break;
 							}
 						}
@@ -1005,7 +1006,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		//markers
 		itemMarkers: undefined,
-		inspectedItemMarkers: undefined,
+		inspectionItemMarkers: undefined,
 		clusterMarkerGroup: undefined,
 		clusterMarkers: undefined,
 		
@@ -1034,7 +1035,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.clusterMarkerRegionShapes = map.ItemShapeHandler(state.map, config.styles.shapes.regions.highlight);
 			
 			map.itemMarkers = map.ItemMarkerHandler(state.map);
-			map.inspectedItemMarkers = map.ItemMarkerHandler(state.map);
+			map.inspectionItemMarkers = map.ItemMarkerHandler(state.map);
+			map.inspectionItemMarkers.icon_options.markerColor = config.styles.markers.color.inspected;
 
 			//init the cluster markers
             map.clusterMarkerGroup = L.markerClusterGroup(clusterMarkerOptions);
@@ -1052,7 +1054,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.inspectionItemListHandler).on("itemLinkClicked", map.onInspectItemLinkClicked);
 			$(map.inspectionItemListHandler).on("itemDetailsOpened", map.onInspectItemDetailsOpened);
 			$(map.inspectionItemListHandler).on("itemDetailsClosed", map.onInspectItemDetailsClosed);
-			$(map.inspectionItemListHandler).on("itemCloseLinkClicker", map.onInspectItemCloseLinkClicked);
+			$(map.inspectionItemListHandler).on("itemCloseLinkClicked", map.onInspectItemCloseLinkClicked);
 			
 			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
 			
@@ -1100,6 +1102,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.clusterMarkerRegionShapes.clear();
 			
 			map.itemMarkers.clear();
+			map.inspectionItemMarkers.clear();
 			map.clusterMarkers.clear();
 
 			map.resultListTabs.clear();
@@ -1230,15 +1233,23 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	   
 		addToInspection: function(itemId) {
 			map.inspectionItemListHandler.insertItemId(itemId);
+			map.inspectionItemMarkers.insert(itemId);
 		},
 		
 		removeFromInspection: function(itemId) {
 			map.inspectionItemListHandler.remove(itemId);
+			map.inspectionItemMarkers.remove(itemId);
 		},
 		
 		onInspectItemLinkClicked: function(e) {
 			var itemId = e.itemId;
 			state.items.inspectItem = itemId;
+		},
+		
+		
+		onInspectItemCloseLinkClicked: function(e) {
+			var itemId = e.itemId;
+			map.inspectionItemMarkers.remove(itemId);
 		},
 		
 		onInspectItemDetailsOpened: function(e) {
@@ -1257,6 +1268,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			map.inspectedItemShapes.remove(itemId);
 		},
+	   
+
 	   
 		onItemLinkClicked: function(e) {
 			var itemId = e.itemId;
