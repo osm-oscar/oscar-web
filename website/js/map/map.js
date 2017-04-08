@@ -1486,6 +1486,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					
 					var childNode = state.dag.region(childId);
 					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
+					if (myOverlap >= 0 && state.map.getZoom() === state.map.getMaxZoom()) {
+						myOverlap = 100;
+					}
 
 					if (myOverlap >= config.clusters.bboxOverlap) {
 						map.updateDag(childNode, childrenToFetch, cellsToFetch)
