@@ -122,6 +122,14 @@ body {
     overflow-y: hidden;
 }
 
+.sidebar-tabs>ul>li.active.sidebar-menu-red, .sidebar-header.sidebar-header-red {
+	background-color: #FF0000;
+}
+
+.sidebar-tabs>ul>li.active.sidebar-menu-green, .sidebar-header.sidebar-header-green {
+	background-color: #00FF00;
+}
+
 #inspect_parent {
     height: fit-content;
     width: 100%;
@@ -370,7 +378,7 @@ g.node > rect{
     margin-right: 2px;
 }
 
-label{
+label {
     margin-bottom: 0px;
 }
 
