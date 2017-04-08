@@ -1233,7 +1233,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	   
 		addToInspection: function(itemId) {
 			map.inspectionItemListHandler.insertItemId(itemId);
-			map.inspectionItemMarkers.insert(itemId);
+			if (map.cfg.resultList.showItemMarkers) {
+				map.inspectionItemMarkers.insert(itemId);
+			}
 		},
 		
 		removeFromInspection: function(itemId) {
