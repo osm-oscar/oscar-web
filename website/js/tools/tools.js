@@ -110,6 +110,22 @@ define(["jquery"], function ($) {
 				}
 			}
 		},
+		partition: function(setA, setB, onlyInB, onlyInA, inBoth) {
+			for(let id of setA.values()) {
+				if (!setB.count(id)) {
+					onlyInA.insert(id);
+				}
+				else {
+					inBoth.insert(id);
+				}
+			}
+			for(let id of setB.values()) {
+				if (!setA.count(id)) {
+					onlyInB.insert(id);
+				}
+			}
+		},
+		
 		
 		toIntArray: function(strArray) {
 			var tmp = [];
