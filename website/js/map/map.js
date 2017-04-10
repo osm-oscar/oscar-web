@@ -577,7 +577,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					handler.activeTab().open(itemId);
 				}
 				else {
-					for(var i in handler.m_tabs.values()) {
+					for(let i of handler.m_tabs.values()) {
 						if (handler.m_tabs.at(i).handler.hasItem(itemId)) {
 							handler.openTab(i);
 							handler.m_tabs.at(i).handler.open(itemId);
@@ -616,7 +616,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (!handler.size()) {
 					return;
 				}
-				for(var i in handler.m_tabs.values()) {
+				for(let i of handler.m_tabs.values()) {
 					var info = handler.m_tabs.at(i);
 					info.handler.destroy();
 					$('#' + info.tabContentId).remove();
@@ -775,7 +775,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			this.m_target.fitBounds(ll.getBounds());
 		};
 		this.clear = function() {
-			for(var i in this.m_layers.values()) {
+			for(let i of this.m_layers.values()) {
 				if (this.m_layers.at(i).layer !== undefined) {
 					this.m_target.removeLayer(this.m_layers.at(i).layer);
 				}
@@ -1451,12 +1451,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				var tmp = tools.SimpleSet();
 				for(var i in cellIds) {
 					var cellNode = state.dag.cell(cellIds[i]);
-					for(var itemId in cellNode.items.values()) {
+					for(let itemId of cellNode.items.values()) {
 						tmp.insert(itemId);
 					}
 				}
 				var ret = [];
-				for(var itemId in tmp.values()) {
+				for(let itemId of tmp.values()) {
 					if (!offset) {
 						ret.push(itemId);
 					}
@@ -1482,7 +1482,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 
 			if (node.children.size()) {
-				for (var childId in node.children.values()) {
+				for (let childId of node.children.values()) {
 					
 					var childNode = state.dag.region(childId);
 					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
@@ -1579,7 +1579,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			//now mark all the cells accordingly
 			state.dag.each(function(node) {
-				for(var cellId in node.cells.values()) {
+				for(let cellId of node.cells.values()) {
 					state.dag.cell(cellId).displayState |= node.displayState;
 				}
 			}, dag.NodeTypes.Region);
@@ -1594,7 +1594,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (node.displayState & dag.DisplayStates.InResultsTab) {
 					var ok = false;
 					var hasMaxOverlapCell = false;
-					for(var cellId in node.cells.values()) {
+					for(let cellId of node.cells.values()) {
 						var cellNode = state.dag.cell(cellId);
 						var ds = cellNode.displayState & (dag.DisplayStates.HasClusterMarker | dag.DisplayStates.InResultsTab2);
 						var xMap = currentMapBounds.intersects(cellNode.bbox);
@@ -1619,14 +1619,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						//if the former is the case then everything is fine
 						//but in the later case we should add a cluster marker for this region
 						ok = !node.cells.size();
-						for(var cellId in node.cells.values()) {
+						for(let cellId of node.cells.values()) {
 							var cellNode = state.dag.cell(cellId);
 							var ds = cellNode.displayState & (dag.DisplayStates.HasClusterMarker | dag.DisplayStates.InResultsTab2);
 							ok = ok || ds;
 						}
 						if (!ok) { //no cell is covered by a tab or a cluster marker, so we add one
 							node.displayState |= dag.DisplayStates.HasClusterMarker;
-							for(var cellId in node.cells.values()) {
+							for(let cellId of node.cells.values()) {
 								var cellNode = state.dag.cell(cellId);
 								cellNode.displayState |= dag.DisplayStates.HasClusterMarker;
 							}
@@ -1642,7 +1642,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//reset the cell display states to the original values
 			state.dag.each(function(node) {
 				if (node.displayState & dag.DisplayStates.InResultsTab) {
-					for(var cellId in node.cells.values()) {
+					for(let cellId of node.cells.values()) {
 						var cellNode = state.dag.cell(cellId);
 						if (cellNode.displayState & dag.DisplayStates.InResultsTab2) {
 							cellNode.displayState = dag.DisplayStates.InResultsTab;
@@ -1709,7 +1709,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				//inspection tab is there, so we have to remove the other tabs explicitly
 				if (!map.cfg.resultList.regionTabs && map.resultListTabs.count(INSPECTION_TAB_ID)) {
 					var tabs2Remove = [];
-					for(var tabId in map.resultListTabs.values()) {
+					for(let tabId of map.resultListTabs.values()) {
 						if (tabId != INSPECTION_TAB_ID) {
 							tabs2Remove.push(tabId);
 						}
@@ -1740,7 +1740,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			if (map.cfg.resultList.regionTabs) {
 				var removedTabs = [];
-				for(var tabId in map.resultListTabs.values()) {
+				for(let tabId of map.resultListTabs.values()) {
 					if (!wantTabListRegions.count(tabId)) {
 						removedTabs.push(tabId);
 					}

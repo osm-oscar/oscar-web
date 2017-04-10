@@ -222,8 +222,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			this.m_requests.insert(myRequest.requestId, myRequest);
 			
 			//add request to remoteRequests
-			for(var i in myRequest.inFlightDeps.values()) {
-				var rrId = myRequest.inFlightDeps.at(i);
+			for(let rrId of myRequest.inFlightDeps.values()) {
 				this.m_remoteRequests.at(rrId).deps.push(myRequest.requestId);
 			}
 			

@@ -160,28 +160,28 @@ define(["jquery", "tools"], function ($, tools) {
 				removeNode: function(node) {
 					console.assert(this.hasNode(node.id, node.type));
 					if (node.type === d.NodeTypes.Region) {
-						for(var parentId in node.parents.values()) {
+						for(let parentId of node.parents) {
 							this.region(parentId).children.erase(node.id);
 						}
-						for(var childId in node.children.values()) {
+						for(let childId of node.children) {
 							this.region(childId).parents.erase(node.id);
 						}
-						for(var cellId in node.cells.values()) {
+						for(let cellId of node.cells) {
 							this.cell(cellId).parents.erase(node.id);
 						}
 						this.m_regions.erase(node.id);
 					}
 					else if (node.type === d.NodeTypes.Cell) {
-						for(var parentId in node.parents.values()) {
+						for(let parentId of node.parents) {
 							this.region(parentId).cells.erase(node.id);
 						}
-						for(var itemId in node.items.values()) {
+						for(let itemId of node.items) {
 							this.item(itemId).parents.erase(node.id);
 						}
 						this.m_cells.erase(node.id);
 					}
 					else if (node.type === d.NodeTypes.Item) {
-						for(var parentId in node.parents.values()) {
+						for(let parentId of node.parents) {
 							this.cell(parentId).items.erase(node.id);
 						}
 						this.m_items.erase(node.id);
@@ -196,17 +196,17 @@ define(["jquery", "tools"], function ($, tools) {
 						types = d.NodeTypes.All;
 					}
 					if (types & d.NodeTypes.Region) {
-						for(var i in this.m_regions.values()) {
+						for(let i of this.m_regions) {
 							cb(this.m_regions.at(i));
 						}
 					}
 					if (types & d.NodeTypes.Cell) {
-						for(var i in this.m_cells.values()) {
+						for(let i of this.m_cells) {
 							cb(this.m_cells.at(i));
 						}
 					}
 					if (types & d.NodeTypes.Item) {
-						for(var i in this.m_items.values()) {
+						for(let i of this.m_items) {
 							cb(this.m_items.at(i));
 						}
 					}
@@ -227,12 +227,12 @@ define(["jquery", "tools"], function ($, tools) {
 						}
 						if (node.type === d.NodeTypes.Region) {
 							if (types & d.NodeTypes.Region) {
-								for(var childId in node.children.values()) {
+								for(let childId of node.children) {
 									queue.push({id: childId, type: d.NodeTypes.Region});
 								}
 							}
 							if (types & d.NodeTypes.Cell) {
-								for(var cellId in node.cells.values()) {
+								for(let cellId of node.cells) {
 									queue.push({id:cellId, type: d.NodeTypes.Cell});
 								}
 							}
@@ -240,7 +240,7 @@ define(["jquery", "tools"], function ($, tools) {
 						}
 						else if (node.type === d.NodeTypes.Cell) {
 							if (types & d.NodeTypes.Item) {
-								for(var itemId in node.items.values()) {
+								for(let itemId of node.items.values()) {
 									queue.push({id:itemId, type: d.NodeTypes.Item});
 								}
 							}
@@ -255,7 +255,7 @@ define(["jquery", "tools"], function ($, tools) {
 					if (ret !== undefined && ret == false) {
 						return;
 					}
-					for(var childId in startNode.children.values()) {
+					for(let childId of startNode.children.values()) {
 						var childNode = this.region(childId);
 						this.dfs(childNode, cb);
 					}
@@ -268,7 +268,7 @@ define(["jquery", "tools"], function ($, tools) {
 					var visited = {};
 					for(var i = 0; i < queue.length; ++i) {
 						var node = this.region(queue[i]);
-						for(var childId in node.children.values()) {
+						for(let childId of node.children.values()) {
 							if (visited[childId] === undefined) {
 								queue.push(childId);
 								visited[childId] = childId;

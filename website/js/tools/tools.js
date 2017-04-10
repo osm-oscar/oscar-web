@@ -1,100 +1,110 @@
 define(["jquery"], function ($) {
     var tools = {
         /**
-         * Represents a small API for a hashmap
+         * A wrapper for Map()
          *
-         * @returns {{}} hashmap-object
          */
 		SimpleHash: function () {
 			return {
-				m_size: 0,
-				m_values: {},
-				values: function () {
-					return this.m_values;
+				m_data: new Map(),
+				"Symbol.iterator": function() {
+					return this.m_data["Symbol.iterator"]();
 				},
-				size: function () {
-					return this.m_size;
+				values: function() {
+					return this.m_data.keys();
 				},
-				insert: function (key, value) {
-					if (this.m_values[key] === undefined) {
-						this.m_size += 1;
-					}
-					this.m_values[key] = value;
+				begin: function() {
+					this["Symbol.iterator"]();
 				},
-				set: function (key, value) {
-					this.insert(key, value);
+				size: function() {
+					return this.m_data.size;
 				},
-				count: function (key) {
-					return this.m_values[key] !== undefined;
+				insert: function(key, value) {
+					this.m_data.set(key, value);
 				},
-				at: function (key) {
-					return this.m_values[key];
+				set: function(key, value) {
+					this.m_data.set(key, value);
 				},
-				//call cb for each (key, value) with cb(key, value)
+				count: function(key) {
+					return this.m_data.has(key);
+				},
+				at: function(key) {
+					return this.m_data.get(key);
+				},
 				each: function(cb) {
-					for(var key in this.m_values) {
-						cb(key, this.m_values[key]);
-					}
+					this.m_data.forEach(cb);
 				},
-				erase: function (key) {
-					if (this.m_values[key] !== undefined) {
-						this.m_size -= 1;
-						delete this.m_values[key];
-					}
+				erase: function(key) {
+					this.m_data.delete(key);
 				},
-				clear: function () {
-					this.m_size = 0;
-					this.m_values = {};
+				clear: function() {
+					this.m_data .clear();
 				}
-			};
+			}
 		},
 		SimpleSet: function() {
-			var ss = tools.SimpleHash();
-			ss.insert = function(key) {
-				if (this.m_values[key] === undefined) {
-					this.m_size += 1;
-				}
-				this.m_values[key] = key;
-			};
-			ss.insertArray = function(arrayOfKeys) {
-				for(var i in arrayOfKeys) {
-					ss.insert(arrayOfKeys[i]);
-				}
-			};
-			ss.each = function(cb) {
-				for(var key in this.m_values) {
-					cb(key);
-				}
-			};
-			ss.toArray = function() {
-				var tmp = [];
-				for(var i in this.values()) {
-					tmp.push(i);
-				}
-				return tmp;
-			};
-			ss.equal = function(other) {
-				if (this.size() != other.size()) {
-					return false;
-				}
-				for(var i in this.values()) {
-					if (!other.count(i)) {
+			return {
+				m_data: new Set(),
+				"Symbol.iterator": function() {
+					return this.m_data["Symbol.iterator"]();
+				},
+				values: function () {
+					return this.m_data;
+				},
+				begin: function() {
+					this["Symbol.iterator"]();
+				},
+				size: function () {
+					return this.size;
+				},
+				count: function (key) {
+					return this.m_data.has(key);
+				},
+				erase: function (key) {
+					this.m_data.delete(key);
+				},
+				clear: function () {
+					this.m_data.clear();
+				},
+				insert: function(key) {
+					this.m_data.add(key);
+				},
+				insertArray: function(arrayOfKeys) {
+					for(var i in arrayOfKeys) {
+						this.m_data.insert(arrayOfKeys[i]);
+					}
+				},
+				each: function(cb) {
+					this.m_data.forEach(cb);
+				},
+				toArray: function() {
+					var tmp = [];
+					for(var i in this.m_data) {
+						tmp.push(i);
+					}
+					return tmp;
+				},
+				equal: function(other) {
+					if (this.size() != other.size()) {
 						return false;
 					}
-				}
+					for(let i of this.m_data) {
+						if (!other.count(i)) {
+							return false;
+						}
+					}
 				return true;
-			};
-			return ss;
+				}
+			}
 		},
 		
-		
 		getMissing: function(setA, setB, missingInA, missingInB) {
-			for(var id in setA.values()) {
+			for(let id of setA.values()) {
 				if (!setB.count(id)) {
 					missingInB.insert(id);
 				}
 			}
-			for(var id in setB.values()) {
+			for(let id of setB.values()) {
 				if (!setA.count(id)) {
 					missingInA.insert(id);
 				}
