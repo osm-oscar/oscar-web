@@ -1,110 +1,100 @@
 define(["jquery"], function ($) {
     var tools = {
         /**
-         * A wrapper for Map()
+         * Represents a small API for a hashmap
          *
+         * @returns {{}} hashmap-object
          */
 		SimpleHash: function () {
 			return {
-				m_data: new Map(),
-				"Symbol.iterator": function() {
-					return this.m_data["Symbol.iterator"]();
-				},
-				values: function() {
-					return this.m_data.keys();
-				},
-				begin: function() {
-					this["Symbol.iterator"]();
-				},
-				size: function() {
-					return this.m_data.size;
-				},
-				insert: function(key, value) {
-					this.m_data.set(key, value);
-				},
-				set: function(key, value) {
-					this.m_data.set(key, value);
-				},
-				count: function(key) {
-					return this.m_data.has(key);
-				},
-				at: function(key) {
-					return this.m_data.get(key);
-				},
-				each: function(cb) {
-					this.m_data.forEach(cb);
-				},
-				erase: function(key) {
-					this.m_data.delete(key);
-				},
-				clear: function() {
-					this.m_data .clear();
-				}
-			}
-		},
-		SimpleSet: function() {
-			return {
-				m_data: new Set(),
-				"Symbol.iterator": function() {
-					return this.m_data["Symbol.iterator"]();
-				},
+				m_size: 0,
+				m_values: {},
 				values: function () {
-					return this.m_data;
-				},
-				begin: function() {
-					this["Symbol.iterator"]();
+					return this.m_values;
 				},
 				size: function () {
-					return this.size;
+					return this.m_size;
+				},
+				insert: function (key, value) {
+					if (this.m_values[key] === undefined) {
+						this.m_size += 1;
+					}
+					this.m_values[key] = value;
+				},
+				set: function (key, value) {
+					this.insert(key, value);
 				},
 				count: function (key) {
-					return this.m_data.has(key);
+					return this.m_values[key] !== undefined;
+				},
+				at: function (key) {
+					return this.m_values[key];
+				},
+				//call cb for each (key, value) with cb(key, value)
+				each: function(cb) {
+					for(var key in this.m_values) {
+						cb(key, this.m_values[key]);
+					}
 				},
 				erase: function (key) {
-					this.m_data.delete(key);
+					if (this.m_values[key] !== undefined) {
+						this.m_size -= 1;
+						delete this.m_values[key];
+					}
 				},
 				clear: function () {
-					this.m_data.clear();
-				},
-				insert: function(key) {
-					this.m_data.add(key);
-				},
-				insertArray: function(arrayOfKeys) {
-					for(var i in arrayOfKeys) {
-						this.m_data.insert(arrayOfKeys[i]);
-					}
-				},
-				each: function(cb) {
-					this.m_data.forEach(cb);
-				},
-				toArray: function() {
-					var tmp = [];
-					for(var i in this.m_data) {
-						tmp.push(i);
-					}
-					return tmp;
-				},
-				equal: function(other) {
-					if (this.size() != other.size()) {
+					this.m_size = 0;
+					this.m_values = {};
+				}
+			};
+		},
+		SimpleSet: function() {
+			var ss = tools.SimpleHash();
+			ss.insert = function(key) {
+				if (this.m_values[key] === undefined) {
+					this.m_size += 1;
+				}
+				this.m_values[key] = key;
+			};
+			ss.insertArray = function(arrayOfKeys) {
+				for(var i in arrayOfKeys) {
+					ss.insert(arrayOfKeys[i]);
+				}
+			};
+			ss.each = function(cb) {
+				for(var key in this.m_values) {
+					cb(key);
+				}
+			};
+			ss.toArray = function() {
+				var tmp = [];
+				for(var i in this.values()) {
+					tmp.push(i);
+				}
+				return tmp;
+			};
+			ss.equal = function(other) {
+				if (this.size() != other.size()) {
+					return false;
+				}
+				for(var i in this.values()) {
+					if (!other.count(i)) {
 						return false;
 					}
-					for(let i of this.m_data) {
-						if (!other.count(i)) {
-							return false;
-						}
-					}
-				return true;
 				}
-			}
+				return true;
+			};
+			return ss;
 		},
 		
+		
 		getMissing: function(setA, setB, missingInA, missingInB) {
-			for(let id of setA.values()) {
+			for(var id in setA.values()) {
 				if (!setB.count(id)) {
 					missingInB.insert(id);
 				}
 			}
-			for(let id of setB.values()) {
+			for(var id in setB.values()) {
 				if (!setA.count(id)) {
 					missingInA.insert(id);
 				}
