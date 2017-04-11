@@ -331,7 +331,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 				success: function (data) {
 					idcs = sserialize.itemIndexSetFromRaw(data);
 					idxMap = {};
-					for (i = 0; i < idcs.length; ++i) {
+					for (var i = 0; i < idcs.length; ++i) {
 						var idx = idcs[i];
 						idxMap[idx.id] = idx;
 					}
@@ -359,7 +359,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 				success: function (data) {
 					tmp = sserialize.asArray(data, 'uint32');
 					myMap = {};
-					for (i = 0; i < tmp.length; ++i) {
+					for (var i = 0; i < tmp.length; ++i) {
 						myMap[dataIds[i]] = tmp[i];
 					}
 					cb(myMap, remoteRequestId);
@@ -428,8 +428,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
         Item: function (d, parent) {
 
             if (d.shape.t === parent.ShapeTypes.MultiPolygon) {
-                for (i in d.shape.v.outer) {
-                    for (j in d.shape.v.outer[i]) {
+                for (var i in d.shape.v.outer) {
+                    for (var j in d.shape.v.outer[i]) {
                         if (d.shape.v.outer[i][j].length !== 2) {
                             alert("BAM");
                             break;
@@ -558,14 +558,14 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                         var myRegion = this.subSet().regions[regionId];
                         var myCellPositions = myRegion.cellpositions;
 
-                        for (i in myCellPositions) {
+                        for (var i in myCellPositions) {
                             var cellPosition = myCellPositions[i];
                             dest[cellPosition] = cellPosition;
                         }
 
                         if (this.subSet().type === 'sparse') {
                             var myChildren = myRegion.children;
-                            for (i in myChildren) {
+                            for (var i in myChildren) {
                                 this.cellPositions(myChildren[i], dest);
                             }
                         }
@@ -587,7 +587,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                     var myRegion = this.subSet().regions[regionId];
                     var myCellPositions = {};
                     this.cellPositions(regionId, myCellPositions);
-                    for (i in myCellPositions) {
+                    for (var i in myCellPositions) {
                         var cellInfo = cqr.cellInfo[myCellPositions[i]];
                         if (cellInfo.fullIndex) {
                             fMC.push(cellInfo.cellId);
@@ -596,7 +596,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                             idcesToFetch.push(cellInfo.indexId);
                         }
                         else {
-                            for (x in cellInfo.index.values) {
+                            for (var x in cellInfo.index.values) {
                                 result[cellInfo.index.values[x]] = 0; //TODO:use a set data structure
                             }
                         }
@@ -605,14 +605,14 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                     var finalFetch = function (successCB, errorCB) {
                         myPtr.p.getIndexes(idcesToFetch,
                             function (ideces) {
-                                for (i in ideces) {
+                                for (var i in ideces) {
                                     var idx = ideces[i].values;
-                                    for (j in idx) {
+                                    for (var j in idx) {
                                         result[idx[j]] = idx[j];
                                     }
                                 }
                                 var finalResult = [];
-                                for (i in result) {
+                                for (var i in result) {
                                     finalResult.push(parseInt(i));
                                 }
                                 finalResult.sort();
@@ -625,7 +625,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                     if (fMC.length) {//fetch the cell item index ids first
                         this.p.getCellsItemIndexIds(fMC,
                             function (idxIds) {
-                                for (i = 0; i < idxIds.length; ++i) {
+                                for (var i = 0; i < idxIds.length; ++i) {
                                     idcesToFetch.push(idxIds[i]);
                                 }
                                 finalFetch(successCB, errorCB);
@@ -1377,7 +1377,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
             var tokens = [];
             var tokenString = "";
             var qtype = 'substring';
-            for (i = 0; i < query.length; ++i) {
+            for (var i = 0; i < query.length; ++i) {
                 while (this.cqrParseSkip[query[i]] !== undefined || this.cqrOps[query[i]] !== undefined) { //ops and braces
                     ++i;
                 }
@@ -1466,7 +1466,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 tokenString = "";
             }
             var totalRegExp = "^(";
-            for (i in tokens) {
+            for (var i in tokens) {
                 var token = tokens[i];
                 var tokenRegExp = "";
                 var j = 0;
