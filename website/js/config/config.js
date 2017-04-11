@@ -33,7 +33,7 @@ define([], function() {
                 },
                 items: {
                     normal: {color: 'blue', stroke: true, fill: false, opacity: 0.8},
-					inspected: {color: 'green', stroke: true, fill: false, opacity: 1.0},
+					inspected: {color: 'red', stroke: true, fill: false, opacity: 1.0},
                     highlight: {color: 'red', stroke: true, fill: false, opacity: 1.0}
                 },
                 relatives: {
@@ -60,7 +60,8 @@ define([], function() {
 			markers: { //maps from tag to marker type
 				color : {
 					standard : "blue",
-					inspected : "green"
+					inspected : "red",
+					relatives: "green"
 				},
 				icons : {
 					"amenity" : {

@@ -14,6 +14,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		if (scrollContainer === undefined) {
 			scrollContainer = parent;
 		}
+		parent = $(parent);
+		scrollContainer = $(scrollContainer);
 		var handler = {
 			m_domRoot : undefined,
 			m_scrollContainer: scrollContainer,
@@ -202,30 +204,30 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				var itemPanelRootDiv = handler._domItemRoot(itemId);
 				var scrollPos = itemPanelRootDiv.offset().top - handler.m_scrollContainer.offset().top + handler.m_scrollContainer.scrollTop();
-				handler.m_scrollContainer.animate({scrollTop: scrollPos});
+				handler.m_scrollContainer.animate({scrollTop: scrollPos-5});
 				//container.animate({scrollTop: itemPanelRootDiv.position().top + $("itemsList").position().top});
 			},
-			//a multi purpous insert function,
-			insert: function(data) {
+			//a multi purpous insert function, cb is called after insertion
+			insert: function(data, cb) {
 				if (typeof data === "string" || typeof data === "number") {
-					handler.insertItemId(data);
+					handler.insertItemId(data, cb);
 				}
 				else if (data instanceof Array) {
 					if (!data.length) {
 						return;
 					}
 					if (typeof data[0] === "string" || typeof data[0] === "number") {
-						handler.insertItemIds(data);
+						handler.insertItemIds(data, cb);
 					}
 					else {
-						handler.insertItems(data);
+						handler.insertItems(data, cb);
 					}
 				}
 				else {
-					handler.insertItem(item);
+					handler.insertItem(item, cb);
 				}
 			},
-			insertItemIds: function(itemIds) {
+			insertItemIds: function(itemIds, cb) {
 				var needItemIds = [];
 				for(var i in itemIds) {
 					if (!handler.count(itemIds[i]) && !handler.m_inFlightItems.count(itemIds[i])) {
@@ -241,33 +243,36 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						}
 					}
 					if (needItems.length) {
-						handler.insertItems(needItems);
+						handler.insertItems(needItems, cb);
 					}
 					for (var i in needItemIds) {
 						handler.m_inFlightItems.erase(needItemIds[i]);
 					}
 				});
 			},
-			insertItemId: function(itemId) {
+			insertItemId: function(itemId, cb) {
 				if (handler.count(itemId)) {
 					return;
 				}
 				handler.m_inFlightItems.insert(itemId);
 				oscar.getItem(itemId, function(item) {
 					if (handler.m_inFlightItems.count(item.id())) {
-						handler.insertItem(item);
+						handler.insertItem(item, cb);
 					}
 					handler.m_inFlightItems.erase(itemId);
 				});
 			},
-			insertItem: function(item) {
+			insertItem: function(item, cb) {
 				if (!handler.hasItem(item.id())) {
 					handler._appendItem(item);
 					handler.m_itemIds.insert(item.id());
 				}
+				if (cb !== undefined) {
+					cb();
+				}
 			},
 			//return number of inserted items
-			insertItems: function(items) {
+			insertItems: function(items, cb) {
 				var missingItems = [];
 				for(var i in items) {
 					var itemId = items[i].id();
@@ -280,6 +285,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$(toInsert).appendTo(handler.m_domRoot);
 				handler._addEventHandlers(handler.m_domRoot);
 
+				if (cb !== undefined) {
+					cb();
+				}
+				
 				return missingItems.length;
 			},
 			remove: function(itemId) {
@@ -343,30 +352,96 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	var InspectionItemListHandler = function(parent, scrollContainer) {
 		var ilh = ItemListHandler(parent, scrollContainer);
 		ilh._item2RenderData = function(item) {
-			return state.resultListTemplateDataFromItem(item, true);
+			return state.resultListTemplateDataFromItem(item, true, true);
 		};
-		ilh.m_eventHandlers["itemCloseLinkClicked"] = function(e) {
+		ilh.m_eventHandlers["itemRemoveLinkClicked"] = function(e) {
 			var me = $(this);
 			var itemIdStr = me.attr("data-item-id");
 			var itemId = parseInt(itemIdStr);
-			ilh._slot_itemCloseLinkClicked(itemId);
+			ilh._slot_itemRemoveLinkClicked(itemId);
 		};
-		ilh["_slot_itemCloseLinkClicked"] = function(itemId) {
+		ilh["_slot_itemRemoveLinkClicked"] = function(itemId) {
 			ilh.close(itemId);
-			ilh.emit_itemCloseLinkClicked(itemId);
+			ilh.emit_itemRemoveLinkClicked(itemId);
 			ilh.remove(itemId);
 		};
-		ilh["emit_itemCloseLinkClicked"] = function(itemId) {
-			$(ilh).triggerHandler({type:"itemCloseLinkClicked", itemId : itemId});
+		ilh["emit_itemRemoveLinkClicked"] = function(itemId) {
+			$(ilh).triggerHandler({type:"itemRemoveLinkClicked", itemId : itemId});
+		};
+		ilh.m_eventHandlers["itemPinLinkClicked"] = function(e) {
+			var me = $(this);
+			var itemIdStr = me.attr("data-item-id");
+			var itemId = parseInt(itemIdStr);
+			ilh._slot_itemPinLinkClicked(itemId);
+		};
+		ilh["_slot_itemPinLinkClicked"] = function(itemId) {
+			ilh.emit_itemPinLinkClicked(itemId);
+			if (ilh.isPinned(itemId)) {
+				ilh.unpin(itemId);
+				$(".fa-thumb-tack", ilh._domItemHeader(itemId)).removeClass("fa-rotate-90");
+			}
+			else {
+				ilh.pin(itemId);
+				$("i.fa-thumb-tack", ilh._domItemHeader(itemId)).addClass("fa-rotate-90");
+			}
+		};
+		ilh["emit_itemPinLinkClicked"] = function(itemId) {
+			$(ilh).triggerHandler({type:"itemPinLinkClicked", itemId : itemId});
 		};
 		ilh["_o_ItemListHandler_addEventHandlers"] = ilh._addEventHandlers;
 		ilh._addEventHandlers = function(elements) {
 			ilh._o_ItemListHandler_addEventHandlers(elements);
-			var aclC = $(".accordion-close-link", elements);
+			var aclC = $(".accordion-remove-link", elements);
+			var aplC = $(".accordion-pin-link", elements);
 			
 			var myClickNS = "click.iilhevh";
-			aclC.unbind(myClickNS).bind(myClickNS, ilh.m_eventHandlers.itemCloseLinkClicked);
+			aclC.unbind(myClickNS).bind(myClickNS, ilh.m_eventHandlers.itemRemoveLinkClicked);
+			aplC.unbind(myClickNS).bind(myClickNS, ilh.m_eventHandlers.itemPinLinkClicked);
+		};
+		ilh["_o_ItemListHandler_clear"] = ilh.clear;
+		ilh["clear"] = function() {
+			for(var itemId in ilh.values()) {
+				ilh.emit_itemRemoveLinkClicked(itemId);
+			}
+			ilh["_o_ItemListHandler_clear"]();
+		};
+		ilh["m_pinned"] = tools.SimpleSet();
+		ilh["pinned"] = function() {
+			return ilh.m_pinned;
+		};
+		ilh["isPinned"] = function(itemId) {
+			return ilh.m_pinned.count(itemId);
+		};
+		ilh["pin"] = function(itemId) {
+			if (ilh.count(itemId)) {
+				ilh.m_pinned.insert(itemId);
+			}
 		}
+		ilh["unpin"] = function(itemId) {
+			ilh.m_pinned.erase(itemId);
+		}
+		ilh["removeUnpinned"] = function(itemId) {
+			if (ilh.m_pinned.size()) {
+				var toRemove = [];
+				
+				ilh.m_inFlightItems.clear();
+				
+				for(var itemId in ilh.values()) {
+					if (!ilh.m_pinned.count(itemId)) {
+						toRemove.push(itemId);
+					}
+				}
+				
+				for(let itemId of toRemove) {
+					ilh.emit_itemRemoveLinkClicked(itemId);
+					ilh.remove(itemId);
+				}
+			}
+			else {
+				ilh.clear();
+			}
+		}
+		
 		return ilh;
 	};
 	
@@ -1023,7 +1098,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//this has to be called prior usage
 		init: function() {
 			map.resultListTabs = map.ItemListTabHandler('#left_menu_parent', '#sidebar-content');
-			map.inspectionItemListHandler = map.InspectionItemListHandler($('#inspectItemsList'));
+			map.inspectionItemListHandler = map.InspectionItemListHandler('#inspectItemsList', '#sidebar-content');
 			map.relativesTab.activeItemHandler = map.ItemListHandler($('#activeItemsList'));
 			map.relativesTab.relativesHandler = map.ItemListHandler($('#relativesList'));
 			
@@ -1043,6 +1118,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			state.map.addLayer(map.clusterMarkerGroup);
 			map.clusterMarkers = map.RegionMarkerHandler(map.clusterMarkerGroup);
 			
+			$("#inspect-remove-all").on("click", map.onInspectRemoveAllClicked);
 		},
 	   
 		_attachEventHandlers: function() {
@@ -1054,9 +1130,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.inspectionItemListHandler).on("itemLinkClicked", map.onInspectItemLinkClicked);
 			$(map.inspectionItemListHandler).on("itemDetailsOpened", map.onInspectItemDetailsOpened);
 			$(map.inspectionItemListHandler).on("itemDetailsClosed", map.onInspectItemDetailsClosed);
-			$(map.inspectionItemListHandler).on("itemCloseLinkClicked", map.onInspectItemCloseLinkClicked);
+			$(map.inspectionItemListHandler).on("itemRemoveLinkClicked", map.onInspectItemRemoveLinkClicked);
 			
 			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
+			$(map.inspectionItemMarkers).on("click", map.onInspectionItemMarkerClicked);
 			
 			$(map.clusterMarkers).on("click", map.onClusterMarkerClicked);
 			$(map.clusterMarkers).on("mouseover", map.onClusterMarkerMouseOver);
@@ -1065,6 +1142,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.clusterMarkerGroup.on("clustermouseover", map.onClusteredClusterMarkerMouseOver);
 			map.clusterMarkerGroup.on("clustermouseout", map.onClusteredClusterMarkerMouseOut);
 			map.clusterMarkerGroup.on("layerremove", map.onClusterMarkerLayerRemoved);
+			
+			state.map.on("click", map.onMapClicked);
 		},
 	   
 		_detachEventHandlers: function() {
@@ -1076,9 +1155,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.inspectionItemListHandler).off("itemLinkClicked", map.onInspectItemLinkClicked);
 			$(map.inspectionItemListHandler).off("itemDetailsOpened", map.onInspectItemDetailsOpened);
 			$(map.inspectionItemListHandler).off("itemDetailsClosed", map.onInspectItemDetailsClosed);
-			$(map.inspectionItemListHandler).off("itemCloseLinkClicked", map.onInspectItemCloseLinkClicked)
+			$(map.inspectionItemListHandler).off("itemRemoveLinkClicked", map.onInspectItemRemoveLinkClicked)
 			
 			$(map.itemMarkers).off("click", map.onItemMarkerClicked);
+			$(map.inspectionItemMarkers).off("click", map.onInspectionItemMarkerClicked);
 			
 			$(map.clusterMarkers).off("click", map.onClusterMarkerClicked);
 			$(map.clusterMarkers).off("mouseover", map.onClusterMarkerMouseOver);
@@ -1087,6 +1167,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.clusterMarkerGroup.off("clustermouseover", map.onClusteredClusterMarkerMouseOver);
 			map.clusterMarkerGroup.off("clustermouseout", map.onClusteredClusterMarkerMouseOut);
 			map.clusterMarkerGroup.off("layerremove", map.onClusterMarkerLayerRemoved);
+			
+			state.map.off("click", map.onMapClicked);
 		},
 		
 		clear: function() {
@@ -1128,7 +1210,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.dagExpander.setPreloadShapes(map.cfg.clusterShapes.preload);
 			map.dagExpander.setBulkItemFetchCount(map.cfg.resultList.bulkItemFetchCount);
 		},
-	   
+		
+		
 		displayCqr: function (cqr) {
 			map.clear();
 			if (!cqr.hasResults()) {
@@ -1230,11 +1313,29 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}, tools.defErrorCB);
 			}, tools.defErrorCB);
 		},
+		
+
+		removeUnpinnedInspectionItems: function() {
+			map.inspectionItemListHandler.removeUnpinned();
+		},
 	   
 		addToInspection: function(itemId) {
-			map.inspectionItemListHandler.insertItemId(itemId);
-			if (map.cfg.resultList.showItemMarkers) {
-				map.inspectionItemMarkers.insert(itemId);
+			var focusItem = function() {
+				if (itemId == state.items.inspectItem) {
+					state.sidebar.open("inspect");
+					map.inspectionItemListHandler.scrollTo(itemId);
+					map.inspectionItemListHandler.open(itemId);
+				}
+			};
+			state.items.inspectItem = itemId;
+			if (map.inspectionItemListHandler.count(itemId)) {
+				focusItem();
+			}
+			else {
+				map.inspectionItemListHandler.insertItemId(itemId, focusItem);
+				if (map.cfg.resultList.showItemMarkers) {
+					map.inspectionItemMarkers.insert(itemId);
+				}
 			}
 		},
 		
@@ -1243,13 +1344,23 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.inspectionItemMarkers.remove(itemId);
 		},
 		
+		onInspectionItemMarkerClicked: function(e) {
+			state.items.inspectItem = e.itemId;
+			state.sidebar.open("inspect");
+			map.inspectionItemListHandler.open(e.itemId);
+			map.inspectionItemListHandler.scrollTo(e.itemId);
+		},
+		
+		onInspectRemoveAllClicked: function() {
+			map.inspectionItemListHandler.clear();
+		},
+	   
 		onInspectItemLinkClicked: function(e) {
 			var itemId = e.itemId;
 			state.items.inspectItem = itemId;
 		},
 		
-		
-		onInspectItemCloseLinkClicked: function(e) {
+		onInspectItemRemoveLinkClicked: function(e) {
 			var itemId = e.itemId;
 			map.inspectionItemMarkers.remove(itemId);
 		},
@@ -1270,8 +1381,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			map.inspectedItemShapes.remove(itemId);
 		},
-	   
-
 	   
 		onItemLinkClicked: function(e) {
 			var itemId = e.itemId;
@@ -1310,6 +1419,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			map.highlightItemShapes.remove(itemId);
 			flickr.closeFlickrBar();
+		},
+	   
+		onMapClicked: function(e) {
+			map.removeUnpinnedInspectionItems();
 		},
 		
 		//removes old item markers and adds the new ones (if needed)

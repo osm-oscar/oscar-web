@@ -8,11 +8,23 @@
                         <b>{{itemName}}</b>{{#street}}, {{postcode}} {{city}} {{street}} {{housenumber}}{{/street}}
                     </a>
                     {{#closelink}}
-                    <span class="pull-right">&#91;<a data-item-id="{{{itemId}}}" class="accordion-close-link" href="#"><i class="fa fa-trash-o" aria-hidden="true"></i></a>&#93;</span>
+                    <span class="pull-right">
+						&#91;
+						<a data-item-id="{{{itemId}}}" class="accordion-remove-link" href="#">
+							<i class="fa fa-trash-o" aria-hidden="true"></i>
+						</a>
+						&#93;
+						&#91;
+						<a data-item-id="{{{itemId}}}" class="accordion-pin-link" href="#">
+							<i class="fa fa-thumb-tack" aria-hidden="true"></i>
+						</a>
+						&#93;
+					</span>
                     {{/closelink}}
                 </h5>
             </div>
         </div>
+        {{#details}}
         <div class="panel-collapse collapse" role="tabpanel" data-item-id="{{{itemId}}}" aria-expanded="true">
             <div class="panel-body">
                 <table class="table table-hover table-bordered table-condensed">
@@ -82,6 +94,7 @@
                 </table>
             </div>
         </div>
+        {{/details}}
     </div>
 {{/wrappedarray}}
 </script>
