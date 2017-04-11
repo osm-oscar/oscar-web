@@ -492,7 +492,7 @@ struct ChildrenInfoWriter {
 			out << ']';
 		}
 		if (sep == '{') {
-			out << '}';
+			out << sep;
 		}
 		out << '}'; // end of graph
 		
@@ -539,7 +539,7 @@ struct ChildrenInfoWriter {
 			out << '}';
 		}
 		if (sep == '{') {
-			out << '}';
+			out << sep;
 		}
 		out << '}'; // end of children info
 		
