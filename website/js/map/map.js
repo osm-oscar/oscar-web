@@ -231,7 +231,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				var needItemIds = [];
 				for(var i in itemIds) {
 					if (!handler.count(itemIds[i]) && !handler.m_inFlightItems.count(itemIds[i])) {
-						needItemIds.insert(itemIds[i]);
+						needItemIds.push(itemIds[i]);
 					}
 				}
 				handler.m_inFlightItems.insertArray(needItemIds);
@@ -248,7 +248,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					for (var i in needItemIds) {
 						handler.m_inFlightItems.erase(needItemIds[i]);
 					}
-				});
+				}, tools.defErrorCB);
 			},
 			insertItemId: function(itemId, cb) {
 				if (handler.count(itemId)) {
@@ -260,7 +260,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						handler.insertItem(item, cb);
 					}
 					handler.m_inFlightItems.erase(itemId);
-				});
+				}, tools.defErrorCB);
 			},
 			insertItem: function(item, cb) {
 				if (!handler.hasItem(item.id())) {
