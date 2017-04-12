@@ -157,6 +157,9 @@ define([], function() {
 				showItemShapes: false,
 				showItemMarkers: true,
 				regionTabs: false
+			clustering : {
+				//minimum number of items in root node to have a clustered view
+				threshold: 100
 			}
 		},
 		maxBufferedItems: 350, // buffered locations

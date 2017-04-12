@@ -1223,7 +1223,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			root.count = cqr.rootRegionApxItemCount();
 			root.name = "World";
 			
-			map.startClustering();
+			//depending on the count, either start clustering or display all results
+			
+			if (root.count >= map.cfg.clustering.threshold) {
+				map.startClustering();
+			}
+			else {
+				map.displayAllItems();
+			}
 		},
 	   
 		//spatial query object handling
@@ -1652,10 +1659,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		mapViewChanged: function() {
-			//this should remove those awfull long stacks
-			setTimeout(function() {
-				map._mapViewChanged();
-			}, 0);
+			if (state.dag.region(0xFFFFFFFF).count >= map.cfg.clustering.threshold) {
+				//this should remove those awfull long stacks
+				setTimeout(function() {
+					map._mapViewChanged();
+				}, 0);
+			}
 		},
 		
 		//function to calculate the dag state from our current mapview
@@ -1984,6 +1993,35 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				map.mapViewChanged(rid);
 				state.map.on("zoomend dragend", map.viewChanged);
 			});
+		},
+	   
+		displayAllItems: function() {
+			var cqr = state.cqr;
+			state.cqr.regionItemIds(0xFFFFFFFF, function(regionId, itemIds) {
+				if (cqr.sequenceId() !== state.cqr.sequenceId()) {
+					return;
+				}
+				oscar.fetchItems(itemIds, function() {}, tools.defErrorCB);
+				var rn = state.dag.region(0xFFFFFFFF);
+				var ilh = map.resultListTabs.addTab(0xFFFFFFFF, rn.name, rn.count, true);
+				ilh.insertItemIds(itemIds);
+				for(let itemId of itemIds) {
+					map.itemMarkers.add(itemId);
+				}
+			});
+			if (cqr.ohPath().length) {
+				var path = cqr.ohPath();
+				rid = path[path.length - 1];
+				oscar.getItem(rid, function(item) {
+					if (cqr.sequenceId() !== state.cqr.sequenceId()) {
+						return;
+					}
+					state.map.fitBounds( item.bbox() );
+				});
+			}
+			else {
+				state.map.fitWorld();
+			}
 		},
 	   
 		closePopups: function () {
