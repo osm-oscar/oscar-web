@@ -718,7 +718,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	//Derived classes need to provide a function _fetchLayer(itemId, call-back)
 	var ItemLayerHandler = function(target) {
 		this.m_target = target;
-		this.m_domRoot = $('#map');
 		this.m_layers = tools.SimpleHash(); //maps from id -> {layer: LeafletLayer, refCount: <int> }
 		this.m_forwardedSignals = {}, //add the name of the signals you want to process here in the form ["layer signal name", "map signal name"]
 		this._handleEvent = function(e, itemId) {
@@ -740,6 +739,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				});
 			}
 		};
+		this.target = function() {
+			return this.m_target;
+		},
 		//this only affects layers added AFTER! calling this function
 		this.addSignalForward = function(sourceSignalName, mappedSignalName) {
 			if (this.m_forwardedSignals[sourceSignalName] !== undefined) {
@@ -752,9 +754,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			this.m_forwardedSignals[sourceSignalName].push(mappedSignalName);
 		},
-		this.domRoot = function() {
-			return this.m_domRoot;
-		};
 		this.size = function() {
 			return this.m_layers.size();
 		};
