@@ -676,7 +676,14 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 					if (count === undefined) {
 						count = this.p.maxFetchItems;
 					}
-                    this.p.simpleCqrItems("$region:" + regionId + " (" + this.d.query + ")",
+					var q = "";
+					if (parseInt(regionId) !== 0xFFFFFFFF) {
+						q = "$region:" + regionId + " (" + this.d.query + ")";
+					}
+					else {
+						q = this.d.query;
+					}
+                    this.p.simpleCqrItems(q,
                         function (itemIds) {
                             successCB(regionId, itemIds);
                         },
