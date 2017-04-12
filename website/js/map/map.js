@@ -1352,10 +1352,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		onInspectionItemMarkerClicked: function(e) {
-			state.items.inspectItem = e.itemId;
-			state.sidebar.open("inspect");
-			map.inspectionItemListHandler.open(e.itemId);
-			map.inspectionItemListHandler.scrollTo(e.itemId);
+			if (state.items.inspectItem == e.itemId) {
+				state.items.inspectItem = -1;
+			}
+			map.inspectionItemListHandler.remove(e.itemId);
+			map.inspectionItemMarkers.remove(e.itemId);
 		},
 		
 		onInspectRemoveAllClicked: function() {
