@@ -894,7 +894,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			icon: "circle",
 			prefix : 'fa',
 			markerColor: "blue"
-		}
+		};
+		handler["marker_options"] = {};
 		
 		return handler;
 	};
@@ -931,18 +932,15 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 							}
 						}
 					}
+					var myMarkerOpts = Object.assign({}, handler.marker_options);
 					if (icon === undefined) {
-						cb(
-							L.marker(geopos,
-								{ 
-									icon: L.AwesomeMarkers.icon(handler.icon_options)
-								}
-							)
-						);
+						myMarkerOpts["icon"] = L.AwesomeMarkers.icon(handler.icon_options);
+						
 					}
 					else {
-						cb( L.marker(geopos, {icon: icon}) );
+						myMarkerOpts["icon"] = icon;
 					}
+					cb( L.marker(geopos, myMarkerOpts) );
 				}, tools.defErrorCB);
 			});
 		};
