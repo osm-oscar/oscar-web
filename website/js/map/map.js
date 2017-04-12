@@ -1100,15 +1100,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.relativesTab.relativesHandler = map.ItemListHandler($('#relativesList'));
 			
 			//init the map layers
-			map.itemShapes = map.ItemShapeHandler(state.map, config.styles.shapes.items.normal);
-			map.inspectedItemShapes = map.ItemShapeHandler(state.map, config.styles.shapes.items.inspected);
-			map.relativesShapes = map.ItemShapeHandler(state.map, config.styles.shapes.relatives.normal);
-			map.highlightItemShapes = map.ItemShapeHandler(state.map, config.styles.shapes.activeItems);
-			map.clusterMarkerRegionShapes = map.ItemShapeHandler(state.map, config.styles.shapes.regions.highlight);
+			map.itemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.items.normal);
+			map.inspectedItemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.items.inspected);
+			map.relativesShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.relatives.normal);
+			map.highlightItemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.activeItems);
+			map.clusterMarkerRegionShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.regions.highlight);
 			
-			map.itemMarkers = map.ItemMarkerHandler(state.map);
-			map.inspectionItemMarkers = map.ItemMarkerHandler(state.map);
+			map.itemMarkers = map.ItemMarkerHandler( L.layerGroup().addTo(state.map) );
+			map.inspectionItemMarkers = map.ItemMarkerHandler( L.layerGroup().addTo(state.map) );
 			map.inspectionItemMarkers.icon_options.markerColor = config.styles.markers.color.inspected;
+			map.inspectionItemMarkers.marker_options["zIndexOffset"] = 1000;
 
 			//init the cluster markers
             map.clusterMarkerGroup = L.markerClusterGroup(clusterMarkerOptions);
