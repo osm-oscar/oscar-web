@@ -940,7 +940,15 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					else {
 						myMarkerOpts["icon"] = icon;
 					}
-					cb( L.marker(geopos, myMarkerOpts) );
+					var marker = L.marker(geopos, myMarkerOpts);
+					marker.bindPopup(item.name());
+					marker.on("mouseover", function() {
+						marker.openPopup();
+					});
+					marker.on("mouseout", function() {
+						marker.closePopup();
+					});
+					cb( marker );
 				}, tools.defErrorCB);
 			});
 		};
