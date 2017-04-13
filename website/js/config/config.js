@@ -59,9 +59,9 @@ define([], function() {
             },
 			markers: { //maps from tag to marker type
 				color : {
-					standard : "blue",
-					inspected : "red",
-					relatives: "green"
+					standard : "darkblue",
+					inspected : "green",
+					relatives: "blue"
 				},
 				icons : {
 					"amenity" : {

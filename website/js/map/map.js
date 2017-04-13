@@ -893,7 +893,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		handler["icon_options"] = {
 			icon: "circle",
 			prefix : 'fa',
-			markerColor: "blue"
+			markerColor: config.styles.markers.color.standard
 		};
 		handler["marker_options"] = {};
 		

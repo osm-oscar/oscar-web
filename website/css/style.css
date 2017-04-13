@@ -122,12 +122,12 @@ body {
     overflow-y: hidden;
 }
 
-.sidebar-tabs>ul>li.active.sidebar-menu-red, .sidebar-header.sidebar-header-red {
-	background-color: #FF0000;
+.sidebar-tabs>ul>li.active.sidebar-menu-success, .sidebar-header.sidebar-header-success {
+	background-color: #5cb85c;
 }
 
-.sidebar-tabs>ul>li.active.sidebar-menu-green, .sidebar-header.sidebar-header-green {
-	background-color: #00FF00;
+.sidebar-tabs>ul>li.active.sidebar-menu-info, .sidebar-header.sidebar-header-info {
+	background-color: #5bc0de;
 }
 
 #inspect_parent {
