@@ -444,6 +444,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		return ilh;
 	};
+
+	var RelativesItemListHandler = function(parent, scrollContainer) {
+		var ilh = ItemListHandler(parent, scrollContainer);
+		ilh._item2RenderData = function(item) {
+			return state.resultListTemplateDataFromItem(item, false, true);
+		};
+		return ilh;
+	}
 	
 	//handles multiple item lists as tab groups
 	//emits multiple signals on it self:
@@ -1068,6 +1076,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
     var map = {
 		ItemListHandler: ItemListHandler,
 		InspectionItemListHandler: InspectionItemListHandler,
+		RelativesItemListHandler: RelativesItemListHandler,
 		ItemListTabHandler: ItemListTabHandler,
 		ItemShapeHandler: ItemShapeHandler,
 		ItemMarkerHandler: ItemMarkerHandler,
@@ -1104,8 +1113,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		init: function() {
 			map.resultListTabs = map.ItemListTabHandler('#left_menu_parent', '#sidebar-content');
 			map.inspectionItemListHandler = map.InspectionItemListHandler('#inspectItemsList', '#sidebar-content');
-			map.relativesTab.activeItemHandler = map.ItemListHandler($('#activeItemsList'));
-			map.relativesTab.relativesHandler = map.ItemListHandler($('#relativesList'));
+			map.relativesTab.activeItemHandler = map.RelativesItemListHandler($('#activeItemsList'));
+			map.relativesTab.relativesHandler = map.RelativesItemListHandler($('#relativesList'));
 			
 			//init the map layers
 			map.itemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.items.normal);
@@ -1357,12 +1366,19 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.inspectionItemMarkers.remove(itemId);
 		},
 		
+	   
 		onInspectionItemMarkerClicked: function(e) {
-			if (state.items.inspectItem == e.itemId) {
-				state.items.inspectItem = -1;
+			if ($('#item_relatives').hasClass("active")) {
+				state.items.activeItem = e.itemId;
+				map.showItemRelatives();
 			}
-			map.inspectionItemListHandler.remove(e.itemId);
-			map.inspectionItemMarkers.remove(e.itemId);
+			else {
+				if (state.items.inspectItem == e.itemId) {
+					state.items.inspectItem = -1;
+				}
+				map.inspectionItemListHandler.remove(e.itemId);
+				map.inspectionItemMarkers.remove(e.itemId);
+			}
 		},
 		
 		onInspectRemoveAllClicked: function() {
@@ -1493,8 +1509,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			state.items.activeItem = e.itemId;
 			map.resultListTabs.openItem(e.itemId);
 			map.resultListTabs.activeTab().scrollTo(e.itemId);
-			map.addToInspection(e.itemId);
-			map.showItemRelatives();
+			if ($('#item_relatives').hasClass("active")) {
+				map.showItemRelatives();
+			}
+			else {
+				map.addToInspection(e.itemId);
+			}
+			
 		},
 		onClusterMarkerLayerRemoved: function(e) {
 			map.closePopups();
