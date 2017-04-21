@@ -132,7 +132,7 @@ define([], function() {
             }
         },
         timeouts: {
-            query: 10000,
+            query: 0,
             loadingSpinner: 1000,
             spatialquery : {
                 select : 10000

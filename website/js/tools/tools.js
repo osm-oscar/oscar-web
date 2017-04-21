@@ -1,4 +1,5 @@
 define(["jquery"], function ($) {
+	
     var tools = {
         /**
          * Represents a small API for a hashmap
@@ -197,22 +198,6 @@ define(["jquery"], function ($) {
 					}
 				}
 			};
-		},
-
-        /**
-         * adds a string to the search input
-         *
-         * @param qstr the string that should be added
-         */
-        addSingleQueryStatementToQuery: function (qstr) {
-            var search_text = $('#search_text');
-			search_text.tokenfield('createToken', qstr);
-//             search_text.change();
-        },
-	   
-		setQuery: function(qstr) {
-            var search_text = $('#search_text');
-			search_text.tokenfield('setTokens', [{value : qstr, label : qstr}]);
 		},
 
         //https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript

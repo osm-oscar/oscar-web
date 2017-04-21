@@ -29,7 +29,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						return false;
 					}
 					var myQstr = "$item:" + myItemId;
-					tools.addSingleQueryStatementToQuery(myQstr);
+					state.addSingleQueryStatementToQuery(myQstr);
 					return false;
 				},
 				itemDetailQuery: function(e) {
@@ -43,7 +43,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					if (myValue !== undefined) {
 						myQstr += ":" + myValue;
 					}
-					tools.addSingleQueryStatementToQuery(myQstr);
+					state.addSingleQueryStatementToQuery(myQstr);
 					return false;
 				},
 				itemLinkClicked: function(e) {

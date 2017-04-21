@@ -122,7 +122,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 			search_text.on("tokenfield:createdtoken", function() {
 				$("#search_text-tokenfield").autocomplete("close");
 			});
-            search_text.bind('change', search.delayedCompletion).bind('keyup', search.delayedCompletion);
+            $('#search_text-tokenfield').bind('blur', search.delayedCompletion);
 
             $('#advancedToggle a').click(function () {
                 if ($(this).attr('mod') == 'hide') {

@@ -122,7 +122,7 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
         queryFromSearchLocation: function () {
             var myQ = tools.getParameterByName("q");
             if (myQ.length) {
-				tools.setQuery(myQ);
+				state.setQuery(myQ);
                 search.instantCompletion();
 			}
 		},

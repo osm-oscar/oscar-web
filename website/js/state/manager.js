@@ -116,7 +116,20 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
             state.mapHandler.clear();
 			state.items.activeItem = undefined;
             state.dag.clear();
-        }
+        },
+        
+        addSingleQueryStatementToQuery: function (qstr) {
+			state.sidebar.open("search");
+			$("#sidebar-content").animate({scrollTop: 0});
+			$('#search_text-tokenfield').focus();
+			$('#search_text').tokenfield('createToken', qstr);
+        },
+	   
+		setQuery: function(qstr) {
+            var search_text = $('#search_text');
+			search_text.tokenfield('setTokens', [{value : qstr, label : qstr}]);
+		},
+        
     };
 
     return state;
