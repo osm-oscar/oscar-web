@@ -4,10 +4,15 @@
         <div class="panel-heading results-panel-title" role="tab">
             <div class="panel-title">
                 <h5>
+                    {{^closelink}}
                     <a data-item-id="{{{itemId}}}" class="accordion-toggle accordion-toggle-link {{{matchingTagClass}}}" href="#" aria-expanded="true">
                         <b>{{itemName}}</b>{{#street}}, {{postcode}} {{city}} {{street}} {{housenumber}}{{/street}}
                     </a>
+                    {{/closelink}}
                     {{#closelink}}
+                    <a data-item-id="{{{itemId}}}" class="accordion-title-link {{{matchingTagClass}}}" href="#" aria-expanded="true">
+                        <b>{{itemName}}</b>{{#street}}, {{postcode}} {{city}} {{street}} {{housenumber}}{{/street}}
+                    </a>
                     <span class="pull-right">
 						&#91;
 						<a data-item-id="{{{itemId}}}" class="accordion-remove-link" href="#">
@@ -17,6 +22,11 @@
 						&#91;
 						<a data-item-id="{{{itemId}}}" class="accordion-pin-link" href="#">
 							<i class="fa fa-thumb-tack" aria-hidden="true"></i>
+						</a>
+						&#93;
+						&#91;
+						<a data-item-id="{{{itemId}}}" class="accordion-toggle accordion-toggle-link" href="#">
+							<i class="fa fa-caret-down" aria-hidden="true"></i>
 						</a>
 						&#93;
 					</span>

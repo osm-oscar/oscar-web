@@ -354,6 +354,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		ilh._item2RenderData = function(item) {
 			return state.resultListTemplateDataFromItem(item, true, true);
 		};
+		
+		//Remove link clicked handling
 		ilh.m_eventHandlers["itemRemoveLinkClicked"] = function(e) {
 			var me = $(this);
 			var itemIdStr = me.attr("data-item-id");
@@ -368,6 +370,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		ilh["emit_itemRemoveLinkClicked"] = function(itemId) {
 			$(ilh).triggerHandler({type:"itemRemoveLinkClicked", itemId : itemId});
 		};
+		
+		//pin link clicked handling
 		ilh.m_eventHandlers["itemPinLinkClicked"] = function(e) {
 			var me = $(this);
 			var itemIdStr = me.attr("data-item-id");
@@ -388,15 +392,32 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		ilh["emit_itemPinLinkClicked"] = function(itemId) {
 			$(ilh).triggerHandler({type:"itemPinLinkClicked", itemId : itemId});
 		};
+
+		//title link clicked handling
+		ilh.m_eventHandlers["itemTitleLinkClicked"] = function(e) {
+			var me = $(this);
+			var itemIdStr = me.attr("data-item-id");
+			var itemId = parseInt(itemIdStr);
+			ilh._slot_itemTitleLinkClicked(itemId);
+		};
+		ilh["_slot_itemTitleLinkClicked"] = function(itemId) {
+			ilh.emit_itemTitleLinkClicked(itemId);
+		};
+		ilh["emit_itemTitleLinkClicked"] = function(itemId) {
+			$(ilh).triggerHandler({type:"itemTitleLinkClicked", itemId : itemId});
+		};
+
 		ilh["_o_ItemListHandler_addEventHandlers"] = ilh._addEventHandlers;
 		ilh._addEventHandlers = function(elements) {
 			ilh._o_ItemListHandler_addEventHandlers(elements);
 			var aclC = $(".accordion-remove-link", elements);
 			var aplC = $(".accordion-pin-link", elements);
+			var atlC = $(".accordion-title-link", elements);
 			
 			var myClickNS = "click.iilhevh";
 			aclC.unbind(myClickNS).bind(myClickNS, ilh.m_eventHandlers.itemRemoveLinkClicked);
 			aplC.unbind(myClickNS).bind(myClickNS, ilh.m_eventHandlers.itemPinLinkClicked);
+			atlC.unbind(myClickNS).bind(myClickNS, ilh.m_eventHandlers.itemTitleLinkClicked);
 		};
 		ilh["_o_ItemListHandler_clear"] = ilh.clear;
 		ilh["clear"] = function() {
@@ -889,7 +910,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	
 	var MarkerHandler = function(target) {
 		var handler = new ItemLayerHandler(target);
-
 		///returns leaflet LatLng
 		handler.coords = function(itemId) {
 			if (!this.count(itemId)) {
@@ -1146,6 +1166,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.inspectionItemListHandler).on("itemDetailsOpened", map.onInspectItemDetailsOpened);
 			$(map.inspectionItemListHandler).on("itemDetailsClosed", map.onInspectItemDetailsClosed);
 			$(map.inspectionItemListHandler).on("itemRemoveLinkClicked", map.onInspectItemRemoveLinkClicked);
+			$(map.inspectionItemListHandler).on("itemTitleLinkClicked", map.onInspectItemTitleLinkClicked);
 			
 			$(map.itemMarkers).on("click", map.onItemMarkerClicked);
 			$(map.inspectionItemMarkers).on("click", map.onInspectionItemMarkerClicked);
@@ -1170,7 +1191,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.inspectionItemListHandler).off("itemLinkClicked", map.onInspectItemLinkClicked);
 			$(map.inspectionItemListHandler).off("itemDetailsOpened", map.onInspectItemDetailsOpened);
 			$(map.inspectionItemListHandler).off("itemDetailsClosed", map.onInspectItemDetailsClosed);
-			$(map.inspectionItemListHandler).off("itemRemoveLinkClicked", map.onInspectItemRemoveLinkClicked)
+			$(map.inspectionItemListHandler).off("itemRemoveLinkClicked", map.onInspectItemRemoveLinkClicked);
+			$(map.inspectionItemListHandler).off("itemTitleLinkClicked", map.onInspectItemTitleLinkClicked);
 			
 			$(map.itemMarkers).off("click", map.onItemMarkerClicked);
 			$(map.inspectionItemMarkers).off("click", map.onInspectionItemMarkerClicked);
@@ -1393,6 +1415,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		onInspectItemRemoveLinkClicked: function(e) {
 			var itemId = e.itemId;
 			map.inspectionItemMarkers.remove(itemId);
+		},
+	   
+		onInspectItemTitleLinkClicked: function(e) {
+			if (map.inspectionItemMarkers.count(e.itemId)) {
+				state.map.panTo(map.inspectionItemMarkers.coords(e.itemId));
+			}
 		},
 		
 		onInspectItemDetailsOpened: function(e) {
