@@ -53,6 +53,9 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
 			else if (e.type === "path") {
 				t = "Path";
 			}
+			else if (e.type === "point") {
+				t = "Point";
+			}
 			return { id : e.id, name : e.name, type : t};
 		},
         resultListTemplateDataFromItem: function (item, withCloseLink, withDetails) {

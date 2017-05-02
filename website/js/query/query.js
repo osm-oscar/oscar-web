@@ -19,6 +19,9 @@ define(["jquery", "state", "map", "conf"], function($, state, map, config) {
                     query.endSpatialQuery();
                 }
             }
+            else if (state.spatialquery.type === "point") {
+				query.endSpatialQuery();
+			}
             else {
                 query.updateSpatialQueryMapShape();
             }
@@ -104,6 +107,11 @@ define(["jquery", "state", "map", "conf"], function($, state, map, config) {
             else if (state.spatialquery.type === "poly") {
                 state.spatialquery.mapshape = L.polygon(state.spatialquery.coords, config.styles.shapes.polyquery.highlight);
             }
+            else if (state.spatialquery.type === "point") {
+				let opts = Object.assign({}, config.styles.shapes.pointquery.highlight);
+				opts["radius"] = $('#spatialquery_radius').val();
+                state.spatialquery.mapshape = L.circle(state.spatialquery.coords[0], opts);
+			}
             else if (state.spatialquery.type === "path") {
                 state.spatialquery.mapshape = L.polyline(state.spatialquery.coords, config.styles.shapes.pathquery.highlight);
             }

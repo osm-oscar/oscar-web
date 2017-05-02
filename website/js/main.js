@@ -241,6 +241,12 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                         }
                     }
                 }
+                else if (state.spatialquery.type === "point") {
+                    if (state.spatialquery.coords.length > 0) {
+                        qStr = "$point:" + jQuery('#spatialquery_radius').val();
+						qStr += "," + state.spatialquery.coords[0].lat + "," + state.spatialquery.coords[0].lng;
+                    }
+                }
                 else if (state.spatialquery.type === "poly") {
                     if (state.spatialquery.coords.length > 3) {
                         qStr = "$poly";
@@ -276,7 +282,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 if (e.target.value !== state.spatialquery.type) {
                     query.clearSpatialQuery();
                 }
-                if (e.target.value === 'path') {
+                if (e.target.value === 'path' || e.target.value === 'point') {
                     $('#spatialquery_radius_group').removeClass('hidden');
                 }
                 else {
