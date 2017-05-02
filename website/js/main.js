@@ -14,7 +14,6 @@ requirejs.config({
         "jquery": "vendor/jquery/jquery.min",
         "jqueryui": "vendor/jquery-ui/jquery-ui.min",
         "bootstrap": "vendor/twitter-bootstrap/js/bootstrap.min",
-        "tokenfield": "vendor/tokenfield/bootstrap-tokenfield",
 		"typeahead" : "vendor/typeahead/typeahead.jquery",
 		"bloodhound" : "vendor/typeahead/bloodhound",
         "leaflet": "vendor/leaflet/leaflet-src",
@@ -56,7 +55,7 @@ requirejs.config({
     waitSeconds: 20
 });
 
-requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf", "tokenfield", "switch", "state", "map", "tree", "query", "tools", "search"],
+requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf",  "switch", "state", "map", "tree", "query", "tools", "search"],
     function () {
         var L = require("leaflet");
 		var jQuery = require("jquery");
@@ -65,7 +64,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 		var sidebar = require("sidebar");
 		var mustacheLoader = require("mustacheLoader");
 		var config = require("conf");
-		var tokenfield = require("tokenfield");
 		var switchButton = require("switch");
 		var state = require("state");
 		var map = require("map");
@@ -86,8 +84,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         $.Mustache.load('template/treeTemplate.mst');
         $("#help").load('template/help.html', function () {
             $('.example-query-string').on('click', function () {
-                $("#search_text").tokenfield('createToken', {value: this.firstChild.data, label: this.firstChild.data});
-                state.sidebar.open("search");
+				state.setQuery(this.firstChild.data);
             });
         });
 
@@ -107,22 +104,9 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 e.preventDefault();
                 search.instantCompletion();
             });
-
-            var search_text = $('#search_text');
-            search_text.tokenfield({
-				minWidth: 250, 
-				delimiter: ",",
-				autocomplete: {
-					source: function(request, response) {
-						search.tagInfoComplete(request["term"], response);
-					},
-					delay: 200
-				}
-			});
-			search_text.on("tokenfield:createdtoken", function() {
-				$("#search_text-tokenfield").autocomplete("close");
-			}).on("tokenfield:removedtoken", search.delayedCompletion);
-
+			
+			search.bindTagCompletion('#search_text');
+			
             $('#advancedToggle a').click(function () {
                 if ($(this).attr('mod') == 'hide') {
                     $('#advancedSearch').hide(800);

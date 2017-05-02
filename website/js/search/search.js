@@ -127,6 +127,96 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
 			}
 		},
 		
+		bindTagCompletion: function(element) {
+            var search_text = $(element);
+            search_text.autocomplete({
+					source: function(request, response) {
+						//request is the whole string
+						//but we only need the part around the current cursor position
+						
+						var caret = search_text[0].selectionStart;
+						var term = request.term;
+						var begin = caret;
+						var end = caret;
+						
+						//begin should start at the end of the token
+						if (begin === term.length || term[begin] === ' ' || term[begin] === '(' || term[begin] === ')') {
+							--begin;
+						}
+						else {
+							setTimeout(function() {response([]); }, 0);
+							return;
+						}
+						
+						for(; begin >= 0; --begin) {
+							var c = term[begin];
+							//we're done
+							if (term[begin] === '@') {
+								break;
+							}
+							else if (term[begin] === ' ' || term[begin] === '(' || term[begin] === ')') {
+								//check for  escape before delimeter
+								if (begin > 0) {
+									if (term[begin-1] === '\\') {
+										begin -= 1;
+										continue;
+									}
+								}
+								begin = -1;
+								break;
+							}
+						}
+						//begin now either points to the position of the @ or it is -1
+						if (begin < 0) {
+							setTimeout(function() { response([])}, 0);
+							return;
+						}
+						
+						//end may point to the beginning of an escape sequence
+						if (term[end] === '\\') {
+							++end;
+						}
+						
+						//check for end
+						for(; end < term.length; ++end) {
+							if (term[end] === '\\') {
+								//skip next character
+								++end;
+							}
+							else if (term[end] === ' ' || term[end] === '(' || term[end] === ')') {
+								break;
+							}
+						}
+						//end now either points to the position of the first non-tag character or to the end of the request
+						var tag = term.slice(begin, end);
+						var metadata = { begin: begin, end: end, caret: caret};
+						search.tagInfoComplete(tag, function(result) {
+								//result is an array
+								let myResult  = [];
+								for(let x of result) {
+									myResult.push({label: x, value: "@" + x, metadata: metadata});
+								}
+								response(myResult);
+							}
+						);
+					},
+					select: function(evt, obj) {
+						var selection = obj.item.value;
+						var metadata = obj.item.metadata;
+						var caret = metadata.begin + selection.length;
+						var text = search_text.val();
+						search_text.val( text.slice(0, metadata.begin) + selection + text.slice(metadata.end, text.length) );
+						search_text.focus();
+						search_text[0].setSelectionRange(caret, caret);
+						return false;
+					},
+					focus: function(evt, obj) {
+						return false;
+					},
+					delay: 200
+			});
+		},
+		
 		///@response array of suggestions
 		tagInfoComplete: function(query, response) {
 			if (query.length < 3 || query[0] != '@') {
@@ -168,12 +258,12 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
 				var result = [];
 				if (value.length) {
 					for (var suggestion in data.data) {
-						result.push("@" + key + ":" + data.data[suggestion].value);
+						result.push(key + ":" + data.data[suggestion].value);
 					}
 				}
 				else {
 					for (var suggestion in data.data) {
-						result.push("@" + data.data[suggestion].key + ":" + data.data[suggestion].value);
+						result.push(data.data[suggestion].key + ":" + data.data[suggestion].value);
 					}
 				}
 				response( result );
