@@ -111,7 +111,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             var search_text = $('#search_text');
             search_text.tokenfield({
 				minWidth: 250, 
-				delimiter: " ",
+				delimiter: ",",
 				autocomplete: {
 					source: function(request, response) {
 						search.tagInfoComplete(request["term"], response);
