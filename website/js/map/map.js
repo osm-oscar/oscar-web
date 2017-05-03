@@ -2107,7 +2107,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
     L.tileLayer('http://tiles.fmi.uni-stuttgart.de/planet/{z}/{x}/{y}.png', {
         attribution: osmAttr,
         minZoom: 18,
-        maxZoom: 20
+        maxZoom: 24
     }).addTo(state.map);
 	//init map module
 	map.init();
