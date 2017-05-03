@@ -48,6 +48,7 @@ requirejs.config({
     shim: {
         'bootstrap': {deps: ['jquery']},
         'leafletCluster': {deps: ['leaflet', 'jquery']},
+        'awesomeMarkers': {deps: ['leaflet', 'jquery']},
         'sidebar': {deps: ['leaflet', 'jquery']},
         'mustacheLoader': {deps: ['jquery']},
         'slimbox': {deps: ['jquery']},
