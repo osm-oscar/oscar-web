@@ -16,7 +16,7 @@
         <link rel="stylesheet" href="vendor/slimbox/css/slimbox2.css" type="text/css" media="screen"/>
         <link rel='stylesheet' href='vendor/leaflet-markercluster/MarkerCluster.css'/>
         <link rel='stylesheet' href='vendor/leaflet-markercluster/MarkerCluster.Default.css'/>
-        <link rel="stylesheet" href="vendor/leaflet-sidebar/css/leaflet-sidebar.min.css"/>
+        <link rel="stylesheet" href="vendor/leaflet-sidebar/css/leaflet-sidebar.min"/>
         <link rel="stylesheet" href="vendor/leaflet-awesome-markers/leaflet.awesome-markers.css"/>
         <link rel="stylesheet" href="vendor/tokenfield/bootstrap-tokenfield.min.css"/>
         <link rel='stylesheet' href="vendor/font-awesome/css/font-awesome.min.css"/>
@@ -68,10 +68,43 @@
 
                 <!-- Tab panes -->
                 <div class="sidebar-content" id='sidebar-content'>
-                    <div class="sidebar-pane" id="search">
-                        <h1 class="sidebar-header">Search
-                            <div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
-                        </h1>
+					<div class="sidebar-content-titles">
+						<div class="sidebar-content-title" id="sidebar-title-search">
+							<h1 class="sidebar-header"><span>Search
+								<div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
+							</h1>
+						</div>
+						<div class="sidebar-content-title" id="sidebar-title-inspect">
+							<h1 class="sidebar-header sidebar-header-success">
+								Details
+								<span>
+									&#91;
+									<a href="#" id="inspect-remove-all">
+										<i class="fa fa-trash-o"></i>
+									</a>
+									&#93;
+								</span>
+								<div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
+							</h1>
+						</div>
+						<div class="sidebar-content-title" id="sidebar-title-help">
+							<h1 class="sidebar-header">Help
+								<div class="sidebar-close"><i class="fa fa-caret-left"></i>
+								</div>
+							</h1>
+						</div>
+						<div class="sidebar-content-title" id="sidebar-title-options">
+							<h1 class="sidebar-header">Options
+								<div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
+							</h1>
+						</div>
+						<div class="sidebar-content-title" id="sidebar-title-relatives">
+							<h1 class="sidebar-header sidebar-header-info">Item relatives
+								<div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
+							</h1>
+						</div>
+					</div>
+					<div class="sidebar-content-fixed">
                         <div>
                             <form id="searchModi" data-toggle="tooltip" data-placement="right" title="Use 'Local' to search in viewport">
                                 <input type="checkbox" name="searchModi" class="form-control">
@@ -134,110 +167,97 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="left_menu_parent" class="menu_parent">
-                        </div>
-                    </div>
-                    <div class="sidebar-pane" id="inspect">
-                        <h1 class="sidebar-header sidebar-header-success">
-							Details
-							<span>
-								&#91;
-								<a href="#" id="inspect-remove-all">
-									<i class="fa fa-trash-o"></i>
-								</a>
-								&#93;
-							</span>
-                            <div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
-                        </h1>
-                        <div id="inspect_parent">
-                            <div id="inspectItemsList"></div>
-                        </div>
-                    </div>
-                    <div class="sidebar-pane" id="help">
-                    </div>
-                    <div class="sidebar-pane" id="options">
-                        <h1 class="sidebar-header">Options
-                            <div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
-                        </h1>
+					</div>
 
-                        <div id='options_menu_parent' class='menu_parent'>
-                            <div id='config_parent'>
-                                <div class='form-group-sm'>
-                                    <label for='show_flickr'>
-                                        <input type="checkbox" class="checkbox" id="show_flickr" checked>Show flickr images
-                                    </label>
-                                </div>
-                                <div class='form-group-sm'>
-                                    <label for='full_cqr_checkbox'>
-                                        <input type="checkbox" class="checkbox" id="full_cqr_checkbox">Transfer entire result
-                                    </label>
-                                </div>
-                                <div class='form-group-sm'>
-                                    <label for='display_cluster_shapes_checkbox'>
-										<input type="checkbox" class="checkbox" id="display_cluster_shapes_checkbox" checked>
-										Display cluster shapes
-									</label>
-                                </div>
-                                <div class='form-group-sm'>
-                                    <label for='display_item_shapes_checkbox'>
-										<input type="checkbox" class="checkbox" id="display_item_shapes_checkbox">
-										Display item shapes
-									</label>
-                                </div>
-                                <div class='form-group-sm'>
-                                    <label for='display_item_markers_checkbox'>
-										<input type="checkbox" class="checkbox" id="display_item_markers_checkbox" checked>
-										Display item markers
-									</label>
-                                </div>
-                                <div class='form-group'>
-                                    <label for='oht_checkbox'>
-                                        <input type="checkbox" class="checkbox" id="oht_checkbox" checked>Global unfold ratio
-                                    </label>
-                                    <div class="input-group" id='ohf_spinner_group'>
-                                        <span class="input-group-addon">unfold ratio</span>
-                                        <input class='form-control' type="number" value='95' min='0' max='100' id='ohf_spinner'
-                                               step="1"/>
-                                    </div>
-                                </div>
-                                <div class='form-group'>
-                                    <div class="input-group" id='region_filter_group'>
-                                        <span class="input-group-addon">Display</span>
-                                        <select class='form-control' id="region_filter"/>
-                                        <option value="named" selected="selected">named</option>
-                                        <option value="admin_level">administrative</option>
-                                        <option value="all">all</option>
-                                        <option value="natural_landuse">natural/landuse</option>
-                                        </select>
-                                        <span class="input-group-addon">regions</span>
-                                    </div>
-                                </div>
-                                <div class='form-group'>
-                                    <div class="input-group">
-                                        <span class="input-group-addon">
-                                            <a href="#" target="_blank" id="result_download_link" data-base-href="">Download</a>
-                                        </span>
-                                        <select class='form-control' id="result_download_select"/>
-                                        <option value="items">items</option>
-                                        <option value="items+parents">items+parents</option>
-                                        <option value="items+shapes">items with shapes</option>
-                                        <option value="items+parents+shapes">items+parents with shapes</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="sidebar-pane" id="item_relatives">
-                        <h1 class="sidebar-header sidebar-header-info">Item relatives
-                            <div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
-                        </h1>
-                        <div id="relatives_parent">
-                            <div id="activeItemsList"></div>
-                            <h4 class="text-center">has the following relatives</h4>
-                            <div id="relativesList"></div>
-                        </div>
-                    </div>
+					
+					<div class="sidebar-panes">
+						<div class="sidebar-pane" id="sidebar-pane-search">
+							<div id="left_menu_parent" class="menu_parent"></div>
+						</div>
+						<div class="sidebar-pane" id="sidebar-pane-inspect">
+							<div id="inspect_parent">
+								<div id="inspectItemsList"></div>
+							</div>
+						</div>
+						<div class="sidebar-pane" id="sidebar-pane-help">
+						</div>
+						<div class="sidebar-pane" id="sidebar-pane-options">
+							<div id='options_menu_parent' class='menu_parent'>
+								<div id='config_parent'>
+									<div class='form-group-sm'>
+										<label for='show_flickr'>
+											<input type="checkbox" class="checkbox" id="show_flickr" checked>Show flickr images
+										</label>
+									</div>
+									<div class='form-group-sm'>
+										<label for='full_cqr_checkbox'>
+											<input type="checkbox" class="checkbox" id="full_cqr_checkbox">Transfer entire result
+										</label>
+									</div>
+									<div class='form-group-sm'>
+										<label for='display_cluster_shapes_checkbox'>
+											<input type="checkbox" class="checkbox" id="display_cluster_shapes_checkbox" checked>
+											Display cluster shapes
+										</label>
+									</div>
+									<div class='form-group-sm'>
+										<label for='display_item_shapes_checkbox'>
+											<input type="checkbox" class="checkbox" id="display_item_shapes_checkbox">
+											Display item shapes
+										</label>
+									</div>
+									<div class='form-group-sm'>
+										<label for='display_item_markers_checkbox'>
+											<input type="checkbox" class="checkbox" id="display_item_markers_checkbox" checked>
+											Display item markers
+										</label>
+									</div>
+									<div class='form-group'>
+										<label for='oht_checkbox'>
+											<input type="checkbox" class="checkbox" id="oht_checkbox" checked>Global unfold ratio
+										</label>
+										<div class="input-group" id='ohf_spinner_group'>
+											<span class="input-group-addon">unfold ratio</span>
+											<input class='form-control' type="number" value='95' min='0' max='100' id='ohf_spinner'
+												step="1"/>
+										</div>
+									</div>
+									<div class='form-group'>
+										<div class="input-group" id='region_filter_group'>
+											<span class="input-group-addon">Display</span>
+											<select class='form-control' id="region_filter"/>
+											<option value="named" selected="selected">named</option>
+											<option value="admin_level">administrative</option>
+											<option value="all">all</option>
+											<option value="natural_landuse">natural/landuse</option>
+											</select>
+											<span class="input-group-addon">regions</span>
+										</div>
+									</div>
+									<div class='form-group'>
+										<div class="input-group">
+											<span class="input-group-addon">
+												<a href="#" target="_blank" id="result_download_link" data-base-href="">Download</a>
+											</span>
+											<select class='form-control' id="result_download_select"/>
+											<option value="items">items</option>
+											<option value="items+parents">items+parents</option>
+											<option value="items+shapes">items with shapes</option>
+											<option value="items+parents+shapes">items+parents with shapes</option>
+											</select>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="sidebar-pane" id="sidebar-pane-relatives">
+							<div id="relatives_parent">
+								<div id="activeItemsList"></div>
+								<h4 class="text-center">has the following relatives</h4>
+								<div id="relativesList"></div>
+							</div>
+						</div>
+					</div>
                 </div>
             </div>
             <div id="map"></div>
