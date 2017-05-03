@@ -2099,10 +2099,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	state.map.zoomControl.setPosition('topright');
 	state.sidebar = L.control.sidebar('sidebar').addTo(state.map);
 	var osmAttr = '&copy; <a target="_blank" href="http://www.openstreetmap.org">OpenStreetMap</a>';
-// 	var tileURI = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-	var tileURI = 'http://tiles.fmi.uni-stuttgart.de/planet/{z}/{x}/{y}.png'
-	L.tileLayer(tileURI, {attribution: osmAttr, maxZoom: 20}).addTo(state.map);
-	
+    L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: osmAttr,
+        minZoom: 0,
+        maxZoom: 17
+    }).addTo(state.map);
+    L.tileLayer('http://tiles.fmi.uni-stuttgart.de/planet/{z}/{x}/{y}.png', {
+        attribution: osmAttr,
+        minZoom: 18,
+        maxZoom: 20
+    }).addTo(state.map);
 	//init map module
 	map.init();
 
