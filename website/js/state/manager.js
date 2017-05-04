@@ -125,16 +125,16 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
 			state.sidebar.open("search");
 			$("#sidebar-content").animate({scrollTop: 0});
             var search_text = $('#search_text');
-			search_text.focus();
 			search_text.val( search_text.val() + " " + qstr);
+			search_text.focus();
         },
 	   
 		setQuery: function(qstr) {
 			state.sidebar.open("search");
 			$("#sidebar-content").animate({scrollTop: 0});
             var search_text = $('#search_text');
-			search_text.focus();
 			search_text.val(qstr);
+			search_text.focus();
 		},
         
     };
