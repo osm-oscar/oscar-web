@@ -754,8 +754,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	//base class form Leaflet layers which take care of layers of items
 	//It triggers event on itself
 	//Derived classes need to provide a function _fetchLayer(itemId, call-back)
-	var ItemLayerHandler = function(target) {
+	var ItemLayerHandler = function(target, map) {
+		if (map === undefined) {
+			map = target;
+		}
 		this.m_target = target;
+		this.m_map = map;
 		this.m_layers = tools.SimpleHash(); //maps from id -> {layer: LeafletLayer, refCount: <int> }
 		this.m_forwardedSignals = {}, //add the name of the signals you want to process here in the form ["layer signal name", "map signal name"]
 		this._handleEvent = function(e, itemId) {
@@ -884,7 +888,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				return;
 			}
 			var ll = this.layer(itemId);
-			this.m_target.fitBounds(ll.getBounds());
+			this.m_map.fitBounds(ll.getBounds());
 		};
 		this.clear = function() {
 			for(var i in this.m_layers.values()) {
@@ -901,8 +905,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	
 	//The ShapeHandler handles the map shapes. It uses ref-counting to track the usage of shapes
 	//Style is of the form:
-	var ItemShapeHandler = function(target, style) {
-		var handler = new ItemLayerHandler(target);
+	var ItemShapeHandler = function(target, style, map) {
+		var handler = new ItemLayerHandler(target, map);
 		handler.m_style = style;
 		handler.m_forwardedSignals = {"click": ["click"]};
 		//calls cb after adding if cb !== undefined
@@ -917,8 +921,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return handler;
 	};
 	
-	var MarkerHandler = function(target) {
-		var handler = new ItemLayerHandler(target);
+	var MarkerHandler = function(target, map) {
+		var handler = new ItemLayerHandler(target, map);
 		///returns leaflet LatLng
 		handler.coords = function(itemId) {
 			if (!this.count(itemId)) {
@@ -926,6 +930,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			var l = this.layer(itemId);
 			return l.getLatLng();
+		};
+		handler.zoomTo = function(itemId) {
+			if (!this.count(itemId)) {
+				return;
+			}
+			this.m_map.panTo(handler.coords(itemId));
 		};
 		handler["icon_options"] = {
 			icon: "circle",
@@ -937,8 +947,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return handler;
 	};
 
-	var ItemMarkerHandler = function(target) {
-		var handler = MarkerHandler(target);
+	var ItemMarkerHandler = function(target, map) {
+		var handler = MarkerHandler(target, map);
 		handler.m_forwardedSignals = {"click": ["click"]};
 		handler._fetchLayer = function(cb, itemId) {
 			oscar.getItem(itemId, function(item) {
@@ -992,8 +1002,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return handler;
 	};
 	
-	var RegionMarkerHandler = function(target) {
-		var handler = MarkerHandler(target);
+	var RegionMarkerHandler = function(target, map) {
+		var handler = MarkerHandler(target, map);
 		handler.m_forwardedSignals = {"click" : ["click"], "mouseover": ["mouseover"], "mouseout": ["mouseout"]};
 		handler._fetchLayer = function(cb, itemId, count) {
 			console.assert(count !== undefined, count);
@@ -1146,14 +1156,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.relativesTab.relativesHandler = map.RelativesItemListHandler($('#relativesList'));
 			
 			//init the map layers
-			map.itemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.items.normal);
-			map.inspectedItemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.items.inspected);
-			map.relativesShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.relatives.normal);
-			map.highlightItemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.activeItems);
-			map.clusterMarkerRegionShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.regions.highlight);
+			map.itemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.items.normal, state.map);
+			map.inspectedItemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.items.inspected, state.map);
+			map.relativesShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.relatives.normal, state.map);
+			map.highlightItemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.activeItems, state.map);
+			map.clusterMarkerRegionShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.regions.highlight, state.map);
 			
-			map.itemMarkers = map.ItemMarkerHandler( L.layerGroup().addTo(state.map) );
-			map.inspectionItemMarkers = map.ItemMarkerHandler( L.layerGroup().addTo(state.map) );
+			map.itemMarkers = map.ItemMarkerHandler( L.layerGroup().addTo(state.map), state.map);
+			map.inspectionItemMarkers = map.ItemMarkerHandler( L.layerGroup().addTo(state.map), state.map);
 			map.inspectionItemMarkers.icon_options.markerColor = config.styles.markers.color.inspected;
 			map.inspectionItemMarkers.marker_options["zIndexOffset"] = 1000;
 
@@ -1387,7 +1397,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			else {
 				map.inspectionItemListHandler.insertItemId(itemId, focusItem);
 				if (map.cfg.resultList.showItemMarkers) {
-					map.inspectionItemMarkers.insert(itemId);
+					map.inspectionItemMarkers.addWithCallback(itemId, function() {
+						if (itemId == state.items.inspectItem) {
+							map.inspectionItemMarkers.zoomTo(itemId);
+						}
+					});
 				}
 			}
 		},
@@ -1428,7 +1442,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	   
 		onInspectItemTitleLinkClicked: function(e) {
 			if (map.inspectionItemMarkers.count(e.itemId)) {
-				state.map.panTo(map.inspectionItemMarkers.coords(e.itemId));
+				map.inspectionItemMarkers.zoomTo(e.itemId);
 			}
 		},
 		
