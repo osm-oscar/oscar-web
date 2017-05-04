@@ -288,6 +288,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             search.queryFromSearchLocation();
 			
 			//store some config options
-
+			
+			state.sidebar.open("search");
         });
     });
