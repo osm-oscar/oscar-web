@@ -104,11 +104,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			_renderItem: function(item) {
 				return handler._renderItems([item]);
 			},
+			//returns jquery object of the inserted dom item element, by default appends
+			_insertRendered: function(rendered) {
+				return $($(rendered).appendTo(this.m_domRoot));
+			},
 			//returns jquery object of the inserted dom item element
-			_appendItem: function(item) {
+			_insertItem: function(item) {
 				var rendered = handler._renderItem(item);
-				var inserted = $($(rendered).appendTo(this.m_domRoot));
+				var inserted = handler._insertRendered(rendered);
 				handler._addEventHandlers(inserted);
+				return inserted;
 			},
 			_domItemRoot: function(itemId) {
 				return $("div[class~='panel'][data-item-id~='" + itemId + "']", handler.m_domRoot);
@@ -264,7 +269,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			insertItem: function(item, cb) {
 				if (!handler.hasItem(item.id())) {
-					handler._appendItem(item);
+					handler._insertItem(item);
 					handler.m_itemIds.insert(item.id());
 				}
 				if (cb !== undefined) {
@@ -282,8 +287,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 				}
 				var toInsert = handler._renderItems(missingItems);
-				$(toInsert).appendTo(handler.m_domRoot);
-				handler._addEventHandlers(handler.m_domRoot);
+				var inserted = handler._insertRendered(toInsert);
+				handler._addEventHandlers(inserted);
 
 				if (cb !== undefined) {
 					cb();
