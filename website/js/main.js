@@ -290,5 +290,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 			//store some config options
 			
 			state.sidebar.open("search");
+			$("#search_text").focus();
         });
     });
