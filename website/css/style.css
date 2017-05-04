@@ -130,6 +130,10 @@ body {
 	background-color: #5bc0de;
 }
 
+.sidebar-tabs>ul>li.active.sidebar-menu-warning, .sidebar-header.sidebar-header-warning {
+	background-color: #ec971f;
+}
+
 #inspect_parent {
     height: fit-content;
     width: 100%;
@@ -268,15 +272,6 @@ body {
     float: left;
 }
 
-#advancedSearch {
-    display: none;
-}
-
-#advancedToggle {
-    margin-top: 3px;
-    float: right;
-}
-
 #searchModi {
     margin-top: 5px;
     float: left;
@@ -395,3 +390,56 @@ label {
 	word-break: break-all;
 	overflow-wrap: break-word;
 }
+
+    ::-moz-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-moz-scrollbar-button:start:decrement,
+    ::-moz-scrollbar-button:start:decrement {
+        height: 0px;
+        display: block;
+/*         background-color: black; */
+    }
+    ::-webkit-scrollbar-button:start:decrement,
+    ::-webkit-scrollbar-button:end:increment {
+        height: 0px;
+        display: block;
+        background-color: black;
+    }
+    
+    ::-moz-scrollbar-track-piece {
+        background-color: #ffffff;          /*Global Track Peice(the slider noob.)*/
+        -webkit-border-radius: 6px;
+    }
+    ::-webkit-scrollbar-track-piece {
+        background-color: #ffffff;          /*Global Track Peice(the slider noob.)*/
+        -webkit-border-radius: 6px;
+    }
+
+    ::-moz-scrollbar-thumb:vertical {
+        height: 50px;
+        background-color: #ffffff;            /* Up/Down slider background*/
+        -webkit-border-radius: 6px;
+    }    
+    ::-webkit-scrollbar-thumb:vertical {
+        height: 50px;
+        background-color: #ccc;            /* Up/Down slider background*/
+        -webkit-border-radius: 6px;
+    }
+
+    ::-moz-scrollbar-thumb:horizontal {
+        width: 50px;
+        background-color: #ffffff;            /* Side/Side slider background*/
+        -webkit-border-radius: 3px;
+    }    
+    ::-webkit-scrollbar-thumb:horizontal {
+        width: 50px;
+        background-color: #ffffff;            /* Side/Side slider background*/
+        -webkit-border-radius: 3px;
+    }

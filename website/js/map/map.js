@@ -1332,7 +1332,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 
 		//shows the relatives of the currently active item if the relatives pane is active
 		showItemRelatives: function() {
-			if (!$('#item_relatives').hasClass("active") || state.items.activeItem === undefined) {
+			if (!$('#sidebar-pane-relatives').hasClass("active") || state.items.activeItem === undefined) {
 				return;
 			}
 			map.relativesTab.activeItemHandler.clear();
@@ -1390,7 +1390,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 	   
 		onInspectionItemMarkerClicked: function(e) {
-			if ($('#item_relatives').hasClass("active")) {
+			if ($('#sidebar-pane-relatives').hasClass("active")) {
 				state.items.activeItem = e.itemId;
 				map.showItemRelatives();
 			}
@@ -1537,7 +1537,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			state.items.activeItem = e.itemId;
 			map.resultListTabs.openItem(e.itemId);
 			map.resultListTabs.activeTab().scrollTo(e.itemId);
-			if ($('#item_relatives').hasClass("active")) {
+			if ($('#sidebar-pane-relatives').hasClass("active")) {
 				map.showItemRelatives();
 			}
 			else {
