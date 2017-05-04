@@ -125,12 +125,6 @@ body {
     margin: 5px;
 }
 
-.menu_parent {
-    z-index: 100;
-    overflow-y: hidden;
-    overflow-x: hidden;
-}
-
 .sidebar-tabs>ul>li.active.sidebar-menu-success, .sidebar-header.sidebar-header-success {
 	background-color: #5cb85c;
 }

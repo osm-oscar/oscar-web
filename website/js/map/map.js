@@ -1182,7 +1182,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		//this has to be called prior usage
 		init: function() {
-			map.resultListTabs = map.ItemListTabHandler('#left_menu_parent', '#sidebar-content');
+			map.resultListTabs = map.ItemListTabHandler('#result_list_container', '#sidebar-content');
 			map.inspectionItemListHandler = map.InspectionItemListHandler('#inspectItemsList', '#sidebar-content');
 			map.relativesTab.activeItemHandler = map.RelativesItemListHandler($('#activeItemsList'));
 			map.relativesTab.relativesHandler = map.RelativesItemListHandler($('#relativesList'));
@@ -1312,8 +1312,15 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		displayCqr: function (cqr) {
 			map.clear();
 			if (!cqr.hasResults()) {
+				$("#result_list_container").addClass("hidden");
+				$("#empty_result_info").removeClass("hidden");
 				return;
 			}
+			else {
+				$("#empty_result_info").addClass("hidden");
+				$("#result_list_container").removeClass("hidden");
+			}
+			
 			map.reloadShapeConfig();
 			state.dag.addRoot(0xFFFFFFFF);
 			var root = state.dag.region(0xFFFFFFFF);
