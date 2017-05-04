@@ -53,10 +53,13 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
 		}
 		
         //Find sidebar > div.sidebar-content > div.sidebar-pane
-		var panes_container = this._findChildByClass(content_container, 'sidebar-panes');
+		this._panes_container = this._findChildByClass(content_container, 'sidebar-panes');
         
         // Find sidebar > div.sidebar-content > div.sidebar-panes > div.sidebar-pane
-        this._panes = this._findChildrenByClass(panes_container, 'sidebar-pane');
+        this._panes = this._findChildrenByClass(this._panes_container, 'sidebar-pane');
+		
+		this._scrollp = new Array(this._panes.length);
+		this._scrollp.fill(0);
 		
 		console.log("done");
     },
@@ -130,7 +133,9 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
      *
      * @param {string} id - The id of the tab to show (without the # character)
      */
-    open: function(id) {	
+    open: function(id) {
+		this._storeScrollP();
+		
 		var titleId = "sidebar-pane-title-" + id;
 		var paneId = "sidebar-pane-" + id;
 
@@ -164,6 +169,8 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
             this.fire('opening');
             L.DomUtil.removeClass(this._sidebar, 'collapsed');
         }
+        
+        this._restoreScrollP();
 
         return this;
     },
@@ -172,6 +179,8 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
      * Close the sidebar (if necessary).
      */
     close: function() {
+		this._storeScrollP();
+		
         // remove old active highlights
         for (var i = this._tabitems.length - 1; i >= 0; i--) {
             var child = this._tabitems[i];
@@ -218,6 +227,23 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
     _findChildByClass: function(parent, childClass) {
 		var tmp = this._findChildrenByClass(parent, childClass);
         return tmp.length ? tmp[0] : undefined;
+	},
+	//store scroll position of active panes
+	_storeScrollP: function() {
+        for (let i = 0; i < this._panes.length; ++i) {
+			let child = this._panes[i];
+            if (L.DomUtil.hasClass(this._panes[i], 'active')){
+				this._scrollp[i] = this._panes_container.scrollTop;
+			}
+        }
+	},
+	//restore scroll position of active panes
+	_restoreScrollP: function() {
+        for (let i = 0; i < this._panes.length; ++i) {
+            if (L.DomUtil.hasClass(this._panes[i], 'active')){
+				this._panes_container.scrollTop = this._scrollp[i];
+			}
+        }
 	},
 });
 
