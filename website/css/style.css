@@ -243,7 +243,7 @@ label {
 ::-moz-scrollbar-button:start:decrement {
 	height: 0px;
 	display: block;
-/*         background-color: black; */
+	background-color: black;
 }
 ::-webkit-scrollbar-button:start:decrement,
 ::-webkit-scrollbar-button:end:increment {
