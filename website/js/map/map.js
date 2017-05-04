@@ -360,6 +360,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			return state.resultListTemplateDataFromItem(item, true, true);
 		};
 		
+		ilh._insertRendered = function(rendered) {
+			return $($(rendered).prependTo(this.m_domRoot));
+		};
+		
 		//Remove link clicked handling
 		ilh.m_eventHandlers["itemRemoveLinkClicked"] = function(e) {
 			var me = $(this);
