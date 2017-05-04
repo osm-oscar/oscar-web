@@ -30,33 +30,35 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
             L.DomUtil.addClass(this._sidebar, 'leaflet-touch');
 
         // Find sidebar > div.sidebar-content
-        for (i = this._sidebar.children.length - 1; i >= 0; i--) {
-            child = this._sidebar.children[i];
-            if (child.tagName == 'DIV' &&
-                    L.DomUtil.hasClass(child, 'sidebar-content'))
-                this._container = child;
-        }
+		content_container = this._findChildByClass(this._sidebar, 'sidebar-content');
 
         // Find sidebar ul.sidebar-tabs > li, sidebar .sidebar-tabs > ul > li
         this._tabitems = this._sidebar.querySelectorAll('ul.sidebar-tabs > li, .sidebar-tabs > ul > li');
         for (i = this._tabitems.length - 1; i >= 0; i--) {
             this._tabitems[i]._sidebar = this;
         }
-
-        // Find sidebar > div.sidebar-content > div.sidebar-pane
-        this._panes = [];
-        this._closeButtons = [];
-        for (i = this._container.children.length - 1; i >= 0; i--) {
-            child = this._container.children[i];
-            if (child.tagName == 'DIV' &&
-                L.DomUtil.hasClass(child, 'sidebar-pane')) {
-                this._panes.push(child);
-
-                var closeButtons = child.querySelectorAll('.sidebar-close');
-                for (var j = 0, len = closeButtons.length; j < len; j++)
-                    this._closeButtons.push(closeButtons[j]);
-            }
-        }
+        
+        //Find sidebar > div.sidebar-content > div.sidebar-pane-titles
+		var pane_titles_container = this._findChildByClass(content_container, 'sidebar-pane-titles');
+        //Find sidebar > div.sidebar-content > div.sidebar-panetitles > div.sidebar-pane-title
+        this._titles = this._findChildrenByClass(pane_titles_container, 'sidebar-pane-title');
+        
+		//Find close buttons
+		this._closeButtons = [];
+		for(let child of this._titles) {
+			let closeButtons = child.querySelectorAll('.sidebar-close');
+			for (let j = 0; j < closeButtons.length; j++) {
+				this._closeButtons.push( closeButtons[j] );
+			}
+		}
+		
+        //Find sidebar > div.sidebar-content > div.sidebar-pane
+		var panes_container = this._findChildByClass(content_container, 'sidebar-panes');
+        
+        // Find sidebar > div.sidebar-content > div.sidebar-panes > div.sidebar-pane
+        this._panes = this._findChildrenByClass(panes_container, 'sidebar-pane');
+		
+		console.log("done");
     },
 
     /**
@@ -195,7 +197,22 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
      */
     _onCloseClick: function () {
         this.close();
-    }
+    },
+    
+    _findChildrenByClass: function(parent, childClass) {
+		var result = [];
+        for (var i = parent.children.length - 1; i >= 0; i--) {
+            child = parent.children[i];
+            if (child.tagName == 'DIV' &&
+                    L.DomUtil.hasClass(child, childClass))
+                result.push(child);
+        }
+        return result;
+	},
+    _findChildByClass: function(parent, childClass) {
+		var tmp = this._findChildrenByClass(parent, childClass);
+        return tmp.length ? tmp[0] : undefined;
+	},
 });
 
 /**

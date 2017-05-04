@@ -16,7 +16,7 @@
         <link rel="stylesheet" href="vendor/slimbox/css/slimbox2.css" type="text/css" media="screen"/>
         <link rel='stylesheet' href='vendor/leaflet-markercluster/MarkerCluster.css'/>
         <link rel='stylesheet' href='vendor/leaflet-markercluster/MarkerCluster.Default.css'/>
-        <link rel="stylesheet" href="vendor/leaflet-sidebar/css/leaflet-sidebar.min"/>
+        <link rel="stylesheet" href="vendor/leaflet-sidebar/css/leaflet-sidebar.css"/>
         <link rel="stylesheet" href="vendor/leaflet-awesome-markers/leaflet.awesome-markers.css"/>
         <link rel="stylesheet" href="vendor/tokenfield/bootstrap-tokenfield.min.css"/>
         <link rel='stylesheet' href="vendor/font-awesome/css/font-awesome.min.css"/>
@@ -59,6 +59,7 @@
                 <div class="sidebar-tabs">
                     <ul role="tablist">
                         <li title="Search"><a href="#search" role="tab"><i class="fa fa-search"></i></a></li>
+                        <li title="Geometry"><a href="#geometry" role="tab"><i class="fa fa-pencil-square-o"></i></a></li>
                         <li title="Item details" class="sidebar-menu-success" ><a href="#inspect" role="tab"><i class="fa fa-lightbulb-o"></i></a></li>
                         <li title="Help"><a href="#help" role="tab"><i class="fa fa-question"></i></a></li>
                         <li title="Options"><a href="#options" role="tab"><i class="fa fa-wrench"></i></a></li>
@@ -68,13 +69,18 @@
 
                 <!-- Tab panes -->
                 <div class="sidebar-content" id='sidebar-content'>
-					<div class="sidebar-content-titles">
-						<div class="sidebar-content-title" id="sidebar-title-search">
+					<div class="sidebar-pane-titles">
+						<div class="sidebar-pane-title active" id="sidebar-pane-title-search">
 							<h1 class="sidebar-header"><span>Search
 								<div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
 							</h1>
 						</div>
-						<div class="sidebar-content-title" id="sidebar-title-inspect">
+						<div class="sidebar-pane-title" id="sidebar-pane-title-geometry">
+							<h1 class="sidebar-header"><span>Geometry
+								<div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
+							</h1>
+						</div>
+						<div class="sidebar-pane-title" id="sidebar-pane-title-inspect">
 							<h1 class="sidebar-header sidebar-header-success">
 								Details
 								<span>
@@ -87,18 +93,18 @@
 								<div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
 							</h1>
 						</div>
-						<div class="sidebar-content-title" id="sidebar-title-help">
+						<div class="sidebar-pane-title" id="sidebar-pane-title-help">
 							<h1 class="sidebar-header">Help
 								<div class="sidebar-close"><i class="fa fa-caret-left"></i>
 								</div>
 							</h1>
 						</div>
-						<div class="sidebar-content-title" id="sidebar-title-options">
+						<div class="sidebar-pane-title" id="sidebar-pane-title-options">
 							<h1 class="sidebar-header">Options
 								<div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
 							</h1>
 						</div>
-						<div class="sidebar-content-title" id="sidebar-title-relatives">
+						<div class="sidebar-pane-title" id="sidebar-pane-title-relatives">
 							<h1 class="sidebar-header sidebar-header-info">Item relatives
 								<div class="sidebar-close"><i class="fa fa-caret-left"></i></div>
 							</h1>
@@ -109,7 +115,6 @@
                             <form id="searchModi" data-toggle="tooltip" data-placement="right" title="Use 'Local' to search in viewport">
                                 <input type="checkbox" name="searchModi" class="form-control">
                             </form>
-                            <span id="advancedToggle" mod="hide"><a href="#">Show advanced search</a></span>
                         </div>
                         <div>
                             <form class="form-inline pull-left" id="search_form">
@@ -121,58 +126,53 @@
                             </form>
                             <a href="#" id="graph" class="fa fa-sitemap" data-toggle="tooltip" data-placement="left" title="Show the region-hierarchy"></a>
                         </div>
-                        <div id="search_container">
-                            <div id="categorieWrapper">
-                                <div style="clear:both;"></div>
-                                <div id="advancedSearch">
-                                    <div class='form-group'>
-                                        <div class="input-group">
-                                            <span class="input-group-btn">
-                                                <button type="button" class="btn btn-default" id="spatialquery_selectbutton">Create</button>
-                                            </span>
-                                            <select class='form-control' id="spatialquery_type"/>
-                                            <option value="point">Point</option>
-                                            <option value="rect" selected="selected">Rectangle</option>
-                                            <option value="poly">Polygon</option>
-                                            <option value="path">Path</option>
-                                            </select>
-                                            <span class="input-group-btn">
-                                                <button type="button" class="btn btn-default" id="spatialquery_acceptbutton">Accept</button>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class='form-group hidden' id="spatialquery_radius_group">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">Radius:</span>
-                                            <input id="spatialquery_radius" type="number" value="100" min="50" max="20000" step="50"/>
-                                        </div>
-                                    </div>
-                                    <div class ="form-group">
-                                        <table class="table table-hover table-bordered table-condense">
-                                            <thead>
-                                                <tr>
-                                                    <th colspan="4" class="text-center">Available spatial objects</th>
-                                                </tr>
-                                                <tr>
-                                                    <th>Name</th>
-                                                    <th>Type</th>
-                                                    <th>Show</th>
-                                                    <th>Remove</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id='spatial_objects_table_body'>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 					</div>
-
-					
 					<div class="sidebar-panes">
 						<div class="sidebar-pane" id="sidebar-pane-search">
 							<div id="left_menu_parent" class="menu_parent"></div>
+						</div>
+						<div class="sidebar-pane" id="sidebar-pane-geometry">
+							<div id="advancedSearch">
+								<div class='form-group'>
+									<div class="input-group">
+										<span class="input-group-btn">
+											<button type="button" class="btn btn-default" id="spatialquery_selectbutton">Create</button>
+										</span>
+										<select class='form-control' id="spatialquery_type"/>
+										<option value="point">Point</option>
+										<option value="rect" selected="selected">Rectangle</option>
+										<option value="poly">Polygon</option>
+										<option value="path">Path</option>
+										</select>
+										<span class="input-group-btn">
+											<button type="button" class="btn btn-default" id="spatialquery_acceptbutton">Accept</button>
+										</span>
+									</div>
+								</div>
+								<div class='form-group hidden' id="spatialquery_radius_group">
+									<div class="input-group">
+										<span class="input-group-addon">Radius:</span>
+										<input id="spatialquery_radius" type="number" value="100" min="50" max="20000" step="50"/>
+									</div>
+								</div>
+								<div class ="form-group">
+									<table class="table table-hover table-bordered table-condense">
+										<thead>
+											<tr>
+												<th colspan="4" class="text-center">Available spatial objects</th>
+											</tr>
+											<tr>
+												<th>Name</th>
+												<th>Type</th>
+												<th>Show</th>
+												<th>Remove</th>
+											</tr>
+										</thead>
+										<tbody id='spatial_objects_table_body'>
+										</tbody>
+									</table>
+								</div>
+							</div>
 						</div>
 						<div class="sidebar-pane" id="sidebar-pane-inspect">
 							<div id="inspect_parent">

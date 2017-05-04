@@ -102,7 +102,7 @@
   padding: 10px 20px; }
 
 .sidebar-content-title {
-	display: hidden;
+	display: none;
 }
 .sidebar-content-title.active {
 	display: block;

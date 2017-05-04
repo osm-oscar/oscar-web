@@ -19,7 +19,7 @@ requirejs.config({
         "leaflet": "vendor/leaflet/leaflet-src",
         "leafletCluster": "vendor/leaflet-markercluster/leaflet.markercluster-src",
 		"awesomeMarkers" : "vendor/leaflet-awesome-markers/leaflet.awesome-markers.min",
-        "sidebar": "vendor/leaflet-sidebar/js/leaflet-sidebar.min",
+        "sidebar": "vendor/leaflet-sidebar/js/leaflet-sidebar",
         "spin": "vendor/spin/spin.min",
         "mustache": "vendor/mustache/mustache.min",
         "mustacheLoader": "vendor/mustache/jquery.mustache.loader",
@@ -108,18 +108,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 			
 			search.bindTagCompletion('#search_text');
 			
-            $('#advancedToggle a').click(function () {
-                if ($(this).attr('mod') == 'hide') {
-                    $('#advancedSearch').hide(800);
-                    $(this).attr('mod', 'show');
-                    $(this).text('Show advanced search');
-                } else {
-                    $('#advancedSearch').show(800);
-                    $(this).attr('mod', 'hide');
-                    $(this).text('Hide advanced search');
-                }
-            });
-
             $('#graph').click(function () {
                 $("#onePath").button().change(function() {
 					//we need to redraw the whole graph if the former state was onePath
