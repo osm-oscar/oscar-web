@@ -83,7 +83,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         $.Mustache.load('template/arrayItemListEntryTemplate.mst');
         $.Mustache.load('template/spatialQueryTableRowTemplate.mst');
         $.Mustache.load('template/treeTemplate.mst');
-        $("#help").load('template/help.html', function () {
+        $("#sidebar-pane-help").load('template/help.html', function () {
             $('.example-query-string').on('click', function () {
 				state.setQuery(this.firstChild.data);
             });
