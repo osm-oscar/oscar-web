@@ -51,6 +51,18 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					var itemIdStr = me.attr("data-item-id");
 					var itemId = parseInt(itemIdStr);
 					handler._slot_itemLinkClicked(itemId);
+				},
+				itemPanelMouseOver: function(e) {
+					var me = $(this);
+					var itemIdStr = me.parent().attr("data-item-id");
+					var itemId = parseInt(itemIdStr);
+					handler.emit_itemPanelMouseOver(itemId);
+				},
+				itemPanelMouseOut: function(e) {
+					var me = $(this);
+					var itemIdStr = me.parent().attr("data-item-id");
+					var itemId = parseInt(itemIdStr);
+					handler.emit_itemPanelMouseOut(itemId);
 				}
 			},
 			//signals emited on the root dom-element
@@ -64,7 +76,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			emit_itemLinkClicked: function(itemId) {
 				$(handler).triggerHandler({type:"itemLinkClicked", itemId : itemId});
 			},
-	   
+			emit_itemPanelMouseOver: function(itemId) {
+				$(handler).triggerHandler({type:"itemPanelMouseOver", itemId : itemId});
+			},
+			emit_itemPanelMouseOut: function(itemId) {
+				$(handler).triggerHandler({type:"itemPanelMouseOut", itemId : itemId});
+			},
 			//private functions
 	   
 			_init: function(parent) {
@@ -83,12 +100,17 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				var valC = $(".item-detail-value", elements);
 				var detC = $(".item-detail-id", elements);
 				var actC = $(".accordion-toggle-link", elements);
+				var panelh = $(".panel-heading", elements);
 				
 				var myClickNS = "click.ilhevh";
+				var myMouseOverNS = "mouseover.ilhevh";
+				var myMouseOutNS = "mouseout.ilhevh";
 				keyC.unbind(myClickNS).bind(myClickNS, handler.m_eventHandlers.itemDetailQuery);
 				valC.unbind(myClickNS).bind(myClickNS, handler.m_eventHandlers.itemDetailQuery);
 				detC.unbind(myClickNS).bind(myClickNS, handler.m_eventHandlers.itemIdQuery);
 				actC.unbind(myClickNS).bind(myClickNS, handler.m_eventHandlers.itemLinkClicked);
+				panelh.unbind(myMouseOverNS).bind(myMouseOverNS, handler.m_eventHandlers.itemPanelMouseOver);
+				panelh.unbind(myMouseOutNS).bind(myMouseOutNS, handler.m_eventHandlers.itemPanelMouseOut);
 			},
 			_item2RenderData: function(item) {
 				return state.resultListTemplateDataFromItem(item);
@@ -510,7 +532,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			emit_itemLinkClicked: function(itemId) {
 				$(handler).triggerHandler({type:"itemLinkClicked", itemId : itemId});
 			},
-			
+			emit_itemPanelMouseOver: function(itemId) {
+				$(handler).triggerHandler({type:"itemPanelMouseOver", itemId : itemId});
+			},
+			emit_itemPanelMouseOut: function(itemId) {
+				$(handler).triggerHandler({type:"itemPanelMouseOut", itemId : itemId});
+			},
+	   
 			//if no tab is active, then rid=-1
 			emit_activeTabChanged: function(newTabId) {
 				$(handler).triggerHandler({
@@ -617,6 +645,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$(itemListHandler).on("itemDetailsOpened", function(e) { handler.emit_itemDetailsOpened(e.itemId); });
 				$(itemListHandler).on("itemDetailsClosed", function(e) { handler.emit_itemDetailsClosed(e.itemId); });
 				$(itemListHandler).on("itemLinkClicked", function(e) { handler.emit_itemLinkClicked(e.itemId); });
+				$(itemListHandler).on("itemPanelMouseOver", function(e) { handler.emit_itemPanelMouseOver(e.itemId); });
+				$(itemListHandler).on("itemPanelMouseOut", function(e) { handler.emit_itemPanelMouseOut(e.itemId); });
+				
 				var myActiveTabId = handler.activeTabId();
 				handler.refresh();
 				if (myActiveTabId !== -1) {
@@ -1134,6 +1165,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		//markers
 		itemMarkers: undefined,
+		highlightItemMarkers: undefined,
 		inspectionItemMarkers: undefined,
 		clusterMarkerGroup: undefined,
 		clusterMarkers: undefined,
@@ -1163,6 +1195,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.clusterMarkerRegionShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.regions.highlight, state.map);
 			
 			map.itemMarkers = map.ItemMarkerHandler( L.layerGroup().addTo(state.map), state.map);
+			
+			map.highlightItemMarkers = map.ItemMarkerHandler( L.layerGroup().addTo(state.map), state.map);
+			map.highlightItemMarkers.icon_options.markerColor = config.styles.markers.color.highlighted;
+			map.highlightItemMarkers.marker_options["zIndexOffset"] = 2000;
+			
 			map.inspectionItemMarkers = map.ItemMarkerHandler( L.layerGroup().addTo(state.map), state.map);
 			map.inspectionItemMarkers.icon_options.markerColor = config.styles.markers.color.inspected;
 			map.inspectionItemMarkers.marker_options["zIndexOffset"] = 1000;
@@ -1179,6 +1216,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.resultListTabs).on("itemLinkClicked", map.onItemLinkClicked);
 			$(map.resultListTabs).on("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).on("itemDetailsClosed", map.onItemDetailsClosed);
+			$(map.resultListTabs).on("itemPanelMouseOver", map.onItemPanelMouseOver);
+			$(map.resultListTabs).on("itemPanelMouseOut", map.onItemPanelMouseOut);
 			$(map.resultListTabs).on("activeTabChanged", map.onActiveTabChanged);
 
 			$(map.inspectionItemListHandler).on("itemLinkClicked", map.onInspectItemLinkClicked);
@@ -1205,6 +1244,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			$(map.resultListTabs).off("itemLinkClicked", map.onItemLinkClicked);
 			$(map.resultListTabs).off("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).off("itemDetailsClosed", map.onItemDetailsClosed);
+			$(map.resultListTabs).off("itemPanelMouseOver", map.onItemPanelMouseOver);
+			$(map.resultListTabs).off("itemPanelMouseOut", map.onItemPanelMouseOut);
 			$(map.resultListTabs).off("activeTabChanged", map.onActiveTabChanged);
 			
 			$(map.inspectionItemListHandler).off("itemLinkClicked", map.onInspectItemLinkClicked);
@@ -1501,7 +1542,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.highlightItemShapes.remove(itemId);
 			flickr.closeFlickrBar();
 		},
+		
+		onItemPanelMouseOver: function(e) {
+			map.highlightItemMarkers.insert(e.itemId);
+		},
 	   
+		onItemPanelMouseOut: function(e) {
+			map.highlightItemMarkers.remove(e.itemId);
+		},
+		
+		
 		onMapClicked: function(e) {
 			map.removeUnpinnedInspectionItems();
 		},

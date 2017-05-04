@@ -65,7 +65,8 @@ define([], function() {
 				color : {
 					standard : "darkblue",
 					inspected : "green",
-					relatives: "blue"
+					relatives: "blue",
+					highlighted: "orange"
 				},
 				icons : {
 					"amenity" : {
