@@ -94,15 +94,9 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 
             $('[data-toggle="tooltip"]').tooltip();
 
-            var search_form = $("#search_form");
-            search_form.click(function () {
-                if (!$('#categories').is(":visible")) {
-                    $("#showCategories a").click();
-                }
-            });
-            $(search_form[0].children).css("width", "100%");
-            search_form.bind('submit', function (e) {
+            $("#search_form").bind('submit', function (e) {
                 e.preventDefault();
+				$("#search_text").autocomplete("close");
                 search.instantCompletion();
             });
 			
