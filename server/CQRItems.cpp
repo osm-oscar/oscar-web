@@ -34,8 +34,17 @@ void CQRItems::all() {
 	//params
 	std::string cqs = request().get("q");
 	std::string regionFilter = request().get("rf");
+	std::string sfstr = request().post("format");
+
 	bool withShapes = sserialize::toBool(request().get("s"));
 	bool withParents = sserialize::toBool(request().get("p"));
+	ItemSerializer::SerializationFormat sf = ItemSerializer::SF_WITH_SHAPE;
+	if (sfstr == "geojson") {
+		sf = (ItemSerializer::SerializationFormat) (ItemSerializer::SF_GEO_JSON | sf);
+	}
+	else {
+		sf = ItemSerializer::SerializationFormat (ItemSerializer::SF_OSCAR | sf);
+	}
 
 	sserialize::CellQueryResult cqr;
 	sserialize::spatial::GeoHierarchySubGraph sg;
@@ -72,16 +81,16 @@ void CQRItems::all() {
 			if (parents.size() > max_write_items) {
 				using std::sort; //sort for improved disk-access pattern
 				sort(parents.begin(), parents.begin()+max_write_items);
-				m_serializer.toJson(out,
+				m_serializer.serialize(out,
 									store.id2ItemIterator(parents.cbegin()),
 									store.id2ItemIterator(parents.cend()+max_write_items),
-									withShapes);
+									sf);
 				max_write_items = 0;
 			}
 			else {
 				using std::sort; //sort for improved disk-access pattern
 				sort(parents.begin(), parents.end());
-				m_serializer.toJson(out, store.id2ItemIterator(parents.cbegin()), store.id2ItemIterator(parents.cend()), withShapes);
+				m_serializer.serialize(out, store.id2ItemIterator(parents.cbegin()), store.id2ItemIterator(parents.cend()), sf);
 				max_write_items -= parents.size();
 			}
 		}
@@ -114,7 +123,7 @@ void CQRItems::all() {
 					}
 					auto item  = store.at(x);
 					out << ',';
-					m_serializer.toJson(out, item, withShapes, parentString);
+					m_serializer.serialize(out, item, sf, parentString);
 					max_write_items -= 1;
 					if (max_write_items <= 0) {
 						break;
@@ -128,10 +137,10 @@ void CQRItems::all() {
 		else {
 			sserialize::ItemIndex itemIds = cqr.flaten();
 			if (max_write_items > itemIds.size()) {
-				m_serializer.toJson(out, store.id2ItemIterator(itemIds.begin()), store.id2ItemIterator(itemIds.end()), withShapes);
+				m_serializer.serialize(out, store.id2ItemIterator(itemIds.begin()), store.id2ItemIterator(itemIds.end()), sf);
 			}
 			else {
-				m_serializer.toJson(out, store.id2ItemIterator(itemIds.begin()), max_write_items, withShapes);
+				m_serializer.serialize(out, store.id2ItemIterator(itemIds.begin()), max_write_items, sf);
 			}
 		}
 	}
@@ -140,11 +149,11 @@ void CQRItems::all() {
 		if (itemIds.size() > m_dataPtr->maxResultDownloadSize) {
 			sserialize::ItemIndex::const_iterator it(itemIds.cbegin());
 			for(uint32_t i(0), s(m_dataPtr->maxResultDownloadSize); i < s; ++i, ++it) {
-				m_serializer.toJson(out, store.at(*it), withShapes);
+				m_serializer.serialize(out, store.at(*it), sf);
 			}
 		}
 		else {
-			m_serializer.toJson(out, store.id2ItemIterator(itemIds.begin()), store.id2ItemIterator(itemIds.end()), withShapes);
+			m_serializer.serialize(out, store.id2ItemIterator(itemIds.begin()), store.id2ItemIterator(itemIds.end()), sf);
 		}
 	}
 	out << "]";

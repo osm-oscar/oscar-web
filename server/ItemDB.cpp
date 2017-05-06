@@ -23,8 +23,8 @@ void ItemDB::writeFooter(std::ostream & out) {
 	out << "]";
 }
 
-void ItemDB::writeSingleItem(std::ostream & out, uint32_t id, bool withShape) {
-	m_serializer.toJson(out, m_store.at(id), withShape);
+void ItemDB::writeSingleItem(std::ostream& out, uint32_t id, oscar_web::ItemSerializer::SerializationFormat sf) {
+	m_serializer.serialize(out, m_store.at(id), sf);
 }
 
 ItemDB::ItemDB(cppcms::service & srv, const liboscar::Static::OsmKeyValueObjectStore & store) :
@@ -56,9 +56,19 @@ void ItemDB::single(std::string num) {
 	response().set_content_header("text/json"); //content_type needs to be text/ in order for compression to work
 	
 	uint32_t id = atoi(num.c_str());
+	bool withShape = sserialize::toBool(request().post("shape"));
+	std::string sfstr = request().post("format");
+	int sf = (withShape ? ItemSerializer::SF_WITH_SHAPE : ItemSerializer::SF_NONE);
+	if (sfstr == "geojson") {
+		sf |= ItemSerializer::SF_GEO_JSON;
+	}
+	else {
+		sf |= ItemSerializer::SF_OSCAR;
+	}
+	
 	std::ostream & out = response().out();
 	if (m_store.size() > id) {
-		writeSingleItem(out, id, true);
+		writeSingleItem(out, id, (ItemSerializer::SerializationFormat) sf);
 	}
 }
 
@@ -69,9 +79,17 @@ void ItemDB::multiple() {
 	
 	std::stringstream rawIdxIds;
 	bool withShape = sserialize::toBool(request().post("shape"));
+	std::string sfstr = request().post("format");
 	rawIdxIds << request().post("which");
 	cppcms::json::value jsonIdxIds;
 	jsonIdxIds.load(rawIdxIds, true);
+	ItemSerializer::SerializationFormat sf = (withShape ? ItemSerializer::SF_WITH_SHAPE : ItemSerializer::SF_NONE);
+	if (sfstr == "geojson") {
+		sf = (ItemSerializer::SerializationFormat) (ItemSerializer::SF_GEO_JSON | sf);
+	}
+	else {
+		sf = (ItemSerializer::SerializationFormat) (ItemSerializer::SF_OSCAR | sf);
+	}
 	
 	uint32_t maxId = m_store.size();
 	if (jsonIdxIds.type() == cppcms::json::is_array) {
@@ -97,7 +115,7 @@ void ItemDB::multiple() {
 	}
 	
 	writeHeader(out);
-	writeMultiple(out, filteredRequestedItems.begin(), filteredRequestedItems.end(), withShape);
+	writeMultiple(out, filteredRequestedItems.begin(), filteredRequestedItems.end(), sf);
 	writeFooter(out);
 }
 
@@ -106,10 +124,18 @@ void ItemDB::multipleShapes() {
 	
 	std::stringstream rawIdxIds;
 	rawIdxIds << request().post("which");
+	std::string sfstr = request().post("format");
 	
 	cppcms::json::value jsonIdxIds;
 	jsonIdxIds.load(rawIdxIds, true);
-	
+	ItemSerializer::SerializationFormat sf = ItemSerializer::SF_WITH_SHAPE;
+	if (sfstr == "geojson") {
+		sf = (ItemSerializer::SerializationFormat) (ItemSerializer::SF_GEO_JSON | sf);
+	}
+	else {
+		sf = ItemSerializer::SerializationFormat (ItemSerializer::SF_OSCAR | sf);
+	}
+
 	std::ostream & out = response().out();
 	out << std::fixed << std::setprecision(std::numeric_limits<double>::digits10 + 2);
 	
@@ -127,7 +153,7 @@ void ItemDB::multipleShapes() {
 					if (tmp < maxId) {
 						out << sep << "\"" << tmp << "\":";
 						sep = ',';
-						m_serializer.toJson(out, m_store.geoShape(tmp));
+						m_serializer.serialize(out, m_store.geoShape(tmp), sf);
 					}
 				}
 				catch(const cppcms::json::bad_value_cast & err) {}

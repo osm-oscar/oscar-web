@@ -41,19 +41,28 @@ private:
 private:
 	void writeHeader(std::ostream & out);
 	void writeFooter(std::ostream & out);
-	void writeSingleItem(std::ostream & out, uint32_t id, bool withShape);
+	void writeSingleItem(std::ostream& out, uint32_t id, oscar_web::ItemSerializer::SerializationFormat sf);
 	template<typename T_IT>
-	void writeMultiple(std::ostream & out, T_IT begin, T_IT end, bool withShape);
+	void writeMultiple(std::ostream & out, T_IT begin, T_IT end, oscar_web::ItemSerializer::SerializationFormat sf);
 public:
 	ItemDB(cppcms::service & srv, const liboscar::Static::OsmKeyValueObjectStore & store);
 	inline void setMaxPerRequest(uint32_t v) { m_maxPerRequest = v; }
 	inline uint32_t maxPerRequest() const { return m_maxPerRequest; }
 	virtual ~ItemDB();
-	///returns a single item, call with get and variable which=itemId
+	///returns a single item, call with get and variables
+	///format=(oscar|geojson)
+	///shape=(true|false)
 	void single(std::string num);
-	///returns an array of items, call with POST and variable which=[int, int] json array of requested items and shape=(true|false)
+	///returns an array of items,
+	///call with POST and variable
+	///which=[int, int] json array of requested items
+	///shape=(true|false)
+	///format=(oscar|geojson)
 	void multiple();
-	///returns an object of shapes { itemid : shape}, call with POST and variable which=[int, int] json array of requested itemids
+	///returns an object of shapes { itemid : shape}
+	///call with POST and variables
+	///which=[int, int] json array of requested itemids
+	///format=(oscar|geojson)
 	void multipleShapes();
 	///returns an array of item-names, call with POST and variable which=[int, int] json array of requested items
 	void multipleNames();
@@ -70,7 +79,7 @@ public:
 
 
 template<typename T_IT>
-void ItemDB::writeMultiple(std::ostream & out, T_IT begin, T_IT end, bool withShape) {
+void ItemDB::writeMultiple(std::ostream& out, T_IT begin, T_IT end, oscar_web::ItemSerializer::SerializationFormat sf) {
 	uint32_t size = end-begin;
 	if (!size) {
 		return;
@@ -78,11 +87,11 @@ void ItemDB::writeMultiple(std::ostream & out, T_IT begin, T_IT end, bool withSh
 	if (size > m_maxPerRequest) {
 		size = m_maxPerRequest;
 	}
-	writeSingleItem(out, *begin, withShape);
+	writeSingleItem(out, *begin, sf);
 	 ++begin;
 	for(uint32_t i(1); i < size; ++i, ++begin) {
 		out << ",";
-		writeSingleItem(out, *begin, withShape);
+		writeSingleItem(out, *begin, sf);
 	}
 }
 
