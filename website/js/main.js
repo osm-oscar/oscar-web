@@ -257,21 +257,35 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 }
             });
 			
-			$('#result_download_select').change(function(e) {
+			var updateDownloadLink = function() {
 				var dlelem = $("#result_download_link");
-				if (e.target.value === "items") {
-					dlelem.attr("href", dlelem.attr("data-base-href"));
+				var content = $("#result_download_select")
+				var format = $("#result_download_format");
+				var params = ""
+				var content_selection = content.val();
+				var format_selection = format.val();
+				if (content_selection === "items") {
+					;
 				}
-				else if (e.target.value === "items+parents") {
-					dlelem.attr("href", dlelem.attr("data-base-href")+"&p=true");
+				else if (content_selection === "items+parents") {
+					params += "&p=true";
 				}
-				else if (e.target.value === "items+shapes") {
-					dlelem.attr("href", dlelem.attr("data-base-href")+"&s=true");
+				else if (content_selection === "items+shapes") {
+					params += "&s=true";
 				}
-				else if (e.target.value === "items+parents+shapes") {
-					dlelem.attr("href", dlelem.attr("data-base-href")+"&p=true&s=true");
+				else if (content_selection === "items+parents+shapes") {
+					params += "&p=true&s=true";
 				}
-			});
+				
+				if (format_selection === "geojson") {
+					params += "&format=geojson";
+				}
+				
+				dlelem.attr("href", dlelem.attr("data-base-href") + params);
+			};
+			
+			$("#result_download_select").change(updateDownloadLink);
+			$("#result_download_format").change(updateDownloadLink);
 
             $(window).bind('popstate', function (e) {
 				console.log(e);
