@@ -102,6 +102,13 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 			
 			search.bindTagCompletion('#search_text');
 			
+			$("#searchclear").click(function() {
+				var search_text = $("#search_text");
+				search_text.val("");
+				state.clearViews();
+				search_text.focus();
+			});
+			
             $('#graph').click(function () {
                 $("#onePath").button().change(function() {
 					//we need to redraw the whole graph if the former state was onePath

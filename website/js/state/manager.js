@@ -118,7 +118,13 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
         clearViews: function () {
             state.mapHandler.clear();
 			state.items.activeItem = undefined;
+			state.items.inspectItem = undefined;
             state.dag.clear();
+			var dlelem = $("#result_download_link");
+			dlelem.attr('data-base-href', "");
+			dlelem.attr('href', "");
+			$("#empty_result_info").addClass("hidden");
+			$("#result_list_container").addClass("hidden");
         },
         
         addSingleQueryStatementToQuery: function (qstr) {
