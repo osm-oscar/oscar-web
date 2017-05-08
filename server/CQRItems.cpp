@@ -59,6 +59,7 @@ void CQRItems::all() {
 	uint32_t itemCount = 0;
 	
 	std::ostream & out = response().out();
+	auto streamcfg = m_serializer.streamPrepare(out);
 	m_serializer.header(out, sf);
 	if (withParents) {
 		std::unordered_set<uint32_t> tmp;
@@ -157,6 +158,7 @@ void CQRItems::all() {
 		}
 	}
 	m_serializer.footer(out, sf);
+	m_serializer.streamUnprepare(out, streamcfg);
 	
 	ttm.end();
 	writeLogStats("simpleCQR", cqs, ttm, cqr.cellCount(), itemCount);

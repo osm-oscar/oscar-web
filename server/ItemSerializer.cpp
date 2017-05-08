@@ -2,10 +2,19 @@
 
 namespace oscar_web {
 
-ItemSerializer::ItemSerializer() {}
+ItemSerializer::ItemSerializer() : m_precision(8) {}
 
 ItemSerializer::~ItemSerializer() {}
 
+int ItemSerializer::streamPrepare(std::ostream& out) const {
+	int prec = out.precision();
+	out.precision(m_precision);
+	return prec;
+}
+
+void ItemSerializer::streamUnprepare(std::ostream& out, int streamcfg) const {
+	out.precision(streamcfg);
+}
 
 void ItemSerializer::header(std::ostream & out, SerializationFormat sf) {
 	if (sf & SF_GEO_JSON) {

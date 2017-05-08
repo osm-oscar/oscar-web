@@ -67,9 +67,11 @@ void ItemDB::single(std::string num) {
 	}
 	
 	std::ostream & out = response().out();
+	auto streamcfg = m_serializer.streamPrepare(out);
 	if (m_store.size() > id) {
 		writeSingleItem(out, id, (ItemSerializer::SerializationFormat) sf);
 	}
+	m_serializer.streamUnprepare(out, streamcfg);
 }
 
 void ItemDB::multiple() {
@@ -110,13 +112,11 @@ void ItemDB::multiple() {
 	
 	std::ostream & out = response().out();
 	
-	if (withShape) {
-		out << std::fixed << std::setprecision(std::numeric_limits<double>::digits10 + 2);
-	}
-	
+	auto streamcfg = m_serializer.streamPrepare(out);
 	writeHeader(out, sf);
 	writeMultiple(out, filteredRequestedItems.begin(), filteredRequestedItems.end(), sf);
 	writeFooter(out, sf);
+	m_serializer.streamUnprepare(out, streamcfg);
 }
 
 void ItemDB::multipleShapes() {
@@ -137,10 +137,9 @@ void ItemDB::multipleShapes() {
 	}
 
 	std::ostream & out = response().out();
-	out << std::fixed << std::setprecision(std::numeric_limits<double>::digits10 + 2);
 	
-	
-	out << "{";
+	auto streamcfg = m_serializer.streamPrepare(out);
+	writeHeader(out, sf);
 	
 	uint32_t maxId = m_store.size();
 	if (jsonIdxIds.type() == cppcms::json::is_array) {
@@ -160,7 +159,8 @@ void ItemDB::multipleShapes() {
 			}
 		}
 	}
-	out << "}";
+	writeFooter(out, sf);
+	m_serializer.streamUnprepare(out, streamcfg);
 }
 
 

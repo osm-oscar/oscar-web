@@ -15,6 +15,8 @@ public:
 	ItemSerializer();
 	~ItemSerializer();
 public:
+	int streamPrepare(std::ostream & out) const;
+	void streamUnprepare(std::ostream & out, int streamcfg) const;
 public:
 	///Header for writing multiple items
 	void header(std::ostream & out, SerializationFormat sf);
@@ -64,6 +66,7 @@ private:
 	void toGeoJsonObjectMembers(std::ostream & out, const liboscar::Static::OsmKeyValueObjectStore::Item & item, bool withShape) const;
 private:
 	sserialize::JsonEscaper m_escaper;
+	int m_precision;
 };
 
 template<typename T_ITERATOR>
