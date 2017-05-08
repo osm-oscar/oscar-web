@@ -164,6 +164,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				return handler.m_itemIds.values();
 			},
 	   
+			size: function() {
+				return handler.m_itemIds.size();
+			},
+	   
 			//calls cb for each handled itemId
 			each: function(cb) {
 				handler.m_itemIds.each(cb);
@@ -1428,6 +1432,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 
 		removeUnpinnedInspectionItems: function() {
 			map.inspectionItemListHandler.removeUnpinned();
+			if (!map.inspectionItemListHandler.size()) {
+				state.sidebar.open("search");
+			}
 		},
 	   
 		addToInspection: function(itemId) {
@@ -1457,8 +1464,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		removeFromInspection: function(itemId) {
 			map.inspectionItemListHandler.remove(itemId);
 			map.inspectionItemMarkers.remove(itemId);
+			if (!map.inspectionItemListHandler.size()) {
+				state.sidebar.open("search");
+			}
 		},
-		
 	   
 		onInspectionItemMarkerClicked: function(e) {
 			if ($('#sidebar-pane-relatives').hasClass("active")) {
@@ -1469,13 +1478,15 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (state.items.inspectItem == e.itemId) {
 					state.items.inspectItem = -1;
 				}
-				map.inspectionItemListHandler.remove(e.itemId);
-				map.inspectionItemMarkers.remove(e.itemId);
+				map.removeFromInspection(e.itemId);
 			}
 		},
 		
 		onInspectRemoveAllClicked: function() {
 			map.inspectionItemListHandler.clear();
+			if (!map.inspectionItemListHandler.size()) {
+				state.sidebar.open("search");
+			}
 		},
 	   
 		onInspectItemLinkClicked: function(e) {
@@ -1484,8 +1495,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		onInspectItemRemoveLinkClicked: function(e) {
-			var itemId = e.itemId;
-			map.inspectionItemMarkers.remove(itemId);
+			map.removeFromInspection(e.itemId);
 		},
 	   
 		onInspectItemTitleLinkClicked: function(e) {
