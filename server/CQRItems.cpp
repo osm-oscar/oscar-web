@@ -34,7 +34,7 @@ void CQRItems::all() {
 	//params
 	std::string cqs = request().get("q");
 	std::string regionFilter = request().get("rf");
-	std::string sfstr = request().post("format");
+	std::string sfstr = request().get("format");
 
 	bool withShapes = sserialize::toBool(request().get("s"));
 	bool withParents = sserialize::toBool(request().get("p"));
@@ -59,7 +59,7 @@ void CQRItems::all() {
 	uint32_t itemCount = 0;
 	
 	std::ostream & out = response().out();
-	out << "[";
+	m_serializer.header(out, sf);
 	if (withParents) {
 		std::unordered_set<uint32_t> tmp;
 		bool haveParents = false;
@@ -156,7 +156,7 @@ void CQRItems::all() {
 			m_serializer.serialize(out, store.id2ItemIterator(itemIds.begin()), store.id2ItemIterator(itemIds.end()), sf);
 		}
 	}
-	out << "]";
+	m_serializer.footer(out, sf);
 	
 	ttm.end();
 	writeLogStats("simpleCQR", cqs, ttm, cqr.cellCount(), itemCount);

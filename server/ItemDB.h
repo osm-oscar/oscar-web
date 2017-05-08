@@ -39,8 +39,8 @@ private:
 	uint32_t m_maxPerRequest;
 	ItemSerializer m_serializer;
 private:
-	void writeHeader(std::ostream & out);
-	void writeFooter(std::ostream & out);
+	void writeHeader(std::ostream& out, oscar_web::ItemSerializer::SerializationFormat sf);
+	void writeFooter(std::ostream& out, oscar_web::ItemSerializer::SerializationFormat sf);
 	void writeSingleItem(std::ostream& out, uint32_t id, oscar_web::ItemSerializer::SerializationFormat sf);
 	template<typename T_IT>
 	void writeMultiple(std::ostream & out, T_IT begin, T_IT end, oscar_web::ItemSerializer::SerializationFormat sf);

@@ -6,6 +6,25 @@ ItemSerializer::ItemSerializer() {}
 
 ItemSerializer::~ItemSerializer() {}
 
+
+void ItemSerializer::header(std::ostream & out, SerializationFormat sf) {
+	if (sf & SF_GEO_JSON) {
+		out << "{\"type\":\"FeatureCollection\",\"features\":[";
+	}
+	else {
+		out << "[";
+	}
+}
+
+void ItemSerializer::footer(std::ostream & out, SerializationFormat sf) {
+	if (sf & SF_GEO_JSON) {
+		out << "]}";
+	}
+	else {
+		out << "]";
+	}
+}
+
 void ItemSerializer::serialize(std::ostream & out, const liboscar::Static::OsmKeyValueObjectStore::Item & item, SerializationFormat sf) const {
 	if (sf & SF_GEO_JSON) {
 		toGeoJson(out, item, sf & SF_WITH_SHAPE);
@@ -188,26 +207,31 @@ ItemSerializer::toJsonObjectMembers(std::ostream& out, const liboscar::Static::O
 //GeoJson stuff
 void
 ItemSerializer::toGeoJson(std::ostream& out,
-						const sserialize::Static::spatial::DenseGeoPointVector::const_iterator & it,
+						sserialize::Static::spatial::DenseGeoPointVector::const_iterator it,
 						const sserialize::Static::spatial::DenseGeoPointVector::const_iterator & end) const
 {
-	toJson(out, it, end);
+	sserialize::Static::spatial::GeoPoint gp(*it);
+	out << "[" << gp.lon() << "," << gp.lat() << "]";
+	for(++it; it != end; ++it) {
+		gp = *it;
+		out << ",[" << gp.lon() << "," << gp.lat() << "]";
+	}
 }
 
 void
 ItemSerializer::toGeoJson(std::ostream& out, sserialize::Static::spatial::GeoMultiPolygon::PolygonList::const_iterator begin, const sserialize::Static::spatial::GeoMultiPolygon::PolygonList::const_iterator & end) const
 {
 	if (begin != end) {
-		out << '[';
+		out << "[[";
 		auto poly = *begin;
 		toGeoJson(out, poly.cbegin(), poly.cend());
-		out << ']';
+		out << "]]";
 		++begin;
 		for(; begin != end; ++begin) {
-			out << ",[";
+			out << ",[[";
 			poly = *begin;
 			toGeoJson(out, poly.cbegin(), poly.cend());
-			out << ']';
+			out << "]]";
 		}
 	}
 }
@@ -234,22 +258,29 @@ ItemSerializer::toGeoJson(std::ostream& out, const sserialize::Static::spatial::
 		break;
 	}
 	
-	out << "\"coordinates\":";
+	out << "\",\"coordinates\":";
 	
 	switch(gst) {
 	case sserialize::spatial::GS_POINT:
 	{
 		const sserialize::Static::spatial::GeoPoint * gp = gs.get<sserialize::Static::spatial::GeoPoint>();
-		out << "[" << gp->lat() << "," << gp->lon() << "]";
+		out << "[" << gp->lon() << "," << gp->lat() << "]";
 		break;
 	}
 	case sserialize::spatial::GS_WAY:
-	case sserialize::spatial::GS_POLYGON:
 	{
 		const sserialize::Static::spatial::GeoWay * gw = gs.get<sserialize::Static::spatial::GeoWay>();
 		out << "[";
 		toGeoJson(out, gw->cbegin(), gw->cend());
 		out << "]";
+		break;
+	}
+	case sserialize::spatial::GS_POLYGON:
+	{
+		const sserialize::Static::spatial::GeoWay * gw = gs.get<sserialize::Static::spatial::GeoWay>();
+		out << "[[";
+		toGeoJson(out, gw->cbegin(), gw->cend());
+		out << "]]";
 		break;
 	}
 	case sserialize::spatial::GS_MULTI_POLYGON:
@@ -296,7 +327,7 @@ ItemSerializer::toGeoJsonObjectMembers(std::ostream& out, const liboscar::Static
 	liboscar::Static::OsmKeyValueObjectStorePayload payload(item.payload());
 	sserialize::Static::spatial::GeoShape shape(payload.shape());
 	
-	out << "\"type\":\"feature\",";
+	out << "\"type\":\"Feature\",";
 	out << "\"geometry\":";
 	if (withShape) {
 		toGeoJson(out, shape);
@@ -326,7 +357,7 @@ ItemSerializer::toGeoJsonObjectMembers(std::ostream& out, const liboscar::Static
 		break;
 	};
 	out << "\",";
-	out << "\"score\":" << payload.score() << ",";
+	out << "\"score\":" << payload.score();
 	if (item.size()) {
 		out << ",\"k\":[\"" << m_escaper.escape(item.key(0)) << "\"";
 		for(uint32_t i=1, s=item.size(); i < s; ++i) {

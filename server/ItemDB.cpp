@@ -15,12 +15,12 @@
 
 namespace oscar_web {
 
-void ItemDB::writeHeader(std::ostream & out) {
-	out << "[";
+void ItemDB::writeHeader(std::ostream & out, ItemSerializer::SerializationFormat sf) {
+	m_serializer.header(out, sf);
 }
 
-void ItemDB::writeFooter(std::ostream & out) {
-	out << "]";
+void ItemDB::writeFooter(std::ostream & out, ItemSerializer::SerializationFormat sf) {
+	m_serializer.footer(out, sf);
 }
 
 void ItemDB::writeSingleItem(std::ostream& out, uint32_t id, oscar_web::ItemSerializer::SerializationFormat sf) {
@@ -114,9 +114,9 @@ void ItemDB::multiple() {
 		out << std::fixed << std::setprecision(std::numeric_limits<double>::digits10 + 2);
 	}
 	
-	writeHeader(out);
+	writeHeader(out, sf);
 	writeMultiple(out, filteredRequestedItems.begin(), filteredRequestedItems.end(), sf);
-	writeFooter(out);
+	writeFooter(out, sf);
 }
 
 void ItemDB::multipleShapes() {

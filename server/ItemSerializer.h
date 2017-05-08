@@ -15,6 +15,12 @@ public:
 	ItemSerializer();
 	~ItemSerializer();
 public:
+public:
+	///Header for writing multiple items
+	void header(std::ostream & out, SerializationFormat sf);
+	///Footer for writing multiple items
+	void footer(std::ostream & out, SerializationFormat sf);
+public:
 	void serialize(std::ostream & out, const liboscar::Static::OsmKeyValueObjectStore::Item & item, SerializationFormat sf) const;
 	void serialize(std::ostream & out, const liboscar::Static::OsmKeyValueObjectStore::Item & item, SerializationFormat sf, const std::string & addData) const;
 	void serialize(std::ostream & out, const sserialize::Static::spatial::GeoShape & gs, SerializationFormat sf) const;
@@ -44,7 +50,7 @@ private:
 	void toGeoJson(std::ostream & out, const liboscar::Static::OsmKeyValueObjectStore::Item & item, bool withShape) const;
 	void toGeoJson(std::ostream & out, const sserialize::Static::spatial::GeoShape & gs) const;
 	
-	void toGeoJson(std::ostream& out, const sserialize::Static::spatial::DenseGeoPointVector::const_iterator& it, const sserialize::Static::spatial::DenseGeoPointVector::const_iterator& end) const;
+	void toGeoJson(std::ostream& out, sserialize::Static::spatial::DenseGeoPointVector::const_iterator it, const sserialize::Static::spatial::DenseGeoPointVector::const_iterator& end) const;
 	void toGeoJson(std::ostream & out, sserialize::Static::spatial::GeoMultiPolygon::PolygonList::const_iterator begin, const sserialize::Static::spatial::GeoMultiPolygon::PolygonList::const_iterator & end) const;
 
 	template<typename T_ITERATOR>
