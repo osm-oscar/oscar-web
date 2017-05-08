@@ -97,6 +97,7 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
 						var dlelem = $("#result_download_link");
 						dlelem.attr('data-base-href', dllink);
 						dlelem.attr('href', dllink);
+						search.updateDownloadLink();
                     }
                 },
                 function (jqXHR, textStatus, errorThrown) {
@@ -125,6 +126,33 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
 				state.setQuery(myQ);
                 search.instantCompletion();
 			}
+		},
+	   
+		updateDownloadLink: function() {
+			var dlelem = $("#result_download_link");
+			var content = $("#result_download_select")
+			var format = $("#result_download_format");
+			var params = ""
+			var content_selection = content.val();
+			var format_selection = format.val();
+			if (content_selection === "items") {
+				;
+			}
+			else if (content_selection === "items+parents") {
+				params += "&p=true";
+			}
+			else if (content_selection === "items+shapes") {
+				params += "&s=true";
+			}
+			else if (content_selection === "items+parents+shapes") {
+				params += "&p=true&s=true";
+			}
+			
+			if (format_selection === "geojson") {
+				params += "&format=geojson";
+			}
+			
+			dlelem.attr("href", dlelem.attr("data-base-href") + params);
 		},
 		
 		bindTagCompletion: function(element) {
