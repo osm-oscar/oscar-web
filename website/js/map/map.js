@@ -1432,7 +1432,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 
 		removeUnpinnedInspectionItems: function() {
 			map.inspectionItemListHandler.removeUnpinned();
-			if (!map.inspectionItemListHandler.size()) {
+			if (!map.inspectionItemListHandler.size() && state.sidebar.isOpen("inspect")) {
 				state.sidebar.open("search");
 			}
 		},
@@ -1464,7 +1464,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		removeFromInspection: function(itemId) {
 			map.inspectionItemListHandler.remove(itemId);
 			map.inspectionItemMarkers.remove(itemId);
-			if (!map.inspectionItemListHandler.size()) {
+			if (!map.inspectionItemListHandler.size() && state.sidebar.isOpen("inspect")) {
 				state.sidebar.open("search");
 			}
 		},

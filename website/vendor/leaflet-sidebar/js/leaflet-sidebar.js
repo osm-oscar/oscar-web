@@ -174,6 +174,16 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
 
         return this;
     },
+	
+	isOpen: function(id) {
+		var titleId = "sidebar-pane-title-" + id;
+        for (let child of this._titles) {
+            if (child.id == titleId) {
+				return L.DomUtil.hasClass(child, 'active');
+			}
+        }
+        return false;
+	},
 
     /**
      * Close the sidebar (if necessary).
