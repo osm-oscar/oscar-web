@@ -99,7 +99,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 				$("#search_text").autocomplete("close");
                 search.instantCompletion();
             });
-			
 			search.bindTagCompletion('#search_text');
 			
 			$("#searchclear").click(function() {
@@ -130,6 +129,14 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             $('#closeTree a').click(function () {
                 state.visualizationActive = false;
                 $('#tree').css("display", "none");
+            });
+			
+			$("#download_result").click(function() {
+				$('#floatpanel').removeClass("hidden");
+			});
+			
+            $('#floatpanel_close').click(function () {
+                $('#floatpanel').addClass("hidden");
             });
 
             $('#closeFlickr a').click(function () {

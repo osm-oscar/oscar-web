@@ -117,10 +117,35 @@ body {
     width: 10px;
 }
 
+
 #graph {
-    margin-top: 10px;
+/*     margin-top: 10px; */
     font-size: 1.5em;
-    float: right;
+/*     float: right; */
+}
+
+#download_result {
+/*     margin-top: 10px; */
+    font-size: 1.5em;
+/*     float: right; */
+}
+
+#dlgraphdiv {
+	margin-top: 10px;
+	float: right;
+}
+
+#floatpanel {
+	position: fixed;
+	top: 15%;
+	bottom: 10%;
+	right: 10%;
+	max-width: 80%;
+}
+
+#floatpanel_content {
+	overflow-x: auto;
+	overflow-y: auto;
 }
 
 #closeFlickr{
@@ -139,6 +164,16 @@ body {
     padding: 4px;
     display: inline-block;
     margin: 5px;
+}
+
+.floatpanel-close {
+  position: absolute;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  cursor: pointer;
+  right: 0;
 }
 
 .sidebar-tabs>ul>li.active.sidebar-menu-success, .sidebar-header.sidebar-header-success {

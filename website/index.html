@@ -115,6 +115,14 @@
                             <form id="searchModi" data-toggle="tooltip" data-placement="right" title="Use 'Local' to search in viewport">
                                 <input type="checkbox" name="searchModi" class="form-control">
                             </form>
+                            <div id="dlgraphdiv">
+								<span>
+									<a href="#" id="graph" class="fa fa-sitemap" data-toggle="tooltip" data-placement="bottom" title="Show the region-hierarchy"></a>
+								</span>
+								<span>
+									<a href="#" id="download_result" class="fa fa-download" data-toggle="tooltip" data-placement="bottom" title="Download result"></a>
+								</span>
+                            </div>
                         </div>
                         <div>
                             <form class="form-inline pull-left" id="search_form">
@@ -126,7 +134,6 @@
                                        style="position: absolute; left: -9999px; width: 1px; height: 1px;"
                                        tabindex="-1">
                             </form>
-                            <a href="#" id="graph" class="fa fa-sitemap" data-toggle="tooltip" data-placement="left" title="Show the region-hierarchy"></a>
                         </div>
 					</div>
 					<div class="sidebar-panes">
@@ -237,23 +244,6 @@
 											<span class="input-group-addon">regions</span>
 										</div>
 									</div>
-									<div class='form-group'>
-										<div class="input-group">
-											<span class="input-group-addon">
-												<a href="#" target="_blank" id="result_download_link" data-base-href="">Download</a>
-											</span>
-											<select class='form-control' id="result_download_select"/>
-												<option value="items">items</option>
-												<option value="items+parents">items+parents</option>
-												<option value="items+shapes">items with shapes</option>
-												<option value="items+parents+shapes">items+parents with shapes</option>
-											</select>
-											<select class='form-control' id="result_download_format"/>
-												<option value="internal">as internal</option>
-												<option value="geojson">as GeoJSON</option>
-											</select>
-										</div>
-									</div>
 								</div>
 							</div>
 						</div>
@@ -269,6 +259,33 @@
             </div>
             <div id="map"></div>
         </div>
+		<div class="panel panel-default hidden" id="floatpanel">
+			<div class="panel-heading">
+				<h3 class="panel-title">
+					<span id="floatpanel_title">Panel title</span>
+					<span class="pull-right"><a href="#" class="fa fa-times" id="floatpanel_close"></a></span>
+				</h3>
+			</div>
+			<div class="panel-body" id="floatpanel_content">
+				<div class='form-group'>
+					<div class="input-group">
+						<span class="input-group-addon">
+							<a href="#" target="_blank" id="result_download_link" data-base-href="">Download</a>
+						</span>
+						<select class='form-control' id="result_download_select"/>
+							<option value="items">items</option>
+							<option value="items+parents">items+parents</option>
+							<option value="items+shapes">items with shapes</option>
+							<option value="items+parents+shapes">items+parents with shapes</option>
+						</select>
+						<select class='form-control' id="result_download_format"/>
+							<option value="internal">as internal</option>
+							<option value="geojson">as GeoJSON</option>
+						</select>
+					</div>
+				</div>
+			</div>
+		</div>
         <script type="text/javascript" data-main="js/main.js"
         src="vendor/require.js/require.js"></script>
     </body>
