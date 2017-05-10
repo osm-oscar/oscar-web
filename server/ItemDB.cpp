@@ -139,7 +139,7 @@ void ItemDB::multipleShapes() {
 	std::ostream & out = response().out();
 	
 	auto streamcfg = m_serializer.streamPrepare(out);
-	writeHeader(out, sf);
+	out << '{';
 	
 	uint32_t maxId = m_store.size();
 	if (jsonIdxIds.type() == cppcms::json::is_array) {
@@ -159,7 +159,7 @@ void ItemDB::multipleShapes() {
 			}
 		}
 	}
-	writeFooter(out, sf);
+	out << '}';
 	m_serializer.streamUnprepare(out, streamcfg);
 }
 
