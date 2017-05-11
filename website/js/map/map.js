@@ -1715,7 +1715,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				var tmp = tools.SimpleSet();
 				for(let cellId of cellIds) {
 					var cellNode = state.dag.cell(cellId);
-					for(var itemId in cellNode.items.values()) {
+					for(let itemId of cellNode.items.builtinset()) {
 						tmp.insert(itemId);
 					}
 				}
