@@ -237,6 +237,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 		insert: function(cellId, itemsInfo) {
 			var cellNode = state.dag.cell(cellId);
 			for(var itemId in itemsInfo) {
+				itemId = parseInt(itemId);
 				var childNode;
 				if (state.dag.hasItem(itemId)) {
 					childNode = state.dag.item(itemId);
