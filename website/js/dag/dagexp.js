@@ -40,6 +40,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 		//then take care of the cells
 		var regionInfo = data["regionInfo"];
 		for(var regionId in regionInfo) {
+			regionId = parseInt(regionId);
 			if (state.dag.hasRegion(regionId)) {
 				continue;
 			}
@@ -70,6 +71,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 		
 		var cellInfo = data["cells"];
 		for(var regionId in cellInfo) {
+			regionId = parseInt(regionId);
 			var regionNode = state.dag.region(regionId);
 			var cells = cellInfo[regionId];
 			if (cells !== undefined && !cells.length) {
@@ -145,7 +147,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 			var cells = [];
 			var regionInfo = result["regionInfo"];
 			for(var regionId in regionInfo) {
-				children.push(regionId);
+				children.push(parseInt(regionId));
 			}
 			if (result["cells"] !== undefined) {
 				var rc = result["cells"];
