@@ -1704,31 +1704,51 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		//get the top-k items that are in the cells specified by cells which is an array;
+		//top-k will fetch about k/cellIds.size many items per cell
+		//This does not fetch top-k with respect to itemIds but rather with respect to the cells
+		//This should in theory result in a good coverage of the map screen with items from all visible cells
 		topKItems: function(k, offset, cellIds, cb) {
 			map.dagExpander.expandCellItems(cellIds, function() {
 				
-				//iterators would be nice
-				var tmp = tools.SimpleSet();
+				var activeIterators = new Set();
+				var removeIterators = [];
+				var resultIds = new Set();
+				var result = [];
+				
 				for(let cellId of cellIds) {
-					var cellNode = state.dag.cell(cellId);
-					for(let itemId of cellNode.items.builtinset()) {
-						tmp.insert(itemId);
-					}
+					activeIterators.add( state.dag.cell(cellId).items.keys() );
 				}
-				var ret = [];
-				for(let itemId of tmp.builtinset()) {
-					if (!offset) {
-						ret.push(itemId);
+				
+				//TODO: we first have to skip the first k items
+				
+				while(activeIterators.size && result.length < k+offset) {
+					
+					for(let it of activeIterators) {
+						var tmp = it.next();
+						while(!tmp.done) {
+							let id = tmp.value;
+							if (!resultIds.has(id)) {
+								resultIds.add(id);
+								result.push(id);
+								break;
+							}
+							else {
+								tmp = it.next();
+							}
+						}
+						if (tmp.done) {
+							removeIterators.push(it);
+						}
 					}
-					else {
-						--offset;
-					}
-					if (ret.length == k) {
-						break;
+					
+					if (removeIterators.length) {
+						for(let it of removeIterators) {
+							activeIterators.delete(it);
+						}
 					}
 				}
 				
-				cb(ret);
+				cb(result);
 				
 			}, offset);
 		},
