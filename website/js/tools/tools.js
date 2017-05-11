@@ -14,31 +14,20 @@ define(["jquery"], function ($) {
          */
 		SimpleHash: function () {
 			return {
-				m_size: 0,
 				m_data: new Map(),
-				m_values: {},
 				size: function () {
 					return this.m_data.size;
 				},
 				insert: function (key, value) {
-					check_number_is_number(key);
-					if (this.m_values[key] === undefined) {
-						this.m_size += 1;
-					}
-					this.m_values[key] = value;
 					this.m_data.set(key, value);
 				},
 				set: function (key, value) {
 					this.insert(key, value);
 				},
 				count: function (key) {
-					check_number_is_number(key);
-					console.assert((this.m_values[key] !== undefined) === this.m_data.has(key));
 					return this.m_data.has(key);
 				},
 				at: function (key) {
-					check_number_is_number(key);
-					console.assert((this.m_values[key] !== undefined) === this.m_data.has(key));
 					return this.m_data.get(key);
 				},
 				//call cb for each (key, value) with cb(key, value)
@@ -48,24 +37,12 @@ define(["jquery"], function ($) {
 					}
 				},
 				erase: function (key) {
-					check_number_is_number(key);
-					console.assert((this.m_values[key] !== undefined) === this.m_data.has(key));
-					if (this.m_values[key] !== undefined) {
-						this.m_size -= 1;
-						delete this.m_values[key];
-					}
 					this.m_data.delete(key);
 				},
 				clear: function () {
-					this.m_size = 0;
-					this.m_values = {};
 					this.m_data.clear();
 				},
 				builtinmap: function() {
-					console.assert(this.m_size === this.m_data.size);
-					for(let x of this.m_data.keys()) {
-						console.assert(this.m_values[x] !== undefined);
-					}
 					return this.m_data;
 				},
 				keys: function() {
@@ -77,11 +54,6 @@ define(["jquery"], function ($) {
 			var ss = tools.SimpleHash();
 			ss.m_data = new Set();
 			ss.insert = function(key) {
-				check_number_is_number(key);
-				if (this.m_values[key] === undefined) {
-					this.m_size += 1;
-				}
-				this.m_values[key] = key;
 				this.m_data.add(key);
 			};
 			ss.insertArray = function(arrayOfKeys) {
@@ -113,10 +85,6 @@ define(["jquery"], function ($) {
 				return true;
 			};
 			ss["builtinset"] = function() {
-				console.assert(this.m_size === this.m_data.size);
-				for(let x of this.m_data) {
-					console.assert(this.m_values[x] !== undefined);
-				}
 				return this.m_data;
 			};
 			ss.keys = function() {
