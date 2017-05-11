@@ -21,7 +21,7 @@ define(["jquery"], function ($) {
 					return this.m_values;
 				},
 				size: function () {
-					return this.m_size;
+					return this.m_data.size;
 				},
 				insert: function (key, value) {
 					check_number_is_number(key);
