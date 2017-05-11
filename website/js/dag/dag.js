@@ -268,7 +268,7 @@ define(["jquery", "tools"], function ($, tools) {
 					var visited = {};
 					for(var i = 0; i < queue.length; ++i) {
 						var node = this.region(queue[i]);
-						for(var childId in node.children.values()) {
+						for(let childId of node.children.builtinset()) {
 							if (visited[childId] === undefined) {
 								queue.push(childId);
 								visited[childId] = childId;
