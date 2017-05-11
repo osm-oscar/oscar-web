@@ -229,7 +229,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                     }
                 }
                 else if (state.spatialquery.type === "poly") {
-                    if (state.spatialquery.coords.length > 3) {
+                    if (state.spatialquery.coords.length >= 3) {
                         qStr = "$poly";
                         var delim = ":"
                         for(let coord of state.spatialquery.coords) {
