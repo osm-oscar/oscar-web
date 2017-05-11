@@ -217,8 +217,8 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 else if (state.spatialquery.type === "path") {
                     if (state.spatialquery.coords.length > 0) {
                         qStr = "$path:" + jQuery('#spatialquery_radius').val();
-                        for(i in state.spatialquery.coords) {
-                            qStr += "," + state.spatialquery.coords[i].lat + "," + state.spatialquery.coords[i].lng;
+                        for(let coord of state.spatialquery.coords) {
+                            qStr += "," + coord.lat + "," + coord.lng;
                         }
                     }
                 }
@@ -232,8 +232,8 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                     if (state.spatialquery.coords.length > 3) {
                         qStr = "$poly";
                         var delim = ":"
-                        for(i in state.spatialquery.coords) {
-                            qStr += delim + state.spatialquery.coords[i].lat + "," + state.spatialquery.coords[i].lng;
+                        for(let coord of state.spatialquery.coords) {
+                            qStr += delim + coord.lat + "," + coord.lng;
                             delim = ",";
                         }
                     }
