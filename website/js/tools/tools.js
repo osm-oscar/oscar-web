@@ -66,6 +66,9 @@ define(["jquery"], function ($) {
 						console.assert(this.count(x));
 					}
 					return this.m_data;
+				},
+				keys: function() {
+					return this.builtinmap().keys();
 				}
 			};
 		},
@@ -86,14 +89,14 @@ define(["jquery"], function ($) {
 				}
 			};
 			ss.each = function(cb) {
-				for(var key in this.m_values) {
+				for(let key of this.builtinset()) {
 					cb(key);
 				}
 			};
 			ss.toArray = function() {
 				var tmp = [];
-				for(var i in this.values()) {
-					tmp.push(i);
+				for(let x of this.builtinset()) {
+					tmp.push(x);
 				}
 				return tmp;
 			};
@@ -115,23 +118,26 @@ define(["jquery"], function ($) {
 				}
 				return this.m_data;
 			};
+			ss.keys = function() {
+				return this.builtinset();
+			};
 			return ss;
 		},
 		
 		getMissing: function(setA, setB, missingInA, missingInB) {
-			for(var id in setA.values()) {
+			for(let id of setA.keys()) {
 				if (!setB.count(id)) {
 					missingInB.insert(id);
 				}
 			}
-			for(var id in setB.values()) {
+			for(let id of setB.keys()) {
 				if (!setA.count(id)) {
 					missingInA.insert(id);
 				}
 			}
 		},
 		partition: function(setA, setB, onlyInB, onlyInA, inBoth) {
-			for(let id of setA.values()) {
+			for(let id of setA.keys()) {
 				if (!setB.count(id)) {
 					onlyInA.insert(id);
 				}
@@ -139,7 +145,7 @@ define(["jquery"], function ($) {
 					inBoth.insert(id);
 				}
 			}
-			for(let id of setB.values()) {
+			for(let id of setB.keys()) {
 				if (!setA.count(id)) {
 					onlyInB.insert(id);
 				}
