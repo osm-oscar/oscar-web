@@ -122,8 +122,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 		//you may overload this to change the way a request is fullfilled
 		this._requestFromStore = function(cb, dataIds) {
 			res = [];
-			for(var i in dataIds) {
-				res.push(this.m_data.at(dataIds[i]));
+			for(let x of dataIds) {
+				res.push(this.m_data.at(x));
 			}
 			cb(res);
 		};
@@ -132,9 +132,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 		//data is of the form {dataId: dataEntry}
 		//you may overload this to change the way data is inserted into the storage
 		this._insertData = function(dataIds, data) {
-			for(var i in dataIds) {
-				var dataId = dataIds[i];
-				this.m_data.insert(dataIds[i], data[dataId]);
+			for(let dataId of dataIds) {
+				this.m_data.insert(dataId, data[dataId]);
 			}
 		},
 		
@@ -144,13 +143,12 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			var dataIds = myRemoteRequest.dataIds;
 			//insert the data and remove it from in-flight cache
 			this._insertData(dataIds, data);
-			for(var i in dataIds) {
-				this.m_inFlight.erase(dataIds[i]);
+			for(let dataId of dataIds) {
+				this.m_inFlight.erase(dataId);
 			}
 			//take care of all requests that depend on this remote request
 			var myRequestsIds = myRemoteRequest.deps;
-			for(var i in myRequestsIds) {
-				var requestId = myRequestsIds[i];
+			for(let requestId of myRequestsIds) {
 				var myRequest = this.m_requests.at(requestId);
 				myRequest.inFlightDeps.erase(remoteRequestId);
 				if (!myRequest.inFlightDeps.size()) {
@@ -168,9 +166,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 		this.fetch = function(cb, dataIds) {
 			//first check if we already have the requested data available
 			var missingIds = [];
-			for(var i in dataIds) {
-				if (!this.count(dataIds[i])) {
-					missingIds.push(dataIds[i]);
+			for(let dataId of dataIds) {
+				if (!this.count(dataId)) {
+					missingIds.push(dataId);
 				}
 			}
 			if (!missingIds.length) {
@@ -187,12 +185,12 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			
 			//now check if any of the missing ids are in flight
 			var stillMissingIds = [];
-			for(var i in missingIds) {
-				if (this.m_inFlight.count(missingIds[i])) {
-					myRequest.inFlightDeps.insert(this.m_inFlight.at(missingIds[i]));
+			for(let missingId of missingIds) {
+				if (this.m_inFlight.count(missingId)) {
+					myRequest.inFlightDeps.insert(this.m_inFlight.at(missingId));
 				}
 				else {
-					stillMissingIds.push(missingIds[i]);
+					stillMissingIds.push(missingId);
 				}
 			}
 			
@@ -207,8 +205,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 					var myMissingIds = stillMissingIds.splice(-reqSize, reqSize);
 					
 					//put requested dataIds into inflight cache
-					for(var i in myMissingIds) {
-						this.m_inFlight.insert(myMissingIds[i], myRemoteRequestId);
+					for(let missingId of myMissingIds) {
+						this.m_inFlight.insert(missingId, myRemoteRequestId);
 					}
 					
 					myRemoteRequests.push(myRemoteRequestId);
@@ -229,10 +227,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 			
 			//now issue our own requests
 			if (myRemoteRequests.length) {
-				for(var i in myRemoteRequests) {
+				for(let x of myRemoteRequests) {
 					this._getData(function(data, remoteRequestId) {
 						me._handleReturnedRemoteRequest(remoteRequestId, data);
-					}, myRemoteRequests[i]);
+					}, x);
 				};
 			}
 		};
@@ -796,9 +794,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 				},
 				clusterHints: function(regions, successCB, errorCB) {
 					var missingRegions = [];
-					for(var i in regions) {
-						if (this.d.clusterHints[regions[i]] === undefined) {
-							missingRegions.push(regions[i]);
+					for(let regionId of regions) {
+						if (this.d.clusterHints[regionId] === undefined) {
+							missingRegions.push(regionId);
 						}
 					}
 					var me = this;
@@ -807,8 +805,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 							me.d.clusterHints[i] = hints[i];
 						}
 						var data = {};
-						for(var i in regions) {
-							data[regions[i]] = me.d.clusterHints[regions[i]];
+						for(let regionId of regions) {
+							data[regionId] = me.d.clusterHints[regionId];
 						}
 						successCB(data);
 					}
@@ -843,8 +841,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
 				return false;
 			}
 			function containsPts(arrayOfPts) {
-				for(var i in arrayOfPts) {
-					if (bbox.contains(arrayOfPts[i])) {
+				for(let pt of arrayOfPts) {
+					if (bbox.contains(pt)) {
 						return true;
 					}
 				}
@@ -1473,8 +1471,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools'], function (jQuery,
                 tokenString = "";
             }
             var totalRegExp = "^(";
-            for (var i in tokens) {
-                var token = tokens[i];
+            for(let token of tokens) {
                 var tokenRegExp = "";
                 var j = 0;
                 if (token.value[0] === '@') { //tag query
