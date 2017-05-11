@@ -255,7 +255,7 @@ define(["jquery", "tools"], function ($, tools) {
 					if (ret !== undefined && ret == false) {
 						return;
 					}
-					for(var childId in startNode.children.values()) {
+					for(let childId of startNode.children.builtinset()) {
 						var childNode = this.region(childId);
 						this.dfs(childNode, cb);
 					}
