@@ -53,8 +53,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 		}
 		
 		var graph = data["graph"];
-		for (var i in dataIds) {
-			var parentId = dataIds[i];
+		for (let parentId of dataIds) {
 			var parentNode = state.dag.region(parentId);
 			
 			if (graph[parentId] === undefined || !graph[parentId].length) {
@@ -130,8 +129,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 				function (items) {
 					console.assert(items.length == childIds.length);
 					var regionInfo = result["regionInfo"];
-					for(var i in items) {
-						var item = items[i];
+					for(let item of items) {
 						var ri = regionInfo[item.id()];
 						ri["name"] = item.name();
 						ri["bbox"] = item.bbox();
@@ -189,16 +187,14 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 	};
 	//data is of the form: { regionId: [cellId] }
 	regionCellExpander._insertData = function(dataIds, data) {
-		for(var i in dataIds) {
-			var regionId = dataIds[i];
+		for(let regionId of dataIds) {
 			var regionNode = state.dag.region(regionId);
 			var cells = data[regionId];
 			if (cells === undefined || cells.length === 0) {
 				regionNode.mayHaveItems = false;
 				continue;
 			}
-			for(var j in cells) {
-				var cellId = cells[j];
+			for(let cellId of cells) {
 				var cellNode;
 				if (state.dag.hasCell(cellId)) {
 					cellNode = state.dag.cell(cellId);
@@ -219,9 +215,8 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 			//result is of the form { regionId: [cellId] }
 			var tmp = tools.SimpleSet();
 			for(var regionId in result) {
-				var ri = result[regionId];
-				for(var i in ri) {
-					tmp.insert(ri[i]);
+				for(let cellId of result[regionId]) {
+					tmp.insert(cellId);
 				}
 			}
 			oscar.fetchCellInfo(tmp.toArray(), function() {
@@ -282,8 +277,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 			var missingItemInfo = tools.SimpleSet();
 			for(var cellId in cellInfo) {
 				var cellItemIds = cellInfo[cellId];
-				for(var i in cellItemIds) {
-					var itemId = cellItemIds[i];
+				for(let itemId of cellItemIds) {
 					if (!state.dag.hasItem(itemId) ) {
 						missingItemInfo.insert(itemId);
 					}
@@ -291,8 +285,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 			}
 			oscar.getItems(missingItemInfo.toArray(), function(items) {
 				var tmp = {};
-				for(var i in items) {
-					var item = items[i];
+				for(let item of items) {
 					tmp[item.id()] = item;
 				}
 				var res = {};
@@ -371,8 +364,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 					//fetch the item info
 					oscar.getItems(regions,
 						function (items) {
-							for (var i in items) {
-								var item = items[i];
+							for (let item of items) {
 								var node = state.dag.region(item.id());
 								node.name = item.name();
 								node.bbox = item.bbox();
@@ -389,8 +381,8 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 						state.dag.region(regionId).count = subSet.regions[regionId].apxitems;
 						var children = subSet.regions[regionId].children;
 						if (children.length) {
-							for (var i in children) {
-								state.dag.addEdge(state.dag.region(regionId), state.dag.region(children[i]));
+							for(let childId of children) {
+								state.dag.addEdge(state.dag.region(regionId), state.dag.region(childId));
 							}
 						}
 						else {
@@ -398,8 +390,8 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 						}
 					}
 
-					for (var j in subSet.rootchildren) {
-						state.dag.addEdge(state.dag.region(0xFFFFFFFF), state.dag.region(subSet.rootchildren[j]));
+					for (let childId of subSet.rootchildren) {
+						state.dag.addEdge(state.dag.region(0xFFFFFFFF), state.dag.region(childId));
 					}
 					myCB();
 				}
