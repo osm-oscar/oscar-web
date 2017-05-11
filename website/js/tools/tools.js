@@ -120,8 +120,8 @@ define(["jquery"], function ($) {
 		
 		toIntArray: function(strArray) {
 			var tmp = [];
-			for(var i in strArray) {
-				tmp.push(parseInt("" + strArray[i]));
+			for(let x of strArray) {
+				tmp.push(parseInt("" + x));
 			}
 			return tmp;
 		},
