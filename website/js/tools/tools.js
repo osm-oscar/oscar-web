@@ -88,7 +88,7 @@ define(["jquery"], function ($) {
 				return this.m_data;
 			};
 			ss.keys = function() {
-				return this.builtinset();
+				return this.builtinset().values();
 			};
 			return ss;
 		},
