@@ -36,11 +36,13 @@ define(["jquery"], function ($) {
 				},
 				count: function (key) {
 					check_number_is_number(key);
-					return this.m_values[key] !== undefined;
+					console.assert((this.m_values[key] !== undefined) === this.m_data.has(key));
+					return this.m_data.has(key);
 				},
 				at: function (key) {
 					check_number_is_number(key);
-					return this.m_values[key];
+					console.assert((this.m_values[key] !== undefined) === this.m_data.has(key));
+					return this.m_data.get(key);
 				},
 				//call cb for each (key, value) with cb(key, value)
 				each: function(cb) {
@@ -50,6 +52,7 @@ define(["jquery"], function ($) {
 				},
 				erase: function (key) {
 					check_number_is_number(key);
+					console.assert((this.m_values[key] !== undefined) === this.m_data.has(key));
 					if (this.m_values[key] !== undefined) {
 						this.m_size -= 1;
 						delete this.m_values[key];
