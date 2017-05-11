@@ -19,7 +19,6 @@ requirejs.config({
         "leaflet": "vendor/leaflet/leaflet-src",
         "leafletCluster": "vendor/leaflet-markercluster/leaflet.markercluster-src",
 		"awesomeMarkers" : "vendor/leaflet-awesome-markers/leaflet.awesome-markers.min",
-        "sidebar": "vendor/leaflet-sidebar/js/leaflet-sidebar",
         "spin": "vendor/spin/spin.min",
         "mustache": "vendor/mustache/mustache.min",
         "mustacheLoader": "vendor/mustache/jquery.mustache.loader",
@@ -31,6 +30,7 @@ requirejs.config({
         "jdataview": "vendor/jdataview/jdataview",
         "jbinary": "vendor/jbinary/jbinary",
 		//and now our own stuff
+        "sidebar": "js/leaflet-sidebar/js/leaflet-sidebar",
         "spinner": "js/spinner/spinner",
         "sserialize": "js/sserialize/sserialize",
         "oscar": "js/oscar/oscar",
