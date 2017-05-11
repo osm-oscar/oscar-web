@@ -160,28 +160,28 @@ define(["jquery", "tools"], function ($, tools) {
 				removeNode: function(node) {
 					console.assert(this.hasNode(node.id, node.type));
 					if (node.type === d.NodeTypes.Region) {
-						for(var parentId in node.parents.values()) {
+						for(let parentId of node.parents.builtinset()) {
 							this.region(parentId).children.erase(node.id);
 						}
-						for(var childId in node.children.values()) {
+						for(let childId of node.children.builtinset()) {
 							this.region(childId).parents.erase(node.id);
 						}
-						for(var cellId in node.cells.values()) {
+						for(let cellId of node.cells.builtinset()) {
 							this.cell(cellId).parents.erase(node.id);
 						}
 						this.m_regions.erase(node.id);
 					}
 					else if (node.type === d.NodeTypes.Cell) {
-						for(var parentId in node.parents.values()) {
+						for(let parentId of node.parents.builtinset()) {
 							this.region(parentId).cells.erase(node.id);
 						}
-						for(var itemId in node.items.values()) {
+						for(let itemId of node.items.builtinset()) {
 							this.item(itemId).parents.erase(node.id);
 						}
 						this.m_cells.erase(node.id);
 					}
 					else if (node.type === d.NodeTypes.Item) {
-						for(var parentId in node.parents.values()) {
+						for(let parentId of node.parents.builtinset()) {
 							this.cell(parentId).items.erase(node.id);
 						}
 						this.m_items.erase(node.id);
