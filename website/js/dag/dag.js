@@ -196,18 +196,18 @@ define(["jquery", "tools"], function ($, tools) {
 						types = d.NodeTypes.All;
 					}
 					if (types & d.NodeTypes.Region) {
-						for(var i in this.m_regions.values()) {
-							cb(this.m_regions.at(i));
+						for(let region of this.m_regions.builtinmap().values()) {
+							cb(region);
 						}
 					}
 					if (types & d.NodeTypes.Cell) {
-						for(var i in this.m_cells.values()) {
-							cb(this.m_cells.at(i));
+						for(let cell of this.m_cells.builtinmap().values()) {
+							cb(cell);
 						}
 					}
 					if (types & d.NodeTypes.Item) {
-						for(var i in this.m_items.values()) {
-							cb(this.m_items.at(i));
+						for(let item of this.m_items.builtinmap().values()) {
+							cb(item);
 						}
 					}
 				},
