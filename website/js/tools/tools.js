@@ -62,6 +62,7 @@ define(["jquery"], function ($) {
 				clear: function () {
 					this.m_size = 0;
 					this.m_values = {};
+					this.m_data.clear();
 				},
 				builtinmap: function() {
 					console.assert(this.m_size === this.m_data.size);
