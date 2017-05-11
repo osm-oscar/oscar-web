@@ -117,8 +117,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			_renderItems: function(items) {
 				var itemData = [];
-				for(var i in items) {
-					itemData.push(handler._item2RenderData(items[i]));
+				for(let item of items) {
+					itemData.push(handler._item2RenderData(item));
 				}
 				var rendered = $.Mustache.render('arrayItemListEntryHtmlTemplate', {wrappedarray: itemData});
 				return rendered;
@@ -260,24 +260,24 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			insertItemIds: function(itemIds, cb) {
 				var needItemIds = [];
-				for(var i in itemIds) {
-					if (!handler.count(itemIds[i]) && !handler.m_inFlightItems.count(itemIds[i])) {
-						needItemIds.push(itemIds[i]);
+				for(let itemId of itemIds) {
+					if (!handler.count(itemId) && !handler.m_inFlightItems.count(itemId)) {
+						needItemIds.push(itemId);
 					}
 				}
 				handler.m_inFlightItems.insertArray(needItemIds);
 				oscar.getItems(needItemIds, function(items) {
 					var needItems = [];
-					for(var i in items) {
-						if (handler.m_inFlightItems.count(items[i].id())) {
-							needItems.push(items[i]);
+					for(let item of items) {
+						if (handler.m_inFlightItems.count(item.id())) {
+							needItems.push(item);
 						}
 					}
 					if (needItems.length) {
 						handler.insertItems(needItems, cb);
 					}
-					for (var i in needItemIds) {
-						handler.m_inFlightItems.erase(needItemIds[i]);
+					for (let itemId of needItemIds) {
+						handler.m_inFlightItems.erase(itemId);
 					}
 				}, tools.defErrorCB);
 			},
@@ -305,10 +305,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//return number of inserted items
 			insertItems: function(items, cb) {
 				var missingItems = [];
-				for(var i in items) {
-					var itemId = items[i].id();
+				for(let item of items) {
+					var itemId = item.id();
 					if (!handler.hasItem(itemId)) {
-						missingItems.push(items[i]);
+						missingItems.push(item);
 						handler.m_itemIds.insert(itemId);
 					}
 				}
@@ -338,8 +338,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//returns number of added+removed items
 			assign: function(items) {
 				var itemIdSet = tools.SimpleSet();
-				for(i in items) {
-					itemIdSet.insert(items[i].id());
+				for(let item of items) {
+					itemIdSet.insert(item.id());
 				}
 				var itemsToRemove = [];
 				handler.each(function(itemId) {
@@ -347,8 +347,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						itemsToRemove.push(itemId);
 					}
 				});
-				for(var i in itemsToRemove) {
-					handler.remove(itemsToRemove[i]);
+				for(let itemId of itemsToRemove) {
+					handler.remove(itemId);
 				}
 				return handler.insertItems(items) + itemsToRemove.length;
 			},
@@ -1083,9 +1083,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			else if (cluster.getAllChildMarkers) {
 				var children = cluster.getAllChildMarkers();
-				for (var i in children) {
-					if (children[i].count) {
-						count = Math.max(children[i].count, count);
+				for (let child of children) {
+					if (child.count) {
+						count = Math.max(child.count, count);
 					}
 				}
 			}
@@ -1124,9 +1124,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		var names = [];
 		var allChildClusters = this.getAllChildMarkers();
 
-		for (var i in allChildClusters) {
-			if (allChildClusters[i].name != undefined) {
-				names.push(allChildClusters[i].name);
+		for (let child of allChildClusters) {
+			if (child.name != undefined) {
+				names.push(child.name);
 			}
 		}
 		return names;
@@ -1136,9 +1136,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		var rids = [];
 		var allChildClusters = this.getAllChildMarkers();
 
-		for (var i in allChildClusters) {
-			if (allChildClusters[i].rid !== undefined) {
-				rids.push(allChildClusters[i].rid);
+		for (let child of allChildClusters) {
+			if (child.rid !== undefined) {
+				rids.push(child.rid);
 			}
 		}
 		return rids;
@@ -1675,22 +1675,20 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			if (target.getChildCount() > 1 && target.getChildCount() <= config.maxNumSubClusters && map.cfg.clusterShapes.display) {
 				var childRids = target.getChildClustersRegionIds();
 				oscar.fetchShapes(childRids, function() {}, tools.defErrorCB);
-				for(var i in childRids) {
-					map.clusterMarkerRegionShapes.add(childRids[i]);
+				for(let childRid of childRids) {
+					map.clusterMarkerRegionShapes.add(childRid);
 				}
 			}
 			var names = target.getChildClustersNames();
 			var text = "";
 			if (names.length > 0) {
-				for (var i in names) {
-					if(i > config.maxNumSubClusters){
-						text += "...";
-						break;
-					}
-					text += names[i];
-					if (i < names.length - 1) {
-						text += ", ";
-					}
+				let i = 0;
+				text += names[i];
+				for(i=1, s=Math.min(config.maxNumSubClusters, names.length); i < s; ++i) {
+					text += ", " + names[i];
+				}
+				if (names.length > config.maxNumSubClusters && i == config.maxNumSubClusters) {
+					text += "...";
 				}
 				L.popup({offset: new L.Point(0, -10)}).setLatLng(e.latlng).setContent(text).openOn(state.map);
 			}
@@ -1715,8 +1713,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				
 				//iterators would be nice
 				var tmp = tools.SimpleSet();
-				for(var i in cellIds) {
-					var cellNode = state.dag.cell(cellIds[i]);
+				for(let cellId of cellIds) {
+					var cellNode = state.dag.cell(cellId);
 					for(var itemId in cellNode.items.values()) {
 						tmp.insert(itemId);
 					}
@@ -1982,8 +1980,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 							tabs2Remove.push(tabId);
 						}
 					}
-					for(var i in tabs2Remove) {
-						map.resultListTabs.removeTab(tabs2Remove[i]);
+					for(let tabId of tabs2Remove) {
+						map.resultListTabs.removeTab(tabId);
 					}
 				}
 				else {
@@ -2013,8 +2011,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						removedTabs.push(tabId);
 					}
 				}
-				for(var i in removedTabs) {
-					map.resultListTabs.removeTab(removedTabs[i]);
+				for(let tabId of removedTabs) {
+					map.resultListTabs.removeTab(tabId);
 				}
 			}
 
