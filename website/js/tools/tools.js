@@ -44,8 +44,8 @@ define(["jquery"], function ($) {
 				},
 				//call cb for each (key, value) with cb(key, value)
 				each: function(cb) {
-					for(var key in this.m_values) {
-						cb(key, this.m_values[key]);
+					for(let [key, value] of this.builtinmap()) {
+						cb(key, value);
 					}
 				},
 				erase: function (key) {
@@ -84,8 +84,8 @@ define(["jquery"], function ($) {
 				this.m_data.add(key);
 			};
 			ss.insertArray = function(arrayOfKeys) {
-				for(var i in arrayOfKeys) {
-					ss.insert(arrayOfKeys[i]);
+				for(let x in arrayOfKeys) {
+					ss.insert(x);
 				}
 			};
 			ss.each = function(cb) {
@@ -104,8 +104,8 @@ define(["jquery"], function ($) {
 				if (this.size() != other.size()) {
 					return false;
 				}
-				for(var i in this.values()) {
-					if (!other.count(i)) {
+				for(let key of this.keys()) {
+					if (!other.count(key)) {
 						return false;
 					}
 				}
@@ -151,7 +151,6 @@ define(["jquery"], function ($) {
 				}
 			}
 		},
-		
 		
 		toIntArray: function(strArray) {
 			var tmp = [];
