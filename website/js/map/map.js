@@ -1845,7 +1845,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			//now mark all the cells accordingly
 			state.dag.each(function(node) {
-				for(var cellId in node.cells.values()) {
+				for(let cellId of node.cells.builtinset()) {
 					state.dag.cell(cellId).displayState |= node.displayState;
 				}
 			}, dag.NodeTypes.Region);
@@ -1860,7 +1860,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (node.displayState & dag.DisplayStates.InResultsTab) {
 					var ok = false;
 					var hasMaxOverlapCell = false;
-					for(var cellId in node.cells.values()) {
+					for(let cellId of node.cells.builtinset()) {
 						var cellNode = state.dag.cell(cellId);
 						var ds = cellNode.displayState & (dag.DisplayStates.HasClusterMarker | dag.DisplayStates.InResultsTab2);
 						var xMap = currentMapBounds.intersects(cellNode.bbox);
@@ -1885,14 +1885,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						//if the former is the case then everything is fine
 						//but in the later case we should add a cluster marker for this region
 						ok = !node.cells.size();
-						for(var cellId in node.cells.values()) {
+						for(let cellId of node.cells.builtinset()) {
 							var cellNode = state.dag.cell(cellId);
 							var ds = cellNode.displayState & (dag.DisplayStates.HasClusterMarker | dag.DisplayStates.InResultsTab2);
 							ok = ok || ds;
 						}
 						if (!ok) { //no cell is covered by a tab or a cluster marker, so we add one
 							node.displayState |= dag.DisplayStates.HasClusterMarker;
-							for(var cellId in node.cells.values()) {
+							for(let cellId of node.cells.builtinset()) {
 								var cellNode = state.dag.cell(cellId);
 								cellNode.displayState |= dag.DisplayStates.HasClusterMarker;
 							}
@@ -1908,7 +1908,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//reset the cell display states to the original values
 			state.dag.each(function(node) {
 				if (node.displayState & dag.DisplayStates.InResultsTab) {
-					for(var cellId in node.cells.values()) {
+					for(let cellId of node.cells.builtinset()) {
 						var cellNode = state.dag.cell(cellId);
 						if (cellNode.displayState & dag.DisplayStates.InResultsTab2) {
 							cellNode.displayState = dag.DisplayStates.InResultsTab;
