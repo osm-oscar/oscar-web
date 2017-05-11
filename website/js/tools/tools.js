@@ -1,5 +1,11 @@
 define(["jquery"], function ($) {
 	
+	var check_number_is_number = function(key) {
+		if ((parseInt(key) !== key) && (parseInt(key) + "") === key) {
+			console.log("number in string")
+		}
+	};
+	
     var tools = {
         /**
          * Represents a small API for a hashmap
@@ -18,6 +24,7 @@ define(["jquery"], function ($) {
 					return this.m_size;
 				},
 				insert: function (key, value) {
+					check_number_is_number(key);
 					if (this.m_values[key] === undefined) {
 						this.m_size += 1;
 					}
@@ -28,9 +35,11 @@ define(["jquery"], function ($) {
 					this.insert(key, value);
 				},
 				count: function (key) {
+					check_number_is_number(key);
 					return this.m_values[key] !== undefined;
 				},
 				at: function (key) {
+					check_number_is_number(key);
 					return this.m_values[key];
 				},
 				//call cb for each (key, value) with cb(key, value)
@@ -40,6 +49,7 @@ define(["jquery"], function ($) {
 					}
 				},
 				erase: function (key) {
+					check_number_is_number(key);
 					if (this.m_values[key] !== undefined) {
 						this.m_size -= 1;
 						delete this.m_values[key];
@@ -63,6 +73,7 @@ define(["jquery"], function ($) {
 			var ss = tools.SimpleHash();
 			ss.m_data = new Set();
 			ss.insert = function(key) {
+				check_number_is_number(key);
 				if (this.m_values[key] === undefined) {
 					this.m_size += 1;
 				}
