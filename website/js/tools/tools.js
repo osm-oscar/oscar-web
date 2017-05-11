@@ -63,7 +63,7 @@ define(["jquery"], function ($) {
 				builtinmap: function() {
 					console.assert(this.m_size === this.m_data.size);
 					for(let x of this.m_data.keys()) {
-						console.assert(this.count(x));
+						console.assert(this.m_values[x] !== undefined);
 					}
 					return this.m_data;
 				},
@@ -114,7 +114,7 @@ define(["jquery"], function ($) {
 			ss["builtinset"] = function() {
 				console.assert(this.m_size === this.m_data.size);
 				for(let x of this.m_data) {
-					console.assert(this.count(x));
+					console.assert(this.m_values[x] !== undefined);
 				}
 				return this.m_data;
 			};
