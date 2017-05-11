@@ -9,6 +9,7 @@ define(["jquery"], function ($) {
 		SimpleHash: function () {
 			return {
 				m_size: 0,
+				m_data: new Map(),
 				m_values: {},
 				values: function () {
 					return this.m_values;
@@ -21,6 +22,7 @@ define(["jquery"], function ($) {
 						this.m_size += 1;
 					}
 					this.m_values[key] = value;
+					this.m_data.set(key, value);
 				},
 				set: function (key, value) {
 					this.insert(key, value);
@@ -42,20 +44,30 @@ define(["jquery"], function ($) {
 						this.m_size -= 1;
 						delete this.m_values[key];
 					}
+					this.m_data.delete(key);
 				},
 				clear: function () {
 					this.m_size = 0;
 					this.m_values = {};
+				},
+				builtinmap: function() {
+					console.assert(this.m_size === this.m_data.size);
+					for(let x of this.m_data) {
+						console.assert(this.count(x));
+					}
+					return this.m_data;
 				}
 			};
 		},
 		SimpleSet: function() {
 			var ss = tools.SimpleHash();
+			ss.m_data = new Set();
 			ss.insert = function(key) {
 				if (this.m_values[key] === undefined) {
 					this.m_size += 1;
 				}
 				this.m_values[key] = key;
+				this.m_data.add(key);
 			};
 			ss.insertArray = function(arrayOfKeys) {
 				for(var i in arrayOfKeys) {
@@ -84,6 +96,13 @@ define(["jquery"], function ($) {
 					}
 				}
 				return true;
+			};
+			ss["builtinset"] = function() {
+				console.assert(this.m_size === this.m_data.size);
+				for(let x of this.m_data) {
+					console.assert(this.count(x));
+				}
+				return this.m_data;
 			};
 			return ss;
 		},
