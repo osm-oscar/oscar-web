@@ -227,12 +227,12 @@ define(["jquery", "tools"], function ($, tools) {
 						}
 						if (node.type === d.NodeTypes.Region) {
 							if (types & d.NodeTypes.Region) {
-								for(var childId in node.children.values()) {
+								for(let childId of node.children.builtinset()) {
 									queue.push({id: childId, type: d.NodeTypes.Region});
 								}
 							}
 							if (types & d.NodeTypes.Cell) {
-								for(var cellId in node.cells.values()) {
+								for(let cellId of node.cells.builtinset()) {
 									queue.push({id:cellId, type: d.NodeTypes.Cell});
 								}
 							}
@@ -240,7 +240,7 @@ define(["jquery", "tools"], function ($, tools) {
 						}
 						else if (node.type === d.NodeTypes.Cell) {
 							if (types & d.NodeTypes.Item) {
-								for(var itemId in node.items.values()) {
+								for(let itemId of node.items.builtinset()) {
 									queue.push({id:itemId, type: d.NodeTypes.Item});
 								}
 							}
