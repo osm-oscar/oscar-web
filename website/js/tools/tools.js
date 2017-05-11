@@ -52,7 +52,7 @@ define(["jquery"], function ($) {
 				},
 				builtinmap: function() {
 					console.assert(this.m_size === this.m_data.size);
-					for(let x of this.m_data) {
+					for(let x of this.m_data.keys()) {
 						console.assert(this.count(x));
 					}
 					return this.m_data;
@@ -106,7 +106,6 @@ define(["jquery"], function ($) {
 			};
 			return ss;
 		},
-		
 		
 		getMissing: function(setA, setB, missingInA, missingInB) {
 			for(var id in setA.values()) {
