@@ -17,9 +17,6 @@ define(["jquery"], function ($) {
 				m_size: 0,
 				m_data: new Map(),
 				m_values: {},
-				values: function () {
-					return this.m_values;
-				},
 				size: function () {
 					return this.m_data.size;
 				},
