@@ -1746,7 +1746,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 
 			if (node.children.size()) {
-				for (var childId in node.children.values()) {
+				for (let childId of node.children.builtinset()) {
 					
 					var childNode = state.dag.region(childId);
 					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
