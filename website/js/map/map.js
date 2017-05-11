@@ -160,8 +160,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 	   
 			//use this to iterate over itemIds
-			values: function() {
-				return handler.m_itemIds.values();
+			itemIds: function() {
+				return handler.m_itemIds;
 			},
 	   
 			size: function() {
@@ -456,7 +456,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		};
 		ilh["_o_ItemListHandler_clear"] = ilh.clear;
 		ilh["clear"] = function() {
-			for(var itemId in ilh.values()) {
+			for(let itemId of ilh.itemIds().builtinset()) {
 				ilh.emit_itemRemoveLinkClicked(itemId);
 			}
 			ilh["_o_ItemListHandler_clear"]();
@@ -482,7 +482,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				
 				ilh.m_inFlightItems.clear();
 				
-				for(var itemId in ilh.values()) {
+				for(let itemId of ilh.itemIds().builtinset()) {
 					if (!ilh.m_pinned.count(itemId)) {
 						toRemove.push(itemId);
 					}
@@ -573,8 +573,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 	   
 			//Do not use this except for iterating over all available tabs
-			values: function() {
-				return handler.m_tabs.values();
+			tabIds: function() {
+				return handler.m_tabs.builtinmap().keys();
 			},
 	   
 			cells: function(tabId) {
@@ -725,10 +725,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					handler.activeTab().open(itemId);
 				}
 				else {
-					for(var i in handler.m_tabs.values()) {
-						if (handler.m_tabs.at(i).handler.hasItem(itemId)) {
-							handler.openTab(i);
-							handler.m_tabs.at(i).handler.open(itemId);
+					for(let tabId of handler.tabIds()) {
+						if (handler.m_tabs.at(tabId).handler.hasItem(itemId)) {
+							handler.openTab(tabId);
+							handler.m_tabs.at(tabId).handler.open(itemId);
 							break;
 						}
 					}
@@ -764,8 +764,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (!handler.size()) {
 					return;
 				}
-				for(var i in handler.m_tabs.values()) {
-					var info = handler.m_tabs.at(i);
+				for(let tabId of handler.tabIds()) {
+					var info = handler.m_tabs.at(tabId);
 					info.handler.destroy();
 					$('#' + info.tabContentId).remove();
 					$('#' + info.tabHeadId).remove();
@@ -909,15 +909,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			return undefined;
 		};
-		//use this to iterate over all layers like so:
-		//for(var l in layers()) { layer = handler.layer(l); do_sth.;}
 		this.layers = function() {
-			return this.m_layers.values();
+			return this.m_layers;
 		};
-		//the same as layers()
-		this.values = function() {
-			return this.layers();
-		},
+		this.layerIds = function() {
+			return this.m_layers.builtinmap().keys();
+		};
 		this.zoomTo = function(itemId) {
 			if (!this.count(itemId)) {
 				return;
@@ -926,9 +923,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			this.m_map.fitBounds(ll.getBounds());
 		};
 		this.clear = function() {
-			for(var i in this.m_layers.values()) {
-				if (this.m_layers.at(i).layer !== undefined) {
-					this.m_target.removeLayer(this.m_layers.at(i).layer);
+			for(let layerId of this.layerIds()) {
+				if (this.m_layers.at(layerId).layer !== undefined) {
+					this.m_target.removeLayer(this.m_layers.at(layerId).layer);
 				}
 			}
 			this.m_layers = tools.SimpleHash();
@@ -1578,14 +1575,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		onActiveTabChanged: function(e) {
 			var wantItemMarkers;
 			if (map.resultListTabs.activeTabId() >= 0 && map.cfg.resultList.showItemMarkers) {
-				wantItemMarkers = map.resultListTabs.activeTab();
+				wantItemMarkers = map.resultListTabs.activeTab().itemIds();
 			}
 			else {
 				wantItemMarkers = tools.SimpleSet();
 			}
 			var removedIds = tools.SimpleSet();
 			var missingIds = tools.SimpleSet();
-			tools.getMissing(wantItemMarkers, map.itemMarkers, removedIds, missingIds);
+			tools.getMissing(wantItemMarkers, map.itemMarkers.layers(), removedIds, missingIds);
 			removedIds.each(function(itemId) {
 				map.itemMarkers.remove(itemId);
 				state.dag.item(itemId).displayState &= ~dag.DisplayStates.HasItemMarker;
@@ -1597,8 +1594,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				map.itemMarkers.add(itemId);
 			});
 			//mark dag nodes accordingly
-			var tmp = map.itemMarkers.values();
-			for(var itemId in tmp) {
+			for(let itemId of map.itemMarkers.layerIds()) {
 				state.dag.item(itemId).displayState |= dag.DisplayStates.HasItemMarker;
 			}
 			
@@ -1606,7 +1602,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				wantItemMarkers = map.resultListTabs.activeTab();
 				var removedIds = tools.SimpleSet();
 				var missingIds = tools.SimpleSet();
-				tools.getMissing(wantItemMarkers, map.itemShapes, removedIds, missingIds);
+				tools.getMissing(wantItemMarkers, map.itemShapes.layers(), removedIds, missingIds);
 				removedIds.each(function(itemId) {
 					map.itemShapes.remove(itemId);
 				});
@@ -1720,7 +1716,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 				}
 				var ret = [];
-				for(var itemId in tmp.values()) {
+				for(let itemId of tmp.builtinset()) {
 					if (!offset) {
 						ret.push(itemId);
 					}
@@ -1923,7 +1919,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		_assignClusterMarkers: function(wantClusterMarkers) {
 			var removedClusterMarkers = tools.SimpleSet();
 			var missingClusterMarkers = tools.SimpleSet();
-			tools.getMissing(wantClusterMarkers, map.clusterMarkers, removedClusterMarkers, missingClusterMarkers);
+			tools.getMissing(wantClusterMarkers, map.clusterMarkers.layers(), removedClusterMarkers, missingClusterMarkers);
 		
 			removedClusterMarkers.each(function(key) {
 				map.clusterMarkers.remove(key);
@@ -1975,7 +1971,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				//inspection tab is there, so we have to remove the other tabs explicitly
 				if (!map.cfg.resultList.regionTabs && map.resultListTabs.count(INSPECTION_TAB_ID)) {
 					var tabs2Remove = [];
-					for(var tabId in map.resultListTabs.values()) {
+					for(let tabId of map.resultListTabs.tabIds()) {
 						if (tabId != INSPECTION_TAB_ID) {
 							tabs2Remove.push(tabId);
 						}
@@ -2006,7 +2002,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			
 			if (map.cfg.resultList.regionTabs) {
 				var removedTabs = [];
-				for(var tabId in map.resultListTabs.values()) {
+				for(let tabId of map.resultListTabs.tabIds()) {
 					if (!wantTabListRegions.count(tabId)) {
 						removedTabs.push(tabId);
 					}
