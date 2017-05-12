@@ -529,12 +529,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			config: config,
 			m_domRoot : undefined,
 			m_domTabRoot : undefined,
+			m_domPaginationRoot: undefined,
 			//maps from tabId=<int> ->
 			//{ handler : ItemListHandler,
 			//  tabContentId: <string>,
 			//  tabHeadId: <string>,
 			//  cells: tools.SimpleSet(),
 			//  offset: <int>
+			//  count: <int>
 			//}
 			m_tabs : tools.SimpleHash(), 
 			//signals
@@ -564,7 +566,17 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			
 			_slot_activeTabChanged: function() {
+				handler._updatePagination();
 				handler.emit_activeTabChanged(handler.activeTabId());
+			},
+	   
+			_slot_pageLinkClicked: function(e) {
+				var me = $(this);
+				var offset = parseInt( me.attr("data-offset") );
+				var tabId = handler.activeTabId();
+				if (tabId !== -1) {
+					handler._setTabResultListOffset(tabId, offset);
+				}
 			},
 			
 			_init: function (parent) {
@@ -581,6 +593,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				handler.m_domRoot.on("tabsactivate", function(event, ui) {
 					handler._slot_activeTabChanged();
 				});
+				handler.m_domPaginationRoot = $($('<ul class="pagination hidden"></ul>').appendTo(handler.config.paginationContainer));
 			},
 			_insertItem: function(tabId, item) {
 				if (handler.m_tabs.count(tabId)) {
@@ -600,16 +613,83 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 				}
 			},
-			_updateCells: function(tabId, cells, cb) {
-				handler.m_tabs.at(tabId).cells = cells;
-				handler.config.topk(handler.config.itemsPerPage, 0, cells.toArray(), function(itemIds) {
+			_updatePagination: function() {
+				var activeTabId = handler.activeTabId();
+				if (activeTabId === -1) {
+					handler.m_domPaginationRoot.addClass("hidden");
+				}
+				else {
+					handler.m_domPaginationRoot.removeClass("hidden");
+				}
+				var tabData = handler.m_tabs.at(activeTabId);
+				var pages = [{offset: 0, begin: 0, end: handler.config.itemsPerPage-1}];
+				
+				if (tabData.offset > 0) {
+					
+					//the one before our current page
+					if (tabData.offset > handler.config.itemsPerPage) {
+						if (tabData.offset > 2*handler.config.itemsPerPage) {
+							pages.push({
+								offset: tabData.offset-handler.config.itemsPerPage,
+								end: tabData.offset-1
+							});
+						}
+						else {
+							pages.push({
+								offset: tabData.offset-handler.config.itemsPerPage,
+								begin: tabData.offset-handler.config.itemsPerPage,
+								end: tabData.offset-1
+							});
+						}
+					}
+					
+					pages.push({
+						offset: tabData.offset,
+						begin: tabData.offset,
+						end: tabData.offset+tabData.count-1
+					});
+				}
+				
+				//the one after our current (but only if this is not the last)
+				if (tabData.count >= handler.config.itemsPerPage) {
+					pages.push({
+						offset: tabData.offset+tabData.count,
+						begin: tabData.offset+tabData.count
+					});
+				}
+				
+				for (let i = 0; i < pages.length; ++i) {
+					if (pages[i].begin === tabData.offset) {
+						pages[i]["active"] = true;
+					}
+				}
+				var rendered = $.Mustache.render('resultListPaginationTemplate', {pages: pages});
+				handler.m_domPaginationRoot.empty();
+				var inserted = $($(rendered).appendTo(handler.m_domPaginationRoot));
+				$("a", inserted).click(handler._slot_pageLinkClicked);
+			},
+	   
+			_setTabResultListOffset: function(tabId, offset, cb) {
+				offset = (offset/handler.config.itemsPerPage)*handler.config.itemsPerPage;
+				if (offset === handler.m_tabs.at(tabId).offset) {
+					return;
+				}
+				
+				var cells = handler.cells(tabId);
+				handler.config.topk(handler.config.itemsPerPage, offset, cells.toArray(), function(itemIds) {
 					//this should return instantly since the items are in the cache
 					oscar.getItems(itemIds, function(items) {
-						console.assert(itemIds.length == items.length);
+						console.assert(items.length <= itemIds.length);
 						if (!handler.count(tabId) || !cells.equal(handler.cells(tabId))) {
 							return;
 						}
+						var tabData = handler.m_tabs.at(tabId);
+						tabData.offset = offset;
+						tabData.count = items.length;
 						handler._assignItems(tabId, items);
+						if (handler.activeTabId() === tabId) {
+							handler._slot_activeTabChanged();
+						}
 						if (cb !== undefined) {
 							cb();
 						}
@@ -631,7 +711,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (handler.hasTab(tabId)) {
 					//check if cells changed, if not, ignore update
 					if (!cells.equal(handler.m_tabs.at(tabId).cells)) {
-						handler._updateCells(tabId, cells, cb);
+						handler.m_tabs.at(tabId).cells = cells;
+						handler._setTabResultListOffset(tabId, 0, cb);
 					}
 				}
 			},
@@ -723,6 +804,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					//check if this was the last tab we have,
 					//since then there will be no new active tab
 					if (!handler.size()) {
+						handler._updatePagination();
 						handler.emit_activeTabChanged(-1);
 					}
 					return true;
@@ -1217,7 +1299,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				parent: '#result_list_container',
 				scrollContainer: '#sidebar-content',
 				paginationContainer: '#result_list_pagination',
-				itemsPerPage: 20,
+				itemsPerPage: map.cfg.resultList.itemsPerPage,
 				topk: map.topKItems
 			});
 			map.inspectionItemListHandler = map.InspectionItemListHandler('#inspectItemsList', '#sidebar-content');
@@ -1755,8 +1837,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					activeIterators.add( state.dag.cell(cellId).items.keys() );
 				}
 				
-				//TODO: we first have to skip the first k items
-				
 				while(activeIterators.size && result.length < k+offset) {
 					
 					for(let it of activeIterators) {
@@ -1765,7 +1845,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 							let id = tmp.value;
 							if (!resultIds.has(id)) {
 								resultIds.add(id);
-								result.push(id);
+								if (offset > 0) {
+									--offset;
+								}
+								else {
+									result.push(id);
+								}
 								break;
 							}
 							else {
@@ -1786,7 +1871,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				
 				cb(result);
 				
-			}, offset);
+			}, offset+k);
 		},
 	   
 		//this is a recursive function, you have to clear the displayState of the dag before calling

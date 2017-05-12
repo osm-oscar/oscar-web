@@ -403,9 +403,8 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 			},
 			
 			//if cb is called, all relevant items should be in the cache
-			//offset is currently unsupported
-			expandCellItems: function(cellIds, cb, offset) {
-				console.assert(offset === 0);
+			//items2FetchPerCell is currently unsupported
+			expandCellItems: function(cellIds, cb, items2FetchPerCell) {
 				spinner.startLoadingSpinner();
 				if (! $.isArray(cellIds) ) {
 					cellIds = [cellIds];

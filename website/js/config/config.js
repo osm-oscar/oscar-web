@@ -157,6 +157,7 @@ define([], function() {
 				threshold: 25 //maximum # root children to display shapes
 			},
 			resultList: {
+				itemsPerPage: 20,
 				bulkItemFetchCount: 100,
 				focusMaxOverlapTab: false,
 				showItemShapes: false,
