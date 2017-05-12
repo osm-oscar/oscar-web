@@ -166,6 +166,13 @@ body {
     margin: 5px;
 }
 
+.sidebar-pane-footer>div>ul.pagination {
+	margin-top: 4px;
+	margin-left: 0;
+	margin-right: 0;
+	margin-bottom: 0;
+}
+
 .floatpanel-close {
   position: absolute;
   top: 0;

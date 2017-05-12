@@ -1,0 +1,17 @@
+<script id="resultListPaginationTemplate" type="text/x-tmpl-mustache">
+	<ul class="pagination">
+		{{#pages}}
+		{{^active}}
+		<li class="active">
+		{{/active}}
+		<li>
+		{{#active}}
+			<a href="#" data-begin="{{begin}}" data-end="{{end}}">
+				{{begin}}
+				&hellip;
+				{{end}}
+			</a>
+		</li>
+		{{/pages}}
+	</ul>
+</script>
