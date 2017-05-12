@@ -34,6 +34,7 @@ requirejs.config({
         "spinner": "js/spinner/spinner",
         "sserialize": "js/sserialize/sserialize",
         "oscar": "js/oscar/oscar",
+		"storage": "js/storage/storage",
         "tools": "js/tools/tools",
         "conf": "js/config/config",
         "manager": "js/connection/manager.min",

@@ -1,5 +1,5 @@
-define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, tools, state, spinner, oscar, dag) {
-	var regionChildrenExpander = oscar.IndexedDataStore();
+define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], function ($, tools, state, spinner, oscar, dag, storage) {
+	var regionChildrenExpander = storage.IndexedDataStore();
 	
 	regionChildrenExpander.m_cfg = {
 		preloadShapes : true,
@@ -164,7 +164,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 		}, tools.defErrorCB, true, this.m_cfg.loadChildrenCells, this.m_cfg.loadParentCells, this.m_cfg.regionExclusiveCells);
 	};
 	
-	var regionCellExpander = oscar.IndexedDataStore();
+	var regionCellExpander = storage.IndexedDataStore();
 	//cellInfo is { cellId: bbox }
 	regionCellExpander.m_data = {
 		size: function() {
@@ -227,7 +227,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag"], function ($, too
 		}, tools.defErrorCB, true);
 	};
 	
-	var cellItemExpander = oscar.IndexedDataStore();
+	var cellItemExpander = storage.IndexedDataStore();
 	
 	cellItemExpander.m_cfg = {
 		maxFetchCount: 10
