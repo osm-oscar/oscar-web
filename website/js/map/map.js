@@ -510,20 +510,31 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	}
 	
 	//handles multiple item lists as tab groups
-	//emits multiple signals on it self:
-	var ItemListTabHandler = function(parent, scrollContainer) {
-		if (scrollContainer === undefined) {
-			scrollContainer = parent;
+	//*emits multiple signals on it self
+	//cfg : {
+	//   parent: <parent container>,
+	//   scrollContainer: <scroll container>,
+	//   paginationContainer: <pagination container>,
+	//   itemsPerPage: <int>
+	//   topk: function(k, offset, cellIds, cb) // a function to retrieve the top-k elements of cells beginning at offset
+	//}
+	var ItemListTabHandler = function(config) {
+		if (config.scrollContainer === undefined) {
+			config.scrollContainer = config.parent;
 		}
+		config.parent = $(config.parent);
+		config.scrollContainer = $(config.scrollContainer);
+		config.paginationContainer = $(config.paginationContainer);
 		var handler = {
+			config: config,
 			m_domRoot : undefined,
 			m_domTabRoot : undefined,
-			m_scrollContainer: $(scrollContainer),
 			//maps from tabId=<int> ->
 			//{ handler : ItemListHandler,
 			//  tabContentId: <string>,
 			//  tabHeadId: <string>,
-			//  cells: tools.SimpleSet()
+			//  cells: tools.SimpleSet(),
+			//  offset: <int>
 			//}
 			m_tabs : tools.SimpleHash(), 
 			//signals
@@ -571,6 +582,40 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					handler._slot_activeTabChanged();
 				});
 			},
+			_insertItem: function(tabId, item) {
+				if (handler.m_tabs.count(tabId)) {
+					handler.m_tabs.at(tabId).handler.insertItem(item);
+				}
+			},
+			_insertItems: function(tabId, items) {
+				if (handler.m_tabs.count(tabId)) {
+					handler.m_tabs.at(tabId).handler.insertItems(items);
+				}
+			},
+			_assignItems: function(tabId, items) {
+				if (handler.m_tabs.count(tabId)) {
+					var changed = handler.m_tabs.at(tabId).handler.assign(items);
+					if (changed && handler.activeTabId() == tabId) {
+						handler.emit_activeTabChanged();
+					}
+				}
+			},
+			_updateCells: function(tabId, cells, cb) {
+				handler.m_tabs.at(tabId).cells = cells;
+				handler.config.topk(handler.config.itemsPerPage, 0, cells.toArray(), function(itemIds) {
+					//this should return instantly since the items are in the cache
+					oscar.getItems(itemIds, function(items) {
+						console.assert(itemIds.length == items.length);
+						if (!handler.count(tabId) || !cells.equal(handler.cells(tabId))) {
+							return;
+						}
+						handler._assignItems(tabId, items);
+						if (cb !== undefined) {
+							cb();
+						}
+					});
+				});
+			},
 	   
 			//Do not use this except for iterating over all available tabs
 			tabIds: function() {
@@ -582,9 +627,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			},
 			
 			///cells must be of type tools.SimpleSet()
-			setCells: function(tabId, cells) {
+			setCells: function(tabId, cells, cb) {
 				if (handler.hasTab(tabId)) {
-					handler.m_tabs.at(tabId).cells = cells;
+					//check if cells changed, if not, ignore update
+					if (!cells.equal(handler.m_tabs.at(tabId).cells)) {
+						handler._updateCells(tabId, cells, cb);
+					}
 				}
 			},
 	   
@@ -658,24 +706,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					handler.openTab(myActiveTabId);
 				}
 				return handler.m_tabs.at(tabId).handler;
-			},
-			insertItem: function(tabId, item) {
-				if (handler.m_tabs.count(tabId)) {
-					handler.m_tabs.at(tabId).handler.insertItem(item);
-				}
-			},
-			insertItems: function(tabId, items) {
-				if (handler.m_tabs.count(tabId)) {
-					handler.m_tabs.at(tabId).handler.insertItems(items);
-				}
-			},
-			assignItems: function(tabId, items) {
-				if (handler.m_tabs.count(tabId)) {
-					var changed = handler.m_tabs.at(tabId).handler.assign(items);
-					if (changed && handler.activeTabId() == tabId) {
-						handler.emit_activeTabChanged();
-					}
-				}
 			},
 			//removes a tab return true, if removal was successfull
 			removeTab: function(tabId) {
@@ -782,7 +812,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				handler.m_domRoot = undefined;
 			}
 		};
-		handler._init(parent);
+		handler._init(config.parent);
 		return handler;
 	};
 	
@@ -1183,7 +1213,13 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		
 		//this has to be called prior usage
 		init: function() {
-			map.resultListTabs = map.ItemListTabHandler('#result_list_container', '#sidebar-content');
+			map.resultListTabs = map.ItemListTabHandler({
+				parent: '#result_list_container',
+				scrollContainer: '#sidebar-content',
+				paginationContainer: '#result_list_pagination',
+				itemsPerPage: 20,
+				topk: map.topKItems
+			});
 			map.inspectionItemListHandler = map.InspectionItemListHandler('#inspectItemsList', '#sidebar-content');
 			map.relativesTab.activeItemHandler = map.RelativesItemListHandler($('#activeItemsList'));
 			map.relativesTab.relativesHandler = map.RelativesItemListHandler($('#relativesList'));
@@ -1960,20 +1996,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				return;
 			}
-			map.resultListTabs.setCells(regionId, cells);
-			
-			map.topKItems(map.cfg.resultList.bulkItemFetchCount, 0, cells.toArray(), function(itemIds) {
-				//this should return instantly since the items are in the cache
-				oscar.getItems(itemIds, function(items) {
-					console.assert(itemIds.length == items.length);
-					if (!map.resultListTabs.count(regionId) || !cells.equal(map.resultListTabs.cells(regionId))) {
-						return;
-					}
-					map.resultListTabs.assignItems(regionId, items);
-					if (focusAfterLoad) {
-						map.resultListTabs.activateTab(regionId);
-					}
-				});
+			map.resultListTabs.setCells(regionId, cells, function() {
+				if (focusAfterLoad) {
+					map.resultListTabs.activateTab(regionId);
+				}
 			});
 		},
 		
