@@ -39,6 +39,7 @@ define(["jquery", "tools"], function ($, tools) {
 		CellNode: function(id) {
 			var node = d.Node(id, d.NodeTypes.Cell);
 			node.items = tools.SimpleSet();
+			node.allItemsFetched = false;
 			return node;
 		},
 		RegionNode: function(id) {
