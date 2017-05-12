@@ -109,6 +109,10 @@
 	margin-right: 0;
 }
 
+.sidebar-panes.sidebar-pane-has-footer {
+	bottom: 40px;
+}
+
 .sidebar-pane {
   display: none;
   left: 0;
@@ -132,6 +136,27 @@
 }
 
 .sidebar-pane-title.active {
+	display: block;
+}
+
+.sidebar-pane-footers {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 40px;
+	display: none;
+}
+
+.sidebar-pane-footers.active {
+	display: block;
+}
+
+.sidebar-pane-footer {
+	display: none;
+}
+
+.sidebar-pane-footer.active {
 	display: block;
 }
 

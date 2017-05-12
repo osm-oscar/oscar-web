@@ -52,11 +52,16 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
 			}
 		}
 		
-        //Find sidebar > div.sidebar-content > div.sidebar-pane
+        //Find sidebar > div.sidebar-content > div.sidebar-panes
 		this._panes_container = this._findChildByClass(content_container, 'sidebar-panes');
         
         // Find sidebar > div.sidebar-content > div.sidebar-panes > div.sidebar-pane
         this._panes = this._findChildrenByClass(this._panes_container, 'sidebar-pane');
+		
+        //Find sidebar > div.sidebar-content > div.sidebar-pane-footers
+		this._footers_container = this._findChildByClass(content_container, 'sidebar-pane-footers');
+        //Find sidebar > div.sidebar-content > div.sidebar-panetitles > div.sidebar-pane-title
+        this._footers = this._findChildrenByClass(this._footers_container, 'sidebar-pane-footer');
 		
 		this._scrollp = new Array(this._panes.length);
 		this._scrollp.fill(0);
@@ -138,6 +143,7 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
 		
 		var titleId = "sidebar-pane-title-" + id;
 		var paneId = "sidebar-pane-" + id;
+		var footerId = "sidebar-pane-footer-" + id;
 
         for (let child of this._titles) {
             if (child.id == titleId)
@@ -149,6 +155,19 @@ L.Control.Sidebar = L.Control.extend(/** @lends L.Control.Sidebar.prototype */ {
         for (let child of this._panes) {
             if (child.id == paneId)
                 L.DomUtil.addClass(child, 'active');
+            else if (L.DomUtil.hasClass(child, 'active'))
+                L.DomUtil.removeClass(child, 'active');
+        }
+        
+        L.DomUtil.removeClass(this._panes_container, 'sidebar-pane-has-footer');
+		L.DomUtil.removeClass(this._footers_container, 'active');
+        
+        for (let child of this._footers) {
+            if (child.id == footerId) {
+                L.DomUtil.addClass(child, 'active');
+				L.DomUtil.addClass(this._panes_container, 'sidebar-pane-has-footer');
+				L.DomUtil.addClass(this._footers_container, 'active');
+			}
             else if (L.DomUtil.hasClass(child, 'active'))
                 L.DomUtil.removeClass(child, 'active');
         }
