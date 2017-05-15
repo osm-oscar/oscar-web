@@ -2268,18 +2268,19 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	   
 		displayAllItems: function() {
 			var cqr = state.cqr;
-			state.cqr.regionItemIds(0xFFFFFFFF, function(regionId, itemIds) {
+			var rn = state.dag.region(0xFFFFFFFF);
+			map.resultListTabs.addTab(0xFFFFFFFF, rn.name, rn.count, true);
+			cqr.cells([0xFFFFFFFF], function(cellInfo) {
 				if (cqr.sequenceId() !== state.cqr.sequenceId()) {
 					return;
 				}
-				oscar.fetchItems(itemIds, function() {}, tools.defErrorCB);
-				var rn = state.dag.region(0xFFFFFFFF);
-				var ilh = map.resultListTabs.addTab(0xFFFFFFFF, rn.name, rn.count, true);
-				ilh.insertItemIds(itemIds);
-				for(let itemId of itemIds) {
-					map.itemMarkers.add(itemId);
+				var rootNode = state.dag.region(0xFFFFFFFF);
+				for(let cellId of cellInfo[0xFFFFFFFF]) {
+					var cellNode = state.dag.addNode(cellId, dag.NodeTypes.Cell);
+					state.dag.addEdge(rootNode, cellNode);
 				}
-			});
+				map.resultListTabs.setCells(0xFFFFFFFF, rootNode.cells);
+			}, tools.defErrorCB);
 			if (cqr.ohPath().length) {
 				var path = cqr.ohPath();
 				rid = path[path.length - 1];
