@@ -234,7 +234,6 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 	var cellItemExpanderStorage = storage.IndexedDataStore();
 
 	cellItemExpanderStorage.m_cfg = {
-		maxFetchCount: 10,
 		/*const*/ bucketSize: 100 //this one has to be lower than the maximum allowed size returned by the server part
 	};
 	//id is = {cellId: <int>, bucket: <int> }, itemsInfo is = {itemId: {name: <string>, bbox: <bbox>}
