@@ -227,14 +227,20 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 		}, tools.defErrorCB, true);
 	};
 	
-	var cellItemExpander = storage.IndexedDataStore();
-	
-	cellItemExpander.m_cfg = {
-		maxFetchCount: 10
+	///The storage for cell information
+	///The item list of cell nodes is implicitly split into buckets
+	///Each bucket has size cfg.bucketSize
+	///An id is then a cellId and a bucket (=offset/bucketsize)
+	var cellItemExpanderStorage = storage.IndexedDataStore();
+
+	cellItemExpanderStorage.m_cfg = {
+		maxFetchCount: 10,
+		/*const*/ bucketSize: 100 //this one has to be lower than the maximum allowed size returned by the server part
 	};
-	//itemInfo is a simple array {itemId: {name: <string>, bbox: <bbox>}}
-	cellItemExpander.m_data = {
-		insert: function(cellId, itemsInfo) {
+	//id is = {cellId: <int>, bucket: <int> }, itemsInfo is = {itemId: {name: <string>, bbox: <bbox>}
+	cellItemExpanderStorage.m_data = {
+		insert: function(id, itemsInfo) {
+			var cellId = id.cellId;
 			var cellNode = state.dag.cell(cellId);
 			for(var itemId in itemsInfo) {
 				itemId = parseInt(itemId);
@@ -251,28 +257,26 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				state.dag.addEdge(cellNode, childNode);
 			}
 		},
-		size: function() {
-			return state.dag.cellSize();
-		},
+		size: undefined,
+		///id = {cellId: <int>, bucket: <int>}
 		count: function(id) {
-			if (!state.dag.hasCell(id)) {
+			if (!state.dag.hasCell(id.cellId)) {
 				return false;
 			}
 			var node = state.dag.cell(id);
-			return node.items.size();
+			return node.items.size() >= id.bucket*CellItemExpanderStorage.bucketSize;
 		},
-		at: function(id) {
-			console.assert(false, "Should never be called");
-			return;
-		}
+		at: undefined
 	};
 	//fetching stuff from store is not necessary,
 	//we only call the cb to tell that we're done
-	cellItemExpander._requestFromStore = function(cb, cellIds) {
+	cellItemExpanderStorage._requestFromStore = function(cb, cellIds) {
 		cb();
 	};
-	cellItemExpander._getData = function(cb, remoteRequestId) {
-		var cellIds = this._remoteRequestDataIds(remoteRequestId);
+	cellItemExpanderStorage._getData = function(cb, remoteRequestId) {
+		//ids are of the form {cellId: <int>, bucket: <int> }
+		//buckets have to be the same for all
+		var ids = this._remoteRequestDataIds(remoteRequestId);
 		
 		//cellInfo is of the form {cellId: [itemId]}
 		state.cqr.getCellItems(cellIds, function(cellInfo) {
@@ -312,6 +316,37 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 			}, tools.defErrorCB);
 		}, tools.defErrorCB);
 	};
+	
+	var cellItemExpander = {
+		m_storage: cellItemExpanderStorage,
+	   
+		setBulkItemFetchCount: function(value) {
+			cellItemExpander.m_storage.m_cfg.bucketSize = value;
+		},
+		
+	   //request is of the form [{cellId: <int>, count: <int>}]
+		fetch: function(cb, request) {
+			var storageRequests = tools.SimpleHash(); //bucket -> [{cellId: <int>, bucket: bucket}]
+			for(let x of request) {
+				console.assert(state.dag.hasCell(x.cellId));
+				var cellNode = state.dag.cell(x.cellId);
+				if (!cellNode.allItemsFetched && cellNode.items.size() < x.count) {
+					//split this request into the appropriate buckets
+					let bucketBegin = cellNode.items.size() / cellItemExpander.m_storage.m_cfg.bucketSize;
+					for(let bucket = bucketBegin; (bucket+1)*cellItemExpander.m_storage.m_cfg.bucketSize < x.count; ++bucket) {
+						if (!storageRequests.count(bucket)) {
+							storageRequests.insert(bucket, []);
+						}
+						storageRequests.at(bucket).push({cellId: x.cellId, bucket: bucket});
+					}
+				}
+			}
+			//we have to group the request by buckets
+			for(let bucket of storageRequests.keys()) {
+				cellItemExpander.m_storage.fetch(function() {cb();}, storageRequests.at(bucket));
+			}
+		}
+	};
 
 	var dagExpander = function() {
 		return {
@@ -332,7 +367,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 			},
 	   
 			setBulkItemFetchCount: function(value) {
-				this.cellItemExpander.m_cfg.bulkItemFetchCount = value;
+				this.cellItemExpander.setBulkItemFetchCount(value);
 			},
 	   
 			loadAll: function(cb) {
@@ -409,10 +444,14 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				if (! $.isArray(cellIds) ) {
 					cellIds = [cellIds];
 				}
+				var request = [];
+				for(let cellId of cellIds) {
+					request.push({cellId: cellId, count: items2FetchPerCell}); 
+				}
 				this.cellItemExpander.fetch(function() {
 					spinner.endLoadingSpinner();
 					cb();
-				}, cellIds);
+				}, request);
 			},
 
 			expandRegionCells: function(regionIds, cb) {
