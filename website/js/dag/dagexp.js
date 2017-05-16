@@ -297,20 +297,14 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 		
 		//cellInfo is of the form {cellId: [itemId]}
 		state.cqr.getCellItems(requestIds, function(cellInfo) {
-			var missingItemInfo = tools.SimpleSet();
+			var itemsToFetch = tools.SimpleSet();
 			
 			for(let cellId of requestIds) {
 				console.assert(cellInfo[cellId] !== undefined);
-				
-				var cellItemIds = cellInfo[cellId];
-				for(let itemId of cellItemIds) {
-					if (!state.dag.hasItem(itemId) ) {
-						missingItemInfo.insert(itemId);
-					}
-				}
+				itemsToFetch.insertArray( tools.toIntArray( cellInfo[cellId] ) );
 			}
 
-			oscar.getItems(missingItemInfo.toArray(), function(items) {
+			oscar.getItems(itemsToFetch.toArray(), function(items) {
 				var itemId2Item = new Map();
 				for(let item of items) {
 					itemId2Item.set(item.id(), item);
@@ -330,7 +324,11 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 								"bbox" : item.bbox()
 							});
 						}
+						else {
+							console.assert(false);
+						}
 					}
+					console.assert(result_ci.size === parseInt(ci.length));
 					res.set(id, result_ci);
 				}
 				//result is of the form Map{ {cellId: <int>, bucket<int>} -> Map{itemId -> {name: <string>, bbox: <bbox>}} }
