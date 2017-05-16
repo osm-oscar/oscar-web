@@ -128,7 +128,14 @@ define(["jquery"], function ($) {
 			}
 			return tmp;
 		},
-	   
+		toSortedIntArray: function(strArray) {
+			var tmp = [];
+			for(let x of strArray) {
+				tmp.push(parseInt("" + x));
+			}
+			tmp.sort(function(a, b){return a-b});
+			return tmp;
+		},
         /**
          * Calculates the overlap of the viewport and a bbox. Returns the percentage of overlap.
          *
