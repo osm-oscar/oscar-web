@@ -1,19 +1,19 @@
 <script id="arrayItemListEntryHtmlTemplate" type="text/x-tmpl-mustache">
 {{#wrappedarray}}
 	<div class="panel panel-default" data-item-id="{{{itemId}}}">
-        <div class="panel-heading results-panel-title" role="tab">
-            <div class="panel-title">
-                <h5>
-                    {{^closelink}}
-                    <a data-item-id="{{{itemId}}}" class="accordion-toggle accordion-toggle-link {{{matchingTagClass}}}" href="#" aria-expanded="true">
-                        <b>{{itemName}}</b>{{#street}}, {{postcode}} {{city}} {{street}} {{housenumber}}{{/street}}
-                    </a>
-                    {{/closelink}}
-                    {{#closelink}}
-                    <a data-item-id="{{{itemId}}}" class="accordion-title-link {{{matchingTagClass}}}" href="#" aria-expanded="true">
-                        <b>{{itemName}}</b>{{#street}}, {{postcode}} {{city}} {{street}} {{housenumber}}{{/street}}
-                    </a>
-                    <span class="pull-right">
+		<div class="panel-heading results-panel-title" role="tab">
+			<div class="panel-title">
+				<h5>
+					{{^closelink}}
+					<a data-item-id="{{{itemId}}}" class="accordion-toggle accordion-toggle-link {{{matchingTagClass}}}" href="#" aria-expanded="true">
+					{{/closelink}}
+					{{#closelink}}
+					<a data-item-id="{{{itemId}}}" class="accordion-title-link {{{matchingTagClass}}}" href="#" aria-expanded="true">
+					{{/closelink}}
+					{{#itemName}}<b>{{itemName}}</b>{{/itemName}}{{#street}}{{#itemName}}, {{/itemName}}{{street}} {{housenumber}}{{#city}}, {{postcode}} {{city}}{{/city}}{{/street}}
+					</a>
+					{{#closelink}}
+					<span class="pull-right">
 						&#91;
 						<a data-item-id="{{{itemId}}}" class="accordion-remove-link" href="#">
 							<i class="fa fa-trash-o" aria-hidden="true"></i>
@@ -30,81 +30,81 @@
 						</a>
 						&#93;
 					</span>
-                    {{/closelink}}
-                </h5>
-            </div>
-        </div>
-        {{#details}}
-        <div class="panel-collapse collapse" role="tabpanel" data-item-id="{{{itemId}}}" aria-expanded="true">
-            <div class="panel-body">
-                <table class="table table-hover table-bordered table-condensed">
-                    <thead>
-                        <tr>
-                            <th class="result-list-key">Key</th>
-                            <th class="result-list-value">Value</th>
-                        <tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <span>id</span>
-                            </td>
-                            <td>
-                                <a href='#' class="item-detail-id" data-item-id='{{itemId}}'>{{itemId}}</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="result-list-key">
-                                <span>OSM Id</span>
-                            </td>
-                            <td class="result-list-value">
-                                <span><a href="http://www.openstreetmap.org/{{{osmType}}}/{{{osmId}}}" target="_blank">{{osmId}}</a></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="result-list-key">
-                                <span>score</span>
-                            </td>
-                            <td class="result-list-value">
-                                <span>{{score}}</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="table table-hover table-bordered table-condensed">
-                    <thead>
-                        <tr>
-                            <th class="result-list-key">Key</th>
-                            <th class="result-list-value">Value</th>
-                        <tr>
-                    </thead>
-                    <tbody>
-                    {{#kv}}
-                        <tr>
-                            <td class="result-list-key">
-                                <span title='Add key to query'>
-                                    <a href='#{{{shapeSrcType}}}Details{{{itemId}}}' class='item-detail-key {{kc}} break-word' data-item-id="{{{itemId}}}" data-query-key='{{k}}'>{{k}}</a>
-                                </span>
-                            </td>
-                            <td class="result-list-value">
-                                {{#link}}
-                                    <span title='Open in new window'>
-                                        <a href='{{link}}' target="_blank" class='{{vc}} break-word'>{{v}}</a>
-                                    </span>
-                                {{/link}}
-                                {{^link}}
-                                    <span title='Add key:value to query'>
-                                        <a href='#{{{shapeSrcType}}}Details{{{itemId}}}' class='item-detail-value {{vc}} break-word' data-item-id="{{{itemId}}}" data-query-key='{{k}}' data-query-value='{{v}}'>{{v}}</a>
-                                    </span>
-                                {{/link}}
-                            </td>
-                        </tr>
-                    {{/kv}}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        {{/details}}
-    </div>
+					{{/closelink}}
+				</h5>
+			</div>
+		</div>
+		{{#details}}
+		<div class="panel-collapse collapse" role="tabpanel" data-item-id="{{{itemId}}}" aria-expanded="true">
+			<div class="panel-body">
+				<table class="table table-hover table-bordered table-condensed">
+					<thead>
+						<tr>
+							<th class="result-list-key">Key</th>
+							<th class="result-list-value">Value</th>
+						<tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								<span>id</span>
+							</td>
+							<td>
+								<a href='#' class="item-detail-id" data-item-id='{{itemId}}'>{{itemId}}</a>
+							</td>
+						</tr>
+						<tr>
+							<td class="result-list-key">
+								<span>OSM Id</span>
+							</td>
+							<td class="result-list-value">
+								<span><a href="http://www.openstreetmap.org/{{{osmType}}}/{{{osmId}}}" target="_blank">{{osmId}}</a></span>
+							</td>
+						</tr>
+						<tr>
+							<td class="result-list-key">
+								<span>score</span>
+							</td>
+							<td class="result-list-value">
+								<span>{{score}}</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<table class="table table-hover table-bordered table-condensed">
+					<thead>
+						<tr>
+							<th class="result-list-key">Key</th>
+							<th class="result-list-value">Value</th>
+						<tr>
+					</thead>
+					<tbody>
+					{{#kv}}
+						<tr>
+							<td class="result-list-key">
+								<span title='Add key to query'>
+									<a href='#{{{shapeSrcType}}}Details{{{itemId}}}' class='item-detail-key {{kc}} break-word' data-item-id="{{{itemId}}}" data-query-key='{{k}}'>{{k}}</a>
+								</span>
+							</td>
+							<td class="result-list-value">
+								{{#link}}
+									<span title='Open in new window'>
+										<a href='{{link}}' target="_blank" class='{{vc}} break-word'>{{v}}</a>
+									</span>
+								{{/link}}
+								{{^link}}
+									<span title='Add key:value to query'>
+										<a href='#{{{shapeSrcType}}}Details{{{itemId}}}' class='item-detail-value {{vc}} break-word' data-item-id="{{{itemId}}}" data-query-key='{{k}}' data-query-value='{{v}}'>{{v}}</a>
+									</span>
+								{{/link}}
+							</td>
+						</tr>
+					{{/kv}}
+					</tbody>
+				</table>
+			</div>
+		</div>
+		{{/details}}
+	</div>
 {{/wrappedarray}}
 </script>

@@ -254,7 +254,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
                         return this.data.v[namePos];
                     }
                     else {
-                        return "HAS_NO_NAME";
+                        return "";
                     }
                 },
                 asLeafletItem: function (successCB, errorCB) {

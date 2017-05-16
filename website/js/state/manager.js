@@ -67,6 +67,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
             var itemKv = [];
             var wikiLink = undefined;
             var hasMatchingTag = false;
+			var itemName = item.name();
             var postcode, street, city, houseNumber;
 
             for (var i = 0; i < item.size(); ++i) {
@@ -98,6 +99,15 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
                 }
                 itemKv.push(entry);
             }
+            if (!itemName.length) {
+				if ((street === undefined || houseNumber === undefined)) {
+					itemName = "Unnammed item";
+				}
+				else {
+					itemName = undefined;
+				}
+			}
+            
             return {
 				"closelink" : withCloseLink,
 				"details" : withDetails,
@@ -105,7 +115,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
                 "score": item.score(),
                 "osmId": item.osmid(),
                 "osmType": item.type(),
-                "itemName": item.name(),
+                "itemName": itemName,
                 "postcode": postcode,
                 "city": city,
                 "street": street,
