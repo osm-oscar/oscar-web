@@ -354,7 +354,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				var cellNode = state.dag.cell(x.cellId);
 				if (!cellNode.allItemsFetched && cellNode.items.size() < x.count) {
 					//split this request into the appropriate buckets
-					let bucket = cellNode.items.size() / cellItemExpander.m_storage.m_cfg.bucketSize;
+					let bucket = Math.floor( cellNode.items.size() / cellItemExpander.m_storage.m_cfg.bucketSize );
 					do {
 						if (!storageRequests.count(bucket)) {
 							storageRequests.insert(bucket, []);
@@ -365,10 +365,11 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				}
 			}
 			//we have to group the request by buckets
-			var myCB = tools.AsyncCallBackHandler(storageRequests.size(), cb);
+			var myCB = tools.AsyncCallBackHandler(storageRequests.size()+1, cb);
 			for(let bucket of storageRequests.keys()) {
 				cellItemExpander.m_storage.fetch(function() { myCB.inc(); }, storageRequests.at(bucket));
 			}
+			myCB.inc();
 		}
 	};
 
