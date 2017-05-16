@@ -518,8 +518,8 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
 					this.p.simpleCqrCellInfo(this.d.query, successCB, errorCB, regionIds, this.d.regionFilter, regionExclusiveCells);
 				},
 				//calls successCB with { cellId: [itemId] }
-				getCellItems: function(cellIds, successCB, errorCB, offset) {
-					this.p.simpleCqrGetCellItems(this.d.query, successCB, errorCB, cellIds, offset);
+				getCellItems: function(cellIds, successCB, errorCB, k, offset) {
+					this.p.simpleCqrGetCellItems(this.d.query, cellIds, successCB, errorCB, k, offset);
 				},
                 //returning an array in successCB with objects={id : int, apxitems : int}
                 //returns rootRegionChildrenInfo if regionId is undefined
@@ -1076,10 +1076,16 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
                 }
             });
         },
-		simpleCqrGetCellItems: function(query, successCB, errorCB, cellIds, offset) {
+		simpleCqrGetCellItems: function(query, cellIds, successCB, errorCB, k, offset) {
+            if (k === undefined) {
+				k = oscarObject.maxFetchItems;
+			}
+			if (offset === undefined) {
+				offset = 0;
+			}
             var params = {};
             params['q'] = query;
-			params['k'] = oscarObject.maxFetchItems;
+			params['k'] = k;
 			params['o'] = offset;
 			params['which'] = JSON.stringify(tools.toSortedIntArray(cellIds));
             var qpath = this.completerBaseUrl + "/cqr/clustered/cellitems";

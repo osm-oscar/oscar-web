@@ -286,6 +286,9 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 		//ids are of the form [{cellId: <int>, bucket: <int> }]
 		//buckets have to be the same for all
 		var ids = this._remoteRequestDataIds(remoteRequestId);
+		console.assert(ids.length);
+		
+		var offset = ids[0].bucket * cellItemExpanderStorage.m_cfg.bucketSize;
 		
 		var requestIds = [];
 		for(let x of ids) {
@@ -333,7 +336,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				//result is of the form Map{ {cellId: <int>, bucket<int>} -> Map{itemId -> {name: <string>, bbox: <bbox>}} }
 				cb(res, remoteRequestId);
 			}, tools.defErrorCB);
-		}, tools.defErrorCB);
+		}, tools.defErrorCB, cellItemExpanderStorage.m_cfg.bucketSize, offset);
 	};
 	
 	var cellItemExpander = {
