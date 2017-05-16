@@ -1828,6 +1828,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		topKItems: function(k, offset, cellIds, cb) {
 			map.dagExpander.expandCellItems(cellIds, function() {
 				
+				//sort cellIds to always get the same order of items for a given set of cellIds
+				cellIds.sort(function(a,b) {return a-b;});
+				
 				var activeIterators = new Set();
 				var removeIterators = [];
 				var resultIds = new Set();
