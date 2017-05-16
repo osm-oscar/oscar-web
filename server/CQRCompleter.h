@@ -105,7 +105,7 @@ public:
 	  * q=<searchstring>
 	  * k=<number_of_items>
 	  * o=<offset_in_items_result_list>
-	  * which=[cellId]
+	  * which=[cellId] cellIds in ascending order
 	  * Return:
 	  * {<cellId> : [<itemId>]}
 	  */
