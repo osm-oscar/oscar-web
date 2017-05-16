@@ -946,7 +946,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
         simpleCqrChildrenInfo: function (query, successCB, errorCB, which, regionFilter, withClusterHints, withChildrenCells, withParentCells, regionExclusiveCells) {
             var params = {};
             params['q'] = query;
-			params['which'] = JSON.stringify( tools.toIntArray(which) );
+			params['which'] = JSON.stringify( tools.toSortedIntArray(which) );
             if (regionFilter !== undefined) {
                params['rf'] = regionFilter;
             }
@@ -988,7 +988,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
         simpleCqrCellInfo: function (query, successCB, errorCB, which, regionFilter, regionExclusiveCells) {
             var params = {};
             params['q'] = query;
-			params['which'] = JSON.stringify( tools.toIntArray(which) );
+			params['which'] = JSON.stringify( tools.toSortedIntArray(which) );
             if (regionFilter !== undefined) {
                params['rf'] = regionFilter;
             }
@@ -1081,7 +1081,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
             params['q'] = query;
 			params['k'] = oscarObject.maxFetchItems;
 			params['o'] = offset;
-			params['which'] = JSON.stringify(tools.toIntArray(cellIds));
+			params['which'] = JSON.stringify(tools.toSortedIntArray(cellIds));
             var qpath = this.completerBaseUrl + "/cqr/clustered/cellitems";
             jQuery.ajax({
                 type: "POST",
@@ -1131,7 +1131,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
         clusterHints: function (query, regions, successCB, errorCB, regionFilter) {
             var params = {};
             params['q'] = query;
-			params['which'] = JSON.stringify(regions);
+			params['which'] = JSON.stringify( tools.toSortedIntArray(regions) );
             if(regionFilter !== undefined) {
                 params['rf'] = regionFilter;
             }
