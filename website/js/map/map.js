@@ -622,7 +622,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					handler.m_domPaginationRoot.removeClass("hidden");
 				}
 				var tabData = handler.m_tabs.at(activeTabId);
-				var pages = [{offset: 0, begin: 0, end: handler.config.itemsPerPage-1}];
+				var pages = [{offset: 0, begin: 0, end: Math.min(tabData.count, handler.config.itemsPerPage)-1}];
 				
 				if (tabData.offset > 0) {
 					
