@@ -617,6 +617,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				var activeTabId = handler.activeTabId();
 				if (activeTabId === -1) {
 					handler.m_domPaginationRoot.addClass("hidden");
+					handler.m_domPaginationRoot.empty();
+					return;
 				}
 				else {
 					handler.m_domPaginationRoot.removeClass("hidden");
@@ -884,7 +886,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				handler.m_tabs.clear();
 				handler.refresh();
-				handler.emit_activeTabChanged(-1);
+				handler._slot_activeTabChanged(-1);
 			},
 
 			destroy: function () {
