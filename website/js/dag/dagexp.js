@@ -234,14 +234,14 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 	var cellItemExpanderStorage = storage.IndexedDataStore();
 
 	cellItemExpanderStorage.m_cfg = {
-		/*const*/ bucketSize: 100 //this one has to be lower than the maximum allowed size returned by the server part
+		bucketSize: 100 //this one has to be lower than the maximum allowed size returned by the server part
 	};
-	//id is = {cellId: <int>, bucket: <int> }, itemsInfo is = {itemId: {name: <string>, bbox: <bbox>}
+	//id is = {cellId: <int>, bucket: <int> }, itemsInfo is = Map{itemId -> {name: <string>, bbox: <bbox>}}
 	cellItemExpanderStorage.m_data = {
 		insert: function(id, itemsInfo) {
 			var cellId = id.cellId;
 			var cellNode = state.dag.cell(cellId);
-			for(var itemId in itemsInfo) {
+			for(let itemId of itemsInfo) {
 				itemId = parseInt(itemId);
 				var childNode;
 				if (state.dag.hasItem(itemId)) {
@@ -249,11 +249,14 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				}
 				else {
 					childNode = state.dag.addNode(itemId, dag.NodeTypes.Item);
-					var itemInfo = itemsInfo[itemId];
+					var itemInfo = itemsInfo.get(itemId);
 					childNode.name = itemInfo["name"];
 					childNode.bbox = itemInfo["bbox"];
 				}
 				state.dag.addEdge(cellNode, childNode);
+			}
+			if (itemsInfo.size < cellItemExpanderStorage.m_cfg.bucketSize) {
+				cellNode.allItemsFetched = true;
 			}
 		},
 		size: undefined,
@@ -262,8 +265,8 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 			if (!state.dag.hasCell(id.cellId)) {
 				return false;
 			}
-			var node = state.dag.cell(id);
-			return node.items.size() >= id.bucket*CellItemExpanderStorage.bucketSize;
+			var node = state.dag.cell(id.cellId);
+			return node.allItemsFetched || node.items.size() >= (id.bucket+1)*cellItemExpanderStorage.m_cfg.bucketSize;
 		},
 		at: undefined
 	};
@@ -272,16 +275,30 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 	cellItemExpanderStorage._requestFromStore = function(cb, cellIds) {
 		cb();
 	};
+	
+	cellItemExpanderStorage._insertData = function(dataIds, data) {
+		for(let dataId of dataIds) {
+			this.m_data.insert(dataId, data.get(dataId));
+		}
+	},
+	
 	cellItemExpanderStorage._getData = function(cb, remoteRequestId) {
-		//ids are of the form {cellId: <int>, bucket: <int> }
+		//ids are of the form [{cellId: <int>, bucket: <int> }]
 		//buckets have to be the same for all
 		var ids = this._remoteRequestDataIds(remoteRequestId);
 		
+		var requestIds = [];
+		for(let x of ids) {
+			requestIds.push(x.cellId);
+		}
+		
 		//cellInfo is of the form {cellId: [itemId]}
-		state.cqr.getCellItems(cellIds, function(cellInfo) {
-
+		state.cqr.getCellItems(requestIds, function(cellInfo) {
 			var missingItemInfo = tools.SimpleSet();
-			for(var cellId in cellInfo) {
+			
+			for(let cellId of requestIds) {
+				console.assert(cellInfo[cellId] !== undefined);
+				
 				var cellItemIds = cellInfo[cellId];
 				for(let itemId of cellItemIds) {
 					if (!state.dag.hasItem(itemId) ) {
@@ -289,28 +306,31 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 					}
 				}
 			}
+
 			oscar.getItems(missingItemInfo.toArray(), function(items) {
-				var tmp = {};
+				var itemId2Item = new Map();
 				for(let item of items) {
-					tmp[item.id()] = item;
+					itemId2Item.set(item.id(), item);
 				}
-				var res = {};
-				for(var cellId in cellInfo) {
-					res[cellId] = {};
-					var ci = cellInfo[cellId];
-					var rci = res[cellId];
-					for(var i in ci) {
-						var itemId = ci[i];
-						rci[itemId] = {};
-						var ri = rci[itemId];
-						if (tmp[itemId] !== undefined) {
-							var item = tmp[itemId];
-							ri["name"] = item.name();
-							ri["bbox"] = item.bbox();
+				var res = new Map();
+				for(let id of ids) {
+					var ci = cellInfo[id.cellId];
+					var result_ci = new Map();
+					//it may be the case that a cell does not have any items.
+					//Which is the case if the offset is too large
+					for(let itemId of ci) {
+						itemId = parseInt(itemId);
+						if (itemId2Item.has(itemId)) {
+							let item = itemId2Item.get(itemId);
+							result_ci.set(itemId, {
+								"name" : item.name(),
+								"bbox" : item.bbox()
+							});
 						}
 					}
+					res.set(id, result_ci);
 				}
-				
+				//result is of the form Map{ {cellId: <int>, bucket<int>} -> Map{itemId -> {name: <string>, bbox: <bbox>}} }
 				cb(res, remoteRequestId);
 			}, tools.defErrorCB);
 		}, tools.defErrorCB);
@@ -331,18 +351,20 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				var cellNode = state.dag.cell(x.cellId);
 				if (!cellNode.allItemsFetched && cellNode.items.size() < x.count) {
 					//split this request into the appropriate buckets
-					let bucketBegin = cellNode.items.size() / cellItemExpander.m_storage.m_cfg.bucketSize;
-					for(let bucket = bucketBegin; (bucket+1)*cellItemExpander.m_storage.m_cfg.bucketSize < x.count; ++bucket) {
+					let bucket = cellNode.items.size() / cellItemExpander.m_storage.m_cfg.bucketSize;
+					do {
 						if (!storageRequests.count(bucket)) {
 							storageRequests.insert(bucket, []);
 						}
 						storageRequests.at(bucket).push({cellId: x.cellId, bucket: bucket});
-					}
+						++bucket;
+					} while(bucket*cellItemExpander.m_storage.m_cfg.bucketSize < x.count);
 				}
 			}
 			//we have to group the request by buckets
+			var myCB = tools.AsyncCallBackHandler(storageRequests.size(), cb);
 			for(let bucket of storageRequests.keys()) {
-				cellItemExpander.m_storage.fetch(function() {cb();}, storageRequests.at(bucket));
+				cellItemExpander.m_storage.fetch(function() { myCB.inc(); }, storageRequests.at(bucket));
 			}
 		}
 	};
