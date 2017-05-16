@@ -57,7 +57,7 @@ define(["jquery"], function ($) {
 				this.m_data.add(key);
 			};
 			ss.insertArray = function(arrayOfKeys) {
-				for(let x in arrayOfKeys) {
+				for(let x of arrayOfKeys) {
 					ss.insert(x);
 				}
 			};
