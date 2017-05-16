@@ -1837,8 +1837,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					activeIterators.add( state.dag.cell(cellId).items.keys() );
 				}
 				
-				while(activeIterators.size && result.length < k+offset) {
-					
+				while(activeIterators.size && result.length < k) {
 					for(let it of activeIterators) {
 						var tmp = it.next();
 						while(!tmp.done) {
@@ -1860,6 +1859,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						if (tmp.done) {
 							removeIterators.push(it);
 						}
+						if (result.length >= k) {
+							break;
+						}
 					}
 					
 					if (removeIterators.length) {
@@ -1869,6 +1871,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 				}
 				
+				console.assert(result.length <= k);
 				cb(result);
 				
 			}, offset+k);
