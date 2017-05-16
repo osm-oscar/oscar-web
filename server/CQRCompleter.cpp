@@ -869,8 +869,8 @@ void CQRCompleter::cellItems() {
 			out << '"' << cqrCellId << "\":[";
 			SSERIALIZE_CHEAP_ASSERT_LARGER(cqr.idxSize(cIt), 0);
 			sserialize::ItemIndex idx(cqr.idx(cIt));
-			sserialize::ItemIndex::const_iterator idxIt(idx.begin());
 			if (idx.size() > skipItems) {
+				sserialize::ItemIndex::const_iterator idxIt(idx.begin());
 				idxIt += skipItems;
 				out << *idxIt;
 				++idxIt;
