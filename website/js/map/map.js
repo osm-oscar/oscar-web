@@ -713,7 +713,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (handler.hasTab(tabId)) {
 					//check if cells changed, if not, ignore update
 					if (!cells.equal(handler.m_tabs.at(tabId).cells)) {
-						handler.m_tabs.at(tabId).cells = cells;
+						var tabData = handler.m_tabs.at(tabId);
+						tabData.cells = cells;
+						tabData.offset = undefined;
 						handler._setTabResultListOffset(tabId, 0, cb);
 					}
 				}
