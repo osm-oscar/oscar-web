@@ -20,7 +20,8 @@
 			"itemscompleter" : 0, //select items completer
 			"geohcompleter" : 0, //select the geo hierarchy completer
 			"geocompleter" : 0, //select geocompleter
-			"treedCQR" : true //Use treed cqr calculation instead of normal one
+			"treedCQR" : false //Use treed cqr calculation instead of normal one
+			"treedCQRThreads": 1 //Use this many threads for treed cqr calculation
 		},
 	"ghfilters" :
 		[

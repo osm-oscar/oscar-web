@@ -30,7 +30,7 @@
             "itemstextcompleter" : 0,
             "geotextcompleter" : 0,
             "geocompleter" : 0,
-	    "treedCQR" : false
+	    	"treedCQR" : false
         },
     "ghfilters" :
 		[

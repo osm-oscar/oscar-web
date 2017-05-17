@@ -127,10 +127,10 @@ void CQRCompleter::fullCQR() {
 	
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	
 	if (!ssonly || sst == "binary") {
@@ -195,10 +195,10 @@ void CQRCompleter::simpleCQR() {
 	
 	GeoHierarchy::SubSet subSet;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	
 	GeoHierarchy::SubSet::NodePtr rPtr(subSet.root());
@@ -284,10 +284,10 @@ void CQRCompleter::items() {
 	
 	sserialize::CellQueryResult cqr;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	else {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	
 	sserialize::ItemIndex idx(cqr.topK(numItems+skipItems));
@@ -338,10 +338,10 @@ void CQRCompleter::children() {
 
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	
 	sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
@@ -597,10 +597,10 @@ void CQRCompleter::childrenInfo() {
 	uint32_t fullSubSetLimit = (withChildrenCells ? 0xFFFFFFFF : m_dataPtr->fullSubSetLimit);
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	if (regionExclusiveCells) {
 	
@@ -729,10 +729,10 @@ void CQRCompleter::cellInfo() {
 		uint32_t fullSubSetLimit = 0xFFFFFFFF;
 		sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
 		if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-			subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), fullSubSetLimit, m_dataPtr->treedCQR);
+			subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 		}
 		else {
-			subSet = m_dataPtr->completer->clusteredComplete(cqs, fullSubSetLimit, m_dataPtr->treedCQR);
+			subSet = m_dataPtr->completer->clusteredComplete(cqs, fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 		}
 		cellCount = subSet.cqr().cellCount();
 		
@@ -763,10 +763,10 @@ void CQRCompleter::cellInfo() {
 		
 		sserialize::CellQueryResult cqr;
 		if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-			cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR);
+			cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 		}
 		else {
-			cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR);
+			cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 		}
 		cellCount = cqr.cellCount();
 		
@@ -798,7 +798,7 @@ void CQRCompleter::cells() {
 	//params
 	std::string cqs = request().get("q");
 	
-	sserialize::CellQueryResult cqr( m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR) );
+	sserialize::CellQueryResult cqr( m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads) );
 	
 	std::ostream & out = response().out();
 	out << '[';
@@ -854,10 +854,10 @@ void CQRCompleter::cellItems() {
 	
 	sserialize::CellQueryResult cqr;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	else {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	std::ostream & out = response().out();
 	char sep = '{';
@@ -931,10 +931,10 @@ void CQRCompleter::maximumIndependentChildren() {
 	
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	
 	sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
@@ -1063,10 +1063,10 @@ void CQRCompleter::dag() {
 	
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	
 	std::ostream & out = response().out();
@@ -1100,10 +1100,10 @@ void CQRCompleter::clusterHints() {
 	
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
 	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR);
+		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
 	}
 
 	std::unordered_map<uint32_t, std::pair<double, double> > clusterCenters = getClusterCenters(subSet);

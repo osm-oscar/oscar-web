@@ -20,6 +20,7 @@ struct CompletionFileData {
 	maxIndexDBReq(10),
 	maxItemDBReq(10),
 	treedCQR(false),
+	treedCQRThreads(1),
 	geocompleter(0)
 	{}
 	//Info from config file
@@ -34,6 +35,7 @@ struct CompletionFileData {
 	uint32_t maxItemDBReq;
 	uint32_t maxResultDownloadSize;
 	bool treedCQR;
+	bool treedCQRThreads;
 	std::unordered_map<uint8_t, uint8_t> textSearchers;
 	uint32_t geocompleter;
 	//runtime data
