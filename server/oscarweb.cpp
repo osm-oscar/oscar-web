@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
 		data.textSearchers[liboscar::TextSearch::GEOHIERARCHY] = dbfile.get<uint32_t>("geohcompleter", 0);
 		data.geocompleter = dbfile.get<uint32_t>("geocompleter", 0);
 		data.treedCQR = dbfile.get<bool>("treedCQR", false);
-		data.treedCQRThreads = std::min<uint32_t>(std::thread::hardware_concurrency(), dbfile.get<bool>("treedCQRThreads", 1));
+		data.treedCQRThreads = std::min<uint32_t>(std::thread::hardware_concurrency(), dbfile.get<uint32_t>("treedCQRThreads", 1));
 	}
 	catch (cppcms::json::bad_value_cast & e) {
 		std::cerr << "Incomplete dbfiles entry: " << e.what() << std::endl;
