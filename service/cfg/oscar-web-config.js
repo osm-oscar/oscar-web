@@ -31,7 +31,7 @@
             "geotextcompleter" : 0,
             "geocompleter" : 0,
 	    	"treedCQR" : true,
-			"treedCQRThreads": 0
+			"treedCQRThreads": 8
         },
     "ghfilters" :
 		[
