@@ -227,6 +227,47 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 		}, tools.defErrorCB, true);
 	};
 	
+	//BEGIN:cellDataFetcher
+	var cellDataFetcher = storage.IndexedDataStore();
+	//cellInfo is { cellId: bbox }
+	cellDataFetcher.m_data = {
+		size: function() {
+			return state.dag.cellSize();
+		},
+		count: function(id) {
+			if (!state.dag.hasCell(id)) {
+				return false;
+			}
+			var node = state.dag.cell(id);
+			return node.count !== undefined;
+		},
+		at: function(id) {
+			console.assert(false, "Should never be called");
+			return;
+		}
+	};
+	//fetching stuff from store is not necessary,
+	//we only call the cb to tell that we're done
+	cellDataFetcher._requestFromStore = function(cb, parentIds) {
+		cb();
+	};
+	//data is of the form: { cellId: {'s':<int>} }
+	cellDataFetcher._insertData = function(dataIds, data) {
+		for(let cellId of dataIds) {
+			console.assert(state.dag.hasCell(cellIds));
+			var cellNode = state.dag.cell(cellId);
+			console.assert(data[cellId] !== undefined);
+			cellNode.count = parseInt( data[cellId]['s'] );
+		}
+	},
+	cellDataFetcher._getData = function(cb, remoteRequestId) {
+		var cellIds = this._remoteRequestDataIds(remoteRequestId);
+		state.cqr.cellData(cellIds, cb, tools.defErrorCB);
+	};
+	
+	//END:cellDataFetcher
+	
+	
 	///The storage for cell information
 	///The item list of cell nodes is implicitly split into buckets
 	///Each bucket has size cfg.bucketSize
@@ -375,6 +416,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 		return {
 			regionChildrenExpander: regionChildrenExpander,
 			regionCellExpander: regionCellExpander,
+			cellDataFetcher: cellDataFetcher,
 			cellItemExpander: cellItemExpander,
 	   
 			preloadShapes: function()  {
@@ -497,6 +539,17 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 					spinner.endLoadingSpinner();
 					cb();
 				}, regionIds);
+			},
+			
+			retrieveCellData: function(cellIds, cb) {
+				if (! $.isArray(cellIds) ) {
+					cellIds = [cellIds];
+				}
+				spinner.startLoadingSpinner();
+				this.cellDataFetcher.fetch(function() {
+					spinner.endLoadingSpinner();
+					cb();
+				}, cellIds);
 			}
 		}
 	};
