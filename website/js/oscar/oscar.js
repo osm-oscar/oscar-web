@@ -521,6 +521,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
 				getCellItems: function(cellIds, successCB, errorCB, k, offset) {
 					this.p.simpleCqrGetCellItems(this.d.query, cellIds, successCB, errorCB, k, offset);
 				},
+				getCellData: function(cellIds, successCB, errorCB) {
+					this.p.simpleCqrGetCellData(this.d.query, cellIds, successCB, errorCB);
+				},
                 //returning an array in successCB with objects={id : int, apxitems : int}
                 //returns rootRegionChildrenInfo if regionId is undefined
                 regionChildrenInfo: function (regionId, successCB, errorCB) {
@@ -1076,6 +1079,31 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
                 }
             });
         },
+		simpleCqrGetCellData: function(query, cellIds, successCB, errorCB) {
+            var params = {};
+            params['q'] = query;
+			params['which'] = JSON.stringify(tools.toSortedIntArray(cellIds));
+            var qpath = this.completerBaseUrl + "/cqr/clustered/celldata";
+            jQuery.ajax({
+                type: "POST",
+                url: qpath,
+                data: params,
+                mimeType: 'text/plain',
+                success: function (raw) {
+					var json;
+					try {
+						json = JSON.parse(raw);
+					}
+					catch (err) {
+						errorCB("Parsing the celldata failed with the following parameters: " + JSON.stringify(params), err);
+					}
+                    successCB(json);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    errorCB(textStatus, errorThrown);
+                }
+            });
+		},
 		simpleCqrGetCellItems: function(query, cellIds, successCB, errorCB, k, offset) {
             if (k === undefined) {
 				k = oscarObject.maxFetchItems;
