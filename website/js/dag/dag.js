@@ -14,7 +14,8 @@ define(["jquery", "tools"], function ($, tools) {
 			InItemList: 4,
 			HasItemMarker: 8,
 			HasRegionClusterMarker: 16,
-			InResultsTab2: 32
+			HasCellClusterMarker: 32,
+			InResultsTab2: 64
 		},
 		//type should be either region, cell or item
 		Node: function(id, type) {
