@@ -1204,7 +1204,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 
 			// only true for real items
-			if (cluster.getAllChildMarkers().length == 1 && !cluster.getAllChildMarkers()[0].bbox) {
+			var childMarkers = cluster.getAllChildMarkers();
+			if (childMarkers.length == 1 && !childMarkers[0].bbox) {
 				return new L.Icon.Default();
 			}
 
