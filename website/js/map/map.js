@@ -1924,7 +1924,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 							oscar.itemCache.count(childNode.id) && state.map.getBounds().contains(oscar.itemCache.at(childNode.id).centerPoint())
 							)
 						{
-							childNode.displayState |= dag.DisplayStates.HasClusterMarker;
+							childNode.displayState |= dag.DisplayStates.HasRegionClusterMarker;
 						}
 					}
 				}
@@ -2010,7 +2010,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					var hasMaxOverlapCell = false;
 					for(let cellId of node.cells.builtinset()) {
 						var cellNode = state.dag.cell(cellId);
-						var ds = cellNode.displayState & (dag.DisplayStates.HasClusterMarker | dag.DisplayStates.InResultsTab2);
+						var ds = cellNode.displayState & (dag.DisplayStates.HasRegionClusterMarker | dag.DisplayStates.InResultsTab2);
 						var xMap = currentMapBounds.intersects(cellNode.bbox);
 						var pOv = tools.percentOfOverlap(state.map, cellNode.bbox);
 						if (ds === 0 && xMap
@@ -2035,14 +2035,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						ok = !node.cells.size();
 						for(let cellId of node.cells.builtinset()) {
 							var cellNode = state.dag.cell(cellId);
-							var ds = cellNode.displayState & (dag.DisplayStates.HasClusterMarker | dag.DisplayStates.InResultsTab2);
+							var ds = cellNode.displayState & (dag.DisplayStates.HasRegionClusterMarker | dag.DisplayStates.InResultsTab2);
 							ok = ok || ds;
 						}
 						if (!ok) { //no cell is covered by a tab or a cluster marker, so we add one
-							node.displayState |= dag.DisplayStates.HasClusterMarker;
+							node.displayState |= dag.DisplayStates.HasRegionClusterMarker;
 							for(let cellId of node.cells.builtinset()) {
 								var cellNode = state.dag.cell(cellId);
-								cellNode.displayState |= dag.DisplayStates.HasClusterMarker;
+								cellNode.displayState |= dag.DisplayStates.HasRegionClusterMarker;
 							}
 						}
 					}
@@ -2065,7 +2065,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 			}, dag.NodeTypes.Region);
 			
-			//cells now hold the correct display state (either InResultsTab or HasClusterMarker)
+			//cells now hold the correct display state (either InResultsTab or HasRegionClusterMarker)
 			//regions now hold the correct display state as well
 		},
 		_assignClusterMarkers: function(wantClusterMarkers) {
@@ -2219,7 +2219,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			var wantTabListRegions = tools.SimpleSet();
 			var wantClusterMarkers = tools.SimpleSet();
 			state.dag.each(function(node) {
-				if (node.displayState & dag.DisplayStates.HasClusterMarker) {
+				if (node.displayState & dag.DisplayStates.HasRegionClusterMarker) {
 					wantClusterMarkers.insert(node.id);
 				}
 				if (node.displayState & dag.DisplayStates.InResultsTab) {

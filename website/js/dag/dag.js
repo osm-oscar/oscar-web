@@ -13,7 +13,7 @@ define(["jquery", "tools"], function ($, tools) {
 			InResultsTab: 2,
 			InItemList: 4,
 			HasItemMarker: 8,
-			HasClusterMarker: 16,
+			HasRegionClusterMarker: 16,
 			InResultsTab2: 32
 		},
 		//type should be either region, cell or item
