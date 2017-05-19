@@ -83,6 +83,7 @@ m_cqrSerializer(dataPtr->completer->indexStore().indexType())
 	dispatcher().assign("/clustered/children", &CQRCompleter::children, this);
 	dispatcher().assign("/clustered/childreninfo", &CQRCompleter::childrenInfo, this);
 	dispatcher().assign("/clustered/cellinfo", &CQRCompleter::cellInfo, this);
+	dispatcher().assign("/clustered/celldata", &CQRCompleter::cellData, this);
 	dispatcher().assign("/clustered/cells", &CQRCompleter::cells, this);
 	dispatcher().assign("/clustered/cellitems", &CQRCompleter::cellItems, this);
 	dispatcher().assign("/clustered/michildren", &CQRCompleter::maximumIndependentChildren, this);
@@ -785,6 +786,68 @@ void CQRCompleter::cellInfo() {
 	
 	ttm.end();
 	writeLogStats("childrenInfo", cqs, ttm, cellCount, 0);
+}
+
+void CQRCompleter::cellData() {
+	sserialize::TimeMeasurer ttm;
+	ttm.begin();
+	
+	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
+
+	response().set_content_header("text/json");
+	
+	//params
+	std::string cqs = request().post("q");
+	std::string regionFilter = request().post("rf");
+	std::string cellIdsStr = request().post("which");
+	bool ok = false;
+	std::vector<uint32_t> rqCId( parseJsonArray<uint32_t>(cellIdsStr, ok) );
+	
+	if (!ok) {
+		std::ostream & out = response().out();
+		out << "Invalid request!";
+		return;
+	}
+	if (rqCId.size() && cellIdsStr.size() > 2) {
+		std::stringstream ss;
+		ss << "$cells:";
+		ss.write(cellIdsStr.c_str()+1, cellIdsStr.size()-2);
+		ss << " (" << cqs << ")";
+		cqs = ss.str();
+	}
+
+	sserialize::CellQueryResult cqr;
+	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	}
+	else {
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	}
+	std::ostream & out = response().out();
+	char sep = '{';
+	for(uint32_t cIt(0), rIt(0), cS(cqr.cellCount()), rS(rqCId.size()); cIt < cS && rIt < rS;) {
+		uint32_t cqrCellId = cqr.cellId(cIt);
+		if (cqrCellId == rqCId.at(rIt)) {
+			out << sep;
+			sep = ',';
+			out << '"' << cqrCellId << "\":{\"s\":" << cqr.idxSize(cIt) << '}';
+			++cIt;
+			++rIt;
+		}
+		else if (cqrCellId < rqCId[rIt]) {
+			++cIt;
+		}
+		else {
+			++rIt;
+		}
+	}
+	if (sep == '{') {
+		out << sep;
+	}
+	out << '}';
+
+	ttm.end();
+	writeLogStats("cellData", cqs, ttm, cqr.cellCount(), 0);
 }
 
 void CQRCompleter::cells() {

@@ -83,7 +83,7 @@ public:
 	  */
 	void childrenInfo();
 	
-	/** return the region children for the query q:
+	/** return the cell information for the query q for the specified regions:
 	  * call with POST
 	  * q=<searchstring>
 	  * rf=<region filter>
@@ -93,6 +93,15 @@ public:
 	  * { regionId: [cellId] }
 	  */
 	void cellInfo();
+	
+	/** Return data about the cells (currently the number of items in the cell)
+	  * call with post
+	  * q=<searchstring>
+	  * rf=<region filter>
+	  * Return:
+	  * { cellId: <int: size> }
+	  */
+	void cellData();
 	
 	/** return the cells for the query q:
 	  * q=<searchstring>
