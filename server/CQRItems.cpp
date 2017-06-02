@@ -38,7 +38,7 @@ void CQRItems::all() {
 
 	bool withShapes = sserialize::toBool(request().get("s"));
 	bool withParents = sserialize::toBool(request().get("p"));
-	ItemSerializer::SerializationFormat sf = ItemSerializer::SF_WITH_SHAPE;
+	ItemSerializer::SerializationFormat sf = (withShapes ? ItemSerializer::SF_WITH_SHAPE : ItemSerializer::SF_NONE);
 	if (sfstr == "geojson") {
 		sf = (ItemSerializer::SerializationFormat) (ItemSerializer::SF_GEO_JSON | sf);
 	}
