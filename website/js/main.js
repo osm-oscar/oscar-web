@@ -243,8 +243,8 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 if (qStr.length) {
 					var id;
 					for(i=0; true; ++i) {
-						if (!state.spatialObjects.store.count(i)) {
-							id = i;
+						id = i + ""
+						if (!state.spatialObjects.store.count(id)) {
 							break;
 						}
 					}
