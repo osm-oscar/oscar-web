@@ -87,7 +87,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 		$.Mustache.load('template/resultListPaginationTemplate.mst');
         $("#sidebar-pane-help").load('template/help.html', function () {
             $('.example-query-string').on('click', function () {
-				state.setQuery(this.firstChild.data);
+				state.setQuery(this.firstChild.data.trim());
             });
         });
 
