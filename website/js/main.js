@@ -266,10 +266,10 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                     query.clearSpatialQuery();
                 }
                 if (e.target.value === 'path' || e.target.value === 'point') {
-                    $('#spatialquery_radius_group').removeClass('hidden');
+//                     $('#spatialquery_radius_group').removeClass('hidden');
                 }
                 else {
-                    $('#spatialquery_radius_group').addClass('hidden');
+//                     $('#spatialquery_radius_group').addClass('hidden');
                 }
             });
 			
