@@ -19,6 +19,7 @@ struct CompletionFileData {
 	fullSubSetLimit(100),
 	maxIndexDBReq(10),
 	maxItemDBReq(10),
+	cachedGeoHierarchy(true),
 	treedCQR(false),
 	treedCQRThreads(1),
 	geocompleter(0)
@@ -34,6 +35,7 @@ struct CompletionFileData {
 	uint32_t maxIndexDBReq;
 	uint32_t maxItemDBReq;
 	uint32_t maxResultDownloadSize;
+	bool cachedGeoHierarchy;
 	bool treedCQR;
 	uint32_t treedCQRThreads;
 	std::unordered_map<uint8_t, uint8_t> textSearchers;

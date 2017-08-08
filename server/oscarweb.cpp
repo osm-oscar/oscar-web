@@ -137,6 +137,8 @@ int main(int argc, char **argv) {
 		data.maxIndexDBReq = dbfile.get<uint32_t>("maxindexdbreq", 10);
 		data.maxItemDBReq = dbfile.get<uint32_t>("maxitemdbreq", 10);
 		data.maxResultDownloadSize = dbfile.get<uint32_t>("maxresultdownloadsize", 1000);
+		data.cachedGeoHierarchy = dbfile.get<bool>("cachedGeoHierarchy", true);
+
 		data.textSearchers[liboscar::TextSearch::GEOCELL] = dbfile.get<uint32_t>("geocellcompleter", 0);
 		data.textSearchers[liboscar::TextSearch::OOMGEOCELL] = dbfile.get<uint32_t>("geocellcompleter", 0);
 		data.textSearchers[liboscar::TextSearch::ITEMS] = dbfile.get<uint32_t>("itemscompleter", 0);
@@ -155,7 +157,12 @@ int main(int argc, char **argv) {
 	data.completer->setAllFilesFromPrefix(data.path);
 
 	try {
-		data.completer->energize();
+		if (data.cachedGeoHierarchy) {
+			data.completer->energize(sserialize::spatial::GeoHierarchySubGraph::T_IN_MEMORY);
+		}
+		else {
+			data.completer->energize(sserialize::spatial::GeoHierarchySubGraph::T_PASS_THROUGH);
+		}
 	}
 	catch (const std::exception & e) {
 		std::cout << "Failed to initialize completer from " << data.path << ": " << e.what() << std::endl;
@@ -163,7 +170,7 @@ int main(int argc, char **argv) {
 	}
 	
 	try {
-		      initMidPoints(completionFileDataPtr);
+		initMidPoints(completionFileDataPtr);
 	}
 	catch (std::exception & e) {
 		std::cerr << "Failed to init cell mid points:" << e.what() << std::endl;

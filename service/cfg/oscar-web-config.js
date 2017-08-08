@@ -27,6 +27,7 @@
             "maxindexdbreq": 1000,
             "maxitemdbreq": 2000,
 			"maxresultdownloadsize" : 1000000,
+			"cachedGeoHierarchy" : true,
             "itemstextcompleter" : 0,
             "geotextcompleter" : 0,
             "geocompleter" : 0,
