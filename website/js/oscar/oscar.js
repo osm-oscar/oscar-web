@@ -161,7 +161,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
         idxCache: ItemIndexCache(module.config().url),
         cellIdxIdCache: CellIndexIdCache(module.config().url),
 		cellInfoCache: CellInfoCache(module.config().url),
-        cqrOps: {'(': '(', ')': ')', '+': '+', '-': '-', '/': '/', '^': '^'},
+        cqrOps: {'(': '(', ')': ')', '+': '+', '-': '-', '/': '/', '^': '^', '*' : '*'},
         cqrParseSkip : {' ' : ' ', '!' : '!', '#' : '#'},
         cqrRegExpEscapes: {
             '*': '*',
