@@ -324,7 +324,6 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 	
 	cellItemExpanderStorage._insertData = function(dataIds, data) {
 		for(let dataId of dataIds) {
-			dataId = parseInt(dataId);
 			this.m_data.insert(dataId, data.get(dataId));
 		}
 	},
@@ -378,7 +377,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 					console.assert(result_ci.size === parseInt(ci.length));
 					res.set(id, result_ci);
 				}
-				//result is of the form Map{ {cellId: <int>, bucket<int>} -> Map{itemId -> {name: <string>, bbox: <bbox>}} }
+				//result is of the form Map{ {cellId: <int>, bucket: <int>} -> Map{itemId -> {name: <string>, bbox: <bbox>}} }
 				cb(res, remoteRequestId);
 			}, tools.defErrorCB);
 		}, tools.defErrorCB, cellItemExpanderStorage.m_cfg.bucketSize, offset);
@@ -404,7 +403,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 						if (!storageRequests.count(bucket)) {
 							storageRequests.insert(bucket, []);
 						}
-						storageRequests.at(bucket).push({cellId: x.cellId, bucket: bucket});
+						storageRequests.at(bucket).push({cellId: parseInt(x.cellId), bucket: bucket});
 						++bucket;
 					} while(bucket*cellItemExpander.m_storage.m_cfg.bucketSize < x.count);
 				}
