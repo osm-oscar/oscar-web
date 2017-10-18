@@ -55,6 +55,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 		
 		var graph = data["graph"];
 		for (let parentId of dataIds) {
+			parentId = parseInt(parentId)
 			var parentNode = state.dag.region(parentId);
 			
 			if (graph[parentId] === undefined || !graph[parentId].length) {
@@ -64,7 +65,8 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 			
 			var children = graph[parentId];
 			for(var i in children) {
-				var childNode = state.dag.region(children[i]);
+				let childId = parseInt(children[i]);
+				var childNode = state.dag.region(childId);
 				state.dag.addEdge(parentNode, childNode);
 			}
 		}
@@ -78,7 +80,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				regionNode.mayHaveItems = false;
 			}
 			for(var i in cells) {
-				var cellId = cells[i];
+				var cellId = parseInt(cells[i]);
 				var cellNode;
 				if (state.dag.hasCell(cellId)) {
 					cellNode = state.dag.cell(cellId);
@@ -197,6 +199,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				continue;
 			}
 			for(let cellId of cells) {
+				cellId = parseInt(cellId);
 				var cellNode;
 				if (state.dag.hasCell(cellId)) {
 					cellNode = state.dag.cell(cellId);
@@ -217,7 +220,9 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 			//result is of the form { regionId: [cellId] }
 			var tmp = tools.SimpleSet();
 			for(var regionId in result) {
+				regionId = parseInt(regionId);
 				for(let cellId of result[regionId]) {
+					cellId = parseInt(cellId);
 					tmp.insert(cellId);
 				}
 			}
@@ -319,6 +324,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 	
 	cellItemExpanderStorage._insertData = function(dataIds, data) {
 		for(let dataId of dataIds) {
+			dataId = parseInt(dataId);
 			this.m_data.insert(dataId, data.get(dataId));
 		}
 	},
@@ -507,11 +513,11 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 			expandCellItems: function(cellIds, cb, items2FetchPerCell) {
 				spinner.startLoadingSpinner();
 				if (! $.isArray(cellIds) ) {
-					cellIds = [cellIds];
+					cellIds = [parseInt(cellIds)];
 				}
 				var request = [];
 				for(let cellId of cellIds) {
-					request.push({cellId: cellId, count: items2FetchPerCell}); 
+					request.push({cellId: parseInt(cellId), count: items2FetchPerCell}); 
 				}
 				this.cellItemExpander.fetch(function() {
 					spinner.endLoadingSpinner();
@@ -521,7 +527,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 
 			expandRegionCells: function(regionIds, cb) {
 				if (! $.isArray(regionIds) ) {
-					regionIds = [regionIds];
+					regionIds = [parseInt(regionIds)];
 				}
 				spinner.startLoadingSpinner();
 				this.regionCellExpander.fetch(function() {
@@ -532,7 +538,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 	   
 			expandRegionChildren: function(regionIds, cb) {
 				if (! $.isArray(regionIds) ) {
-					regionIds = [regionIds];
+					regionIds = [parseInt(regionIds)];
 				}
 				spinner.startLoadingSpinner();
 				this.regionChildrenExpander.fetch(function() {
@@ -543,7 +549,7 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 			
 			retrieveCellData: function(cellIds, cb) {
 				if (! $.isArray(cellIds) ) {
-					cellIds = [cellIds];
+					cellIds = [parseInt(cellIds)];
 				}
 				spinner.startLoadingSpinner();
 				this.cellDataFetcher.fetch(function() {

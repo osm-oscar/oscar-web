@@ -69,7 +69,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
         _addClickToLoadSubHierarchy: function () {
             $(".treeNodeSub").each(function (key, value) {
                 $(value).on("click", function () {
-                    var id = $(this).attr("nodeId");
+                    var id = parseInt( $(this).attr("nodeId") );
                     state.mapHandler.expandRegion(id, function () {
 						if (!state.dag.hasRegion(id)) {
 							return;
@@ -89,8 +89,8 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
         _addClickToShowRegion: function () {
             $(".treeNodeShow").each(function (key, value) {
                 $(value).on("click", function () {
-                    var id = $(this).attr("nodeId");
-					state.mapHandler.zoomTo(parseInt(id));
+                    var id = parseInt( $(this).attr("nodeId") );
+					state.mapHandler.zoomTo(id);
                 });
             });
         },
@@ -98,7 +98,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
         _addClickToLoadItems: function () {
             $(".treeNodeItems").each(function (key, value) {
                 $(value).on("click", function () {
-                    var id = $(this).attr("nodeId");
+                    var id = parseInt( $(this).attr("nodeId") );
 					state.mapHandler.zoomTo(id);
 					//loading items for the region is currently not supported
                 });
@@ -108,7 +108,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
 		_addClickToOnePath: function() {
             $(".treeNodeOnePath").each(function (key, value) {
                 $(value).on("click", function () {
-                    var id = $(this).attr("nodeId");
+                    var id = parseInt( $(this).attr("nodeId") );
 					$("#onePath").attr('checked', "checked");
 					$("#onePath").button("refresh");
 					tree.onePath(state.dag.region(id));
