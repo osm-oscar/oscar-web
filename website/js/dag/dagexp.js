@@ -411,7 +411,9 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 			//we have to group the request by buckets
 			var myCB = tools.AsyncCallBackHandler(storageRequests.size()+1, cb);
 			for(let bucket of storageRequests.keys()) {
-				cellItemExpander.m_storage.fetch(function() { myCB.inc(); }, storageRequests.at(bucket));
+				cellItemExpander.m_storage.fetch(function() {
+					myCB.inc();
+				}, storageRequests.at(bucket));
 			}
 			myCB.inc();
 		}
