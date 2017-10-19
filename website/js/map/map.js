@@ -588,7 +588,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					handler._setTabResultListOffset(tabId, offset);
 				}
 			},
-			
+			_topk: function(k, offset, cellIds, cb) {
+				handler.config.topk(k, offset, cellIds, cb);
+			},
 			_init: function (parent) {
 				var myDomRootId = tools.generateDocumentUniqueId();
 				var myDomTabRootId = tools.generateDocumentUniqueId();
@@ -688,22 +690,24 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				
 				var cells = handler.cells(tabId);
-				handler.config.topk(handler.config.itemsPerPage, offset, cells.toArray(), function(itemIds) {
+				handler._topk(handler.config.itemsPerPage, offset, cells.toArray(), function(itemIds) {
 					//this should return instantly since the items are in the cache
+					var myCB = cb;
+					var myTabId = tabId;
 					oscar.getItems(itemIds, function(items) {
 						console.assert(items.length <= itemIds.length);
-						if (!handler.count(tabId) || !cells.equal(handler.cells(tabId))) {
+						if (!handler.count(myTabId) || !cells.equal(handler.cells(myTabId))) {
 							return;
 						}
-						var tabData = handler.m_tabs.at(tabId);
+						var tabData = handler.m_tabs.at(myTabId);
 						tabData.offset = offset;
 						tabData.count = items.length;
-						handler._assignItems(tabId, items);
-						if (handler.activeTabId() === tabId) {
+						handler._assignItems(myTabId, items);
+						if (handler.activeTabId() === myTabId) {
 							handler._slot_activeTabChanged();
 						}
-						if (cb !== undefined) {
-							cb();
+						if (myCB !== undefined) {
+							myCB();
 						}
 					});
 				});
@@ -1837,7 +1841,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//This does not fetch top-k with respect to itemIds but rather with respect to the cells
 		//This should in theory result in a good coverage of the map screen with items from all visible cells
 		topKItems: function(k, offset, cellIds, cb) {
-			map.dagExpander.expandCellItems(cellIds, function() {
+			
+			var myCB = function() {
 				
 				//sort cellIds to always get the same order of items for a given set of cellIds
 				cellIds.sort(function(a,b) {return a-b;});
@@ -1887,8 +1892,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				
 				console.assert(result.length <= k);
 				cb(result);
-				
-			}, offset+k);
+			}
+			
+			map.dagExpander.expandCellItems(cellIds, myCB, offset+k);
 		},
 	   
 		//this is a recursive function, you have to clear the displayState of the dag before calling
