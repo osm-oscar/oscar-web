@@ -2182,7 +2182,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						var rn = state.dag.region(regionId);
 						map.resultListTabs.addTab(regionId, rn.name, rn.count);
 					}
-					map._assignTabContentFromRegion(wantCells, regionId, parseInt(regionId) == maxOverlapRegionId);
+					map._assignTabContentFromRegion(wantCells, regionId, parseInt(regionId) === maxOverlapRegionId);
 				}
 				else {
 					state.dag.region(regionId).cells.each(function(cellId) {
