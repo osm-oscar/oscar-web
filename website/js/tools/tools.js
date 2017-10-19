@@ -181,7 +181,7 @@ define(["jquery"], function ($) {
          * @returns {{stop: Function} stops the timer}
          */
         timer: function (name) {
-            return {
+            var tmp = {
 				m_start : new Date(),
 				m_end: undefined,
 				m_name: name,
@@ -194,10 +194,11 @@ define(["jquery"], function ($) {
                     console.log('Timer:', this.m_name, 'finished in', time, 'ms');
                 }
             }
+            return tmp;
         },
 	   
 		AsyncCallBackHandler: function(targetCount, cb) {
-			return h = {
+			var h = {
 				m_tc: targetCount,
 				m_cc: 0,
 				m_cb: cb,
@@ -208,6 +209,7 @@ define(["jquery"], function ($) {
 					}
 				}
 			};
+			return h;
 		},
 
         //https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
