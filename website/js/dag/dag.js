@@ -19,14 +19,15 @@ define(["jquery", "tools"], function ($, tools) {
 		},
 		//type should be either region, cell or item
 		Node: function(id, type) {
-			return node = {
+			var node = {
 				parents: tools.SimpleSet(),
 				id: id,
 				type: type,
 				//these are public, mutable
 				displayState: d.DisplayStates.None,
 				bbox: undefined
-			}
+			};
+			return node;
 		},
 		NamedNode: function(id, type) {
 			var node = d.Node(id, type);
