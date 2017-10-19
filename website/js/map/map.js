@@ -539,6 +539,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			//  count: <int>
 			//}
 			m_tabs : tools.SimpleHash(), 
+			_createTabData : function(ilh, tabContentId, tabHeadId, cells, offset, count) {
+				return {
+					handler : ilh,
+					tabContentId: tabContentId,
+					tabHeadId: tabHeadId,
+					cells: cells,
+					offset: offset,
+					count: count
+				};
+			},
 			//signals
 			emit_itemDetailsOpened: function(itemId) {
 				$(handler).triggerHandler({type:"itemDetailsOpened", itemId : itemId});
@@ -772,12 +782,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$(handler.m_domRoot).append(tabContentHtml);
 				var tabContent = $('#' + tabContentId, handler.m_domRoot);
 				var itemListHandler = itemListHandlerCreator(tabContent, handler.m_scrollContainer);
-				handler.m_tabs.insert(tabId, {
-					handler : itemListHandler,
-					tabHeadId : tabHeadId,
-					tabContentId : tabContentId,
-					cells: tools.SimpleSet()
-				});
+				var tabData = handler._createTabData(itemListHandler, tabHeadId, tabContentId, tools.SimpleSet(), 0, itemCount);
+				handler.m_tabs.insert(tabId, tabData);
 				//take care of the signals emited from the list handler
 				$(itemListHandler).on("itemDetailsOpened", function(e) { handler.emit_itemDetailsOpened(e.itemId); });
 				$(itemListHandler).on("itemDetailsClosed", function(e) { handler.emit_itemDetailsClosed(e.itemId); });
