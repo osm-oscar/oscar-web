@@ -279,7 +279,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 			$("#result_download_format").change(search.updateDownloadLink);
 
             $(window).bind('popstate', function (e) {
-				console.log(e);
+// 				console.log(e);
 //                 search.queryFromSearchLocation();
             });
 
