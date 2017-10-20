@@ -1,5 +1,5 @@
 define(["jquery", "state", "map", "conf"], function($, state, map, config) {
-    return query = {
+    var query = {
         clearSpatialQueryMapShape: function() {
             if (state.spatialquery.mapshape !== undefined) {
                 state.map.removeLayer(state.spatialquery.mapshape);
@@ -118,4 +118,6 @@ define(["jquery", "state", "map", "conf"], function($, state, map, config) {
             state.map.addLayer(state.spatialquery.mapshape);
         }
     };
+
+	return query;
 });

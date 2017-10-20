@@ -1,5 +1,5 @@
 define(['jquery', 'tools'], function (jQuery, tools) {
-	return storage = {
+	var storage = {
 		//This is a simple data store to request indexed data from remote by ajax calls
 		//It tries to minimize the number of requests made by caching former results
 		//USAGE: derive from this and add a function _getData(callback=function(data, remoteRequestId), remoteRequestId) which does the request
@@ -224,4 +224,6 @@ define(['jquery', 'tools'], function (jQuery, tools) {
 			return handler;
 		}
 	};
+
+	return storage;
 });

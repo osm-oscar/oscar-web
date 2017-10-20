@@ -1,5 +1,5 @@
 define(["jquery", "tools"], function ($, tools) {
-    return d = {
+    var d = {
 		NodeTypes: {
 			Region: 1,
 			Cell: 2,
@@ -298,4 +298,6 @@ define(["jquery", "tools"], function ($, tools) {
 			};
 		}
 	};
+
+	return d;
 });

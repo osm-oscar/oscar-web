@@ -1,5 +1,5 @@
 define(["jquery", "state", "conf", "spin"], function ($, state, config, spinner) {
-    return spin = {
+    var spin = {
         spinner: new spinner(config.spinnerOpts),
 
         /**
@@ -43,4 +43,6 @@ define(["jquery", "state", "conf", "spin"], function ($, state, config, spinner)
             }
         }
     };
+
+	return spin;
 });

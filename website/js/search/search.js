@@ -1,5 +1,5 @@
 define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config, oscar, map){
-    return search = {
+    var search = {
        //replace spatial objects with the real deal
 	   replaceSpatialObjects: function(qstr) {
 			var res = "";
@@ -302,4 +302,6 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
 			jQuery.ajax(settings);
 		}
     };
+
+	return search;
 });
