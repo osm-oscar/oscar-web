@@ -2020,22 +2020,35 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (node.displayState & dag.DisplayStates.InResultsTab) {
 					var ok = false;
 					var hasMaxOverlapCell = false;
+					var xCells = [];
 					for(let cellId of node.cells.builtinset()) {
 						var cellNode = state.dag.cell(cellId);
 						var ds = cellNode.displayState & (dag.DisplayStates.HasRegionClusterMarker | dag.DisplayStates.InResultsTab2);
 						var xMap = currentMapBounds.intersects(cellNode.bbox);
 						var pOv = tools.percentOfOverlap(state.map, cellNode.bbox);
-						if (ds === 0 && xMap
-							&& pOv >= config.clusters.shapeOverlap)
-						{
-							ok = true;
-							cellNode.displayState |= dag.DisplayStates.InResultsTab2;
-							if (pOv > maxOverlap) {
-								maxOverlap = pOv;
-								hasMaxOverlapCell = true;
+						if (ds === 0 && xMap) {
+							if (pOv >= config.clusters.shapeOverlap) {
+								ok = true;
+								cellNode.displayState |= dag.DisplayStates.InResultsTab2;
+								if (pOv > maxOverlap) {
+									maxOverlap = pOv;
+									hasMaxOverlapCell = true;
+								}
+							}
+							else {
+								xCells.push(cellId);
 							}
 						}
 						cellNode.displayState &= ~dag.DisplayStates.InResultsTab;
+					}
+					
+					if (ok) {
+						////at least one cell is large enough to bew shown, add all intersecting cells as-well
+						//TODO: add cell cluster markers instead
+						for(let cellId of xCells) {
+							var cellNode = state.dag.cell(cellId);
+							cellNode.displayState |= dag.DisplayStates.InResultsTab2;
+						}
 					}
 					//no cell is marked for this region
 					if (!ok) {
