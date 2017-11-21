@@ -1415,6 +1415,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.clusterMarkerRegionShapes.clear();
 			
 			map.itemMarkers.clear();
+			map.highlightItemMarkers.clear();
 			map.inspectionItemMarkers.clear();
 			map.clusterMarkers.clear();
 
