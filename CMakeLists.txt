@@ -7,6 +7,9 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/vendor/sserialize/cmake/
 )
 
+include(add_buildtype_lto)
+include(add_buildtype_ultra)
+
 add_subdirectory(vendor/liboscar liboscar)
 
 find_package(CPPCMS REQUIRED)
