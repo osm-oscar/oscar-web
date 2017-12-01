@@ -18,6 +18,8 @@ requirejs.config({
 		"bloodhound" : "vendor/typeahead/bloodhound",
         "leaflet": "vendor/leaflet/leaflet-src",
         "leafletCluster": "vendor/leaflet-markercluster/leaflet.markercluster-src",
+		"leafletBing" : "vendor/leaflet-bing-layers/leaflet-bing-layer",
+		"fetch-jsonp" : "vendor/leaflet-bing-layers/fetch-jsonp",
 		"awesomeMarkers" : "vendor/leaflet-awesome-markers/leaflet.awesome-markers.min",
         "spin": "vendor/spin/spin.min",
         "mustache": "vendor/mustache/mustache.min",

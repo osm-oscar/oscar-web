@@ -1,10 +1,11 @@
 //This module handles most stuff associated with the map-gui. It HAS to be a singleton!
-define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner", "leaflet", "leafletCluster", "awesomeMarkers", "dag", "dagexp"],
+define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner", "leaflet", "leafletCluster", "awesomeMarkers", "dag", "dagexp", "leafletBing"],
 function (require, state, $, config, oscar, flickr, tools, tree) {
     var spinner = require("spinner");
 	var L = require("leaflet");
 	var dag = require("dag");
 	var dagexp = require("dagexp");
+	var leafletBing = require("leafletBing");
 
 	//handles a single item list
 	//parent is the parent element of the Item list the handler should take care of
@@ -731,6 +732,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						tabData.cells = cells;
 						tabData.offset = undefined;
 						handler._setTabResultListOffset(tabId, 0, cb);
+						console.log("Setting cells for tabId=" + tabId, cells.toArray());
 					}
 				}
 			},
@@ -2352,16 +2354,23 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	state.map.zoomControl.setPosition('topright');
 	state.sidebar = L.control.sidebar('sidebar').addTo(state.map);
 	var osmAttr = '&copy; <a target="_blank" href="http://www.openstreetmap.org">OpenStreetMap</a>';
-    L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    var osmLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: osmAttr,
         minZoom: 0,
         maxZoom: 22
-    }).addTo(state.map);
-//     L.tileLayer('http://tiles.fmi.uni-stuttgart.de/planet/{z}/{x}/{y}.png', {
-//         attribution: osmAttr,
-//         minZoom: 18,
-//         maxZoom: 24
-//     }).addTo(state.map);
+    });
+	var bingLayer = L.tileLayer.bing(config.map.apikeys.bing);
+    var fmiLayer = L.tileLayer('http://tiles.fmi.uni-stuttgart.de/planet/{z}/{x}/{y}.png', {
+        attribution: osmAttr,
+        minZoom: 0,
+        maxZoom: 20
+    });
+	
+	state.map.addLayer(fmiLayer);
+	state.map.addLayer(osmLayer);
+	state.map.addLayer(bingLayer);
+	
+	L.control.layers({"OpenStreetMap FMI" : fmiLayer, "Bing Aerial" : bingLayer, "OpenStreetMap" : osmLayer}).addTo(state.map);
 	//init map module
 	map.init();
 
