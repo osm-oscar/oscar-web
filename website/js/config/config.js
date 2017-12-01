@@ -169,8 +169,8 @@ define([], function() {
 				threshold: 100
 			},
 			apikeys: {
-				bing :"\
-					"
+				//api keys are public anyway. This should at least help against stupid github crawlers
+				bing : window.atob("QWs4dVRnOWtYaHpZT0Q3d1BLbGVZaXI4ZG5fVDlHcVJDRmxUYTBhWEVkZUpOZFh1RWVweUl0endo\nNEdEa004dg==\n")
 			}
 		},
 		maxBufferedItems: 350, // buffered locations
