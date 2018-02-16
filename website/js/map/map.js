@@ -2353,14 +2353,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	}).setView([48.74568, 9.1047], 17);
 	state.map.zoomControl.setPosition('topright');
 	state.sidebar = L.control.sidebar('sidebar').addTo(state.map);
-	var osmAttr = '&copy; <a target="_blank" href="http://www.openstreetmap.org">OpenStreetMap</a>';
-    var osmLayer = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	var osmAttr = '&copy; <a target="_blank" href="https://www.openstreetmap.org">OpenStreetMap</a>';
+    var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: osmAttr,
         minZoom: 0,
         maxZoom: 22
     });
 	var bingLayer = L.tileLayer.bing(config.map.apikeys.bing);
-    var fmiLayer = L.tileLayer('http://tiles.fmi.uni-stuttgart.de/planet/{z}/{x}/{y}.png', {
+    var fmiLayer = L.tileLayer('https://tiles.fmi.uni-stuttgart.de/planet/{z}/{x}/{y}.png', {
         attribution: osmAttr,
         minZoom: 0,
         maxZoom: 20
