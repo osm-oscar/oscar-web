@@ -58,7 +58,7 @@
 								<span>OSM Id</span>
 							</td>
 							<td class="result-list-value">
-								<span><a href="http://www.openstreetmap.org/{{{osmType}}}/{{{osmId}}}" target="_blank">{{osmId}}</a></span>
+								<span><a href="https://www.openstreetmap.org/{{{osmType}}}/{{{osmId}}}" target="_blank">{{osmId}}</a></span>
 							</td>
 						</tr>
 						<tr>

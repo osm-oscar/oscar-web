@@ -12,7 +12,7 @@ define([], function() {
                             return x;
                     }
                     else {
-                            return "http://en.wikipedia.org/wiki/" + x;
+                            return "https://en.wikipedia.org/wiki/" + x;
                     }
             },
             "wikicommons" : function(x) {
@@ -20,7 +20,7 @@ define([], function() {
                             return x;
                     }
                     else {
-                            return "http://en.wikipedia.org/wiki/commons:" + x;
+                            return "https://en.wikipedia.org/wiki/commons:" + x;
                     }
             }
     };
