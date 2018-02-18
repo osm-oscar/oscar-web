@@ -2366,7 +2366,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
         maxZoom: 20
     });
 	
-	state.map.addLayer(fmiLayer);
+	//state.map.addLayer(fmiLayer); //currently not available
 	state.map.addLayer(osmLayer);
 	state.map.addLayer(bingLayer);
 	
