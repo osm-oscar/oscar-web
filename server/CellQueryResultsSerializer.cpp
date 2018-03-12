@@ -23,7 +23,7 @@ void CellQueryResultsSerializer::write(std::ostream& out, const sserialize::Cell
 	BinaryWriter bout(out);
 	uint32_t numFetchedIndices = 0;
 	
-	sserialize::ItemIndex::Types cqrIdxType = cqr.defaultIndexType();
+	sserialize::ItemIndex::Types cqrIdxType = sserialize::ItemIndex::Types(cqr.defaultIndexTypes());
 	
 	bout.putU32(cqr.cellCount());//CellCount
 	for(sserialize::CellQueryResult::const_iterator it(cqr.cbegin()), end(cqr.cend()); it != end; ++it) {

@@ -76,7 +76,7 @@ CQRCompleter::CQRCompleter(cppcms::service& srv, const CompletionFileDataPtr & d
 application(srv),
 m_dataPtr(dataPtr),
 m_subSetSerializer(dataPtr->completer->store().geoHierarchy()),
-m_cqrSerializer(dataPtr->completer->indexStore().indexType())
+m_cqrSerializer(sserialize::ItemIndex::Types(dataPtr->completer->indexStore().indexTypes()))
 {
 	dispatcher().assign("/clustered/full", &CQRCompleter::fullCQR, this);
 	dispatcher().assign("/clustered/simple", &CQRCompleter::simpleCQR, this);

@@ -89,7 +89,7 @@ void IndexDB::writeMultipleIndexes(std::ostream & out, T_IT begin, T_IT end) {
 	if (size > m_maxPerRequest) {
 		size = m_maxPerRequest;
 	}
-	writeHeader(out, m_idxStore.indexType(), m_idxStore.compressionType(), size);
+	writeHeader(out, sserialize::ItemIndex::Types(m_idxStore.indexTypes()), m_idxStore.compressionType(), size);
 	for(uint32_t i(0); i < size; ++i, ++begin) {
 		writeSingleIndex(out, *begin);
 	}

@@ -34,7 +34,7 @@ set(OSCAR_WEB_SOURCES_CPP
 )
 
 set(MY_C_FLAGS "-std=c99 -fopenmp")
-set(MY_CXX_FLAGS "-std=gnu++14 -fopenmp")
+set(MY_CXX_FLAGS "-fopenmp")
 set(MY_DEBUG_FLAGS "")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MY_C_FLAGS}")

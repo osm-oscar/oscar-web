@@ -165,7 +165,12 @@ int main(int argc, char **argv) {
 		}
 	}
 	catch (const std::exception & e) {
-		std::cout << "Failed to initialize completer from " << data.path << ": " << e.what() << std::endl;
+		std::cerr << "Failed to initialize completer from " << data.path << ": " << e.what() << std::endl;
+		return -1;
+	}
+	
+	if (data.completer->indexStore().indexTypes() & sserialize::ItemIndex::T_MULTIPLE) {
+		std::cerr << "Index store with different index types are not supported" << std::endl;
 		return -1;
 	}
 	
