@@ -2368,9 +2368,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	
 	//state.map.addLayer(fmiLayer); //currently not available
 	state.map.addLayer(osmLayer);
-	state.map.addLayer(bingLayer);
 	
-	L.control.layers({"OpenStreetMap FMI" : fmiLayer, "Bing Aerial" : bingLayer, "OpenStreetMap" : osmLayer}).addTo(state.map);
+// 	L.control.layers({"OpenStreetMap FMI" : fmiLayer, "Bing Aerial" : bingLayer, "OpenStreetMap" : osmLayer}).addTo(state.map);
+	
+// 	state.map.addLayer(bingLayer);
 	//init map module
 	map.init();
 
