@@ -37,6 +37,7 @@ void CQRItems::all() {
 	std::string sfstr = request().get("format");
 
 	bool withShapes = sserialize::toBool(request().get("s"));
+	bool withItems = request().get("i").empty() || sserialize::toBool(request().get("i"));
 	bool withParents = sserialize::toBool(request().get("p"));
 	ItemSerializer::SerializationFormat sf = (withShapes ? ItemSerializer::SF_WITH_SHAPE : ItemSerializer::SF_NONE);
 	if (sfstr == "geojson") {
@@ -95,7 +96,7 @@ void CQRItems::all() {
 				max_write_items -= parents.size();
 			}
 		}
-		if (haveParents && max_write_items > 0) { //now take care of the items
+		if (withItems && haveParents && max_write_items > 0) { //now take care of the items
 			tmp.clear();
 			for(sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
 				std::string parentString;
@@ -135,7 +136,7 @@ void CQRItems::all() {
 				}
 			}
 		}
-		else {
+		else if (withItems) {
 			sserialize::ItemIndex itemIds = cqr.flaten();
 			if (max_write_items > itemIds.size()) {
 				m_serializer.serialize(out, store.id2ItemIterator(itemIds.begin()), store.id2ItemIterator(itemIds.end()), sf);
@@ -161,7 +162,7 @@ void CQRItems::all() {
 	m_serializer.streamUnprepare(out, streamcfg);
 	
 	ttm.end();
-	writeLogStats("simpleCQR", cqs, ttm, cqr.cellCount(), itemCount);
+	writeLogStats("all", cqs, ttm, cqr.cellCount(), itemCount);
 }
 
 void CQRItems::writeLogStats(const std::string& fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize) {

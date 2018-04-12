@@ -136,16 +136,22 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
 			var content_selection = content.val();
 			var format_selection = format.val();
 			if (content_selection === "items") {
-				;
+				params += "&i=true";
+			}
+			if (content_selection === "parents") {
+				params += "&i=false&p=true";
 			}
 			else if (content_selection === "items+parents") {
-				params += "&p=true";
+				params += "&i=true&p=true";
 			}
 			else if (content_selection === "items+shapes") {
-				params += "&s=true";
+				params += "&i=true&s=true";
+			}
+			else if (content_selection === "parents+shapes") {
+				params += "&i=false&p=true&s=true";
 			}
 			else if (content_selection === "items+parents+shapes") {
-				params += "&p=true&s=true";
+				params += "&i=true&p=true&s=true";
 			}
 			
 			if (format_selection === "geojson") {

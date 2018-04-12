@@ -26,8 +26,9 @@ public:
 	void some();
 	/** returns all items of a query
 	  * q=<string searchstring>
-	  * s=<bool with shapes>
+	  * i=<bool with items = true>
 	  * p=<bool with parents>
+	  * s=<bool with shapes>
 	  * Return:
 	  * [Json item description]
 	  */
