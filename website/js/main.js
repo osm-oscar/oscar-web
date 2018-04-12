@@ -232,6 +232,11 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 						qStr += "," + state.spatialquery.coords[0].lat + "," + state.spatialquery.coords[0].lng;
                     }
                 }
+                else if (state.spatialquery.type === "cell") {
+                    if (state.spatialquery.coords.length > 0) {
+                        qStr = "$cell:"+ state.spatialquery.coords[0].lat + "," + state.spatialquery.coords[0].lng;
+                    }
+                }
                 else if (state.spatialquery.type === "poly") {
                     if (state.spatialquery.coords.length >= 3) {
                         qStr = "$poly";

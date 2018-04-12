@@ -108,9 +108,14 @@ define(["jquery", "state", "map", "conf"], function($, state, map, config) {
                 state.spatialquery.mapshape = L.polygon(state.spatialquery.coords, config.styles.shapes.polyquery.highlight);
             }
             else if (state.spatialquery.type === "point") {
-				let opts = Object.assign({}, config.styles.shapes.pointquery.highlight);
-				opts["radius"] = $('#spatialquery_radius').val();
+                let opts = Object.assign({}, config.styles.shapes.pointquery.highlight);
+                if (parseInt($('#spatialquery_radius').val()) > 0) {
+                    opts["radius"] = $('#spatialquery_radius').val();
+                }
                 state.spatialquery.mapshape = L.circle(state.spatialquery.coords[0], opts);
+			}
+            else if (state.spatialquery.type === "cell") {
+                state.spatialquery.mapshape = L.circle(state.spatialquery.coords[0], config.styles.shapes.cellquery.highlight);
 			}
             else if (state.spatialquery.type === "path") {
                 state.spatialquery.mapshape = L.polyline(state.spatialquery.coords, config.styles.shapes.pathquery.highlight);
