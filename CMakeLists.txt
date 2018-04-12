@@ -9,6 +9,7 @@ set(CMAKE_MODULE_PATH
 
 include(add_buildtype_lto)
 include(add_buildtype_ultra)
+include(set_highest_cpp)
 
 add_subdirectory(vendor/liboscar liboscar)
 
