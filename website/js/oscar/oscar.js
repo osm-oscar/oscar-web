@@ -250,6 +250,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
                         namePos = this.data.k.indexOf("name");
                     }
 
+                    if (namePos === -1) {
+                        namePos = this.data.k.indexOf("loc_name");
+                    }
+
                     if (namePos !== -1) {
                         return this.data.v[namePos];
                     }
