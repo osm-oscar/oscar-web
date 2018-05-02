@@ -104,7 +104,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
             }
             if (!itemName.length) {
 				if ((street === undefined || houseNumber === undefined)) {
-					itemName = "Unnammed item";
+					itemName = "Item without name";
 				}
 				else {
 					itemName = undefined;
