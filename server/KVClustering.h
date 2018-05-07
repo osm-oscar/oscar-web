@@ -12,7 +12,7 @@ namespace oscar_web {
 class KVClustering: public cppcms::application {
 public:
 	KVClustering(cppcms::service& srv, const CompletionFileDataPtr & dataPtr);
-	virtual ~CQRItems();
+	virtual ~KVClustering();
 	void get();
 private:
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr SubSetNodePtr;

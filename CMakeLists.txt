@@ -25,6 +25,7 @@ set(OSCAR_WEB_SOURCES_CPP
 	server/CQRItems.cpp
 	server/oscarweb.cpp
 	server/MainHandler.cpp
+	server/KVClustering.cpp
 )
 SET(OSCAR_WEB_LINK_LIBS
 	liboscar
