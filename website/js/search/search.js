@@ -1,5 +1,20 @@
-define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config, oscar, map){
-    var search = {
+define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, tools, config, oscar, map, fuzzysort){
+	var encompletion = {
+		"base": [
+		{
+				"poi": "SpecialPhrasesNotLoadedYet",
+				"tag_key": "waterway",
+				"tag_value": "waterfall"
+		}
+	]
+	}
+	encompletion.base.forEach(t => t.poiPrepared = fuzzysort.prepare(t.poi))
+	
+	var data = {
+		specialphrases: encompletion,
+	}
+	var search = {
+		data : data,
        //replace spatial objects with the real deal
 	   replaceSpatialObjects: function(qstr) {
 			var res = "";
@@ -227,9 +242,23 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
 						search.tagInfoComplete(tag, function(result) {
 								//result is an array
 								let myResult  = [];
-								for(let x of result) {
-									myResult.push({label: x, value: "@" + x, metadata: metadata});
+								let myResultTags = new Set();
+								let fuzzy_results = fuzzysort.go(tag.slice(1, -1), data.specialphrases.base, config.completion.fuzzysort.options);
+								for(let x of fuzzy_results) {
+									let myTag = x.obj.tag_key + ":" + x.obj.tag_value
+									if (!myResultTags.has(myTag)) {
+										myResult.push({label: x.obj.poi + " -> " + myTag, value: "@" + myTag, metadata: metadata});
+										myResultTags.add(myTag)
+									}
 								}
+
+								for(let x of result) {
+									if (!myResultTags.has(x)) {
+										myResult.push({label: x, value: "@" + x, metadata: metadata});
+										myResultTags.add(x)
+									}
+								}
+								//state.lang
 								response(myResult);
 							}
 						);
@@ -308,6 +337,19 @@ define(["state", "tools", "conf", "oscar", "map"], function(state, tools, config
 			jQuery.ajax(settings);
 		}
     };
+
+	jQuery.ajax({
+		type: "GET",
+		url: "data/tag-completion/en.json",
+		mimeType: "application/json",
+		success: function (jsondesc) {
+			data.specialphrases = jsondesc;
+			data.specialphrases.base.forEach(t => t.poiPrepared = fuzzysort.prepare(t.poi))
+		},
+		error: function (jqXHR, textStatus, errorThrown) {
+			errorCB(textStatus, errorThrown);
+		}
+	});
 
 	return search;
 });

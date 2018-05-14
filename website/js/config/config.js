@@ -202,6 +202,17 @@ define([], function() {
 			, position: 'absolute' // Element positioning
 		},
 		
+		completion: {
+			fuzzysort: {
+				options: {
+					limit: 5,
+					allowTypo: true,
+					threshold: -1000,
+					key : "poi"
+				}
+			}
+		},
+
 		//functions
 		loadFromURI: function() {
 			

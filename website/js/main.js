@@ -11,6 +11,7 @@ requirejs.config({
 		}
     },
     paths: {
+        "fuzzysort" : "vendor/fuzzysort/fuzzysort",
         "jquery": "vendor/jquery/jquery.min",
         "jqueryui": "vendor/jquery-ui/jquery-ui.min",
         "bootstrap": "vendor/twitter-bootstrap/js/bootstrap.min",

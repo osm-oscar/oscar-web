@@ -18,12 +18,4 @@ an additional search field, that queries the [taginfo](http://taginfo.openstreet
 
 ## Used libraries
 
-- [dagre-d3](https://github.com/cpettitt/dagre-d3)
-- [sidebar-v2](https://github.com/Turbo87/sidebar-v2)
-- [leaflet](http://leafletjs.com/)
-- [leaflet-markercluster](https://github.com/Leaflet/Leaflet.markercluster)
-- [mustache](https://github.com/janl/mustache.js/)
-- [bootstrap-tokenfield](https://github.com/sliptree/bootstrap-tokenfield)
-- [jQuery-switchButton](https://github.com/olance/jQuery-switchButton)
-- [slimbox2](http://www.digitalia.be/software/slimbox2/)
-- [require.js](http://requirejs.org/)
+- A lot! Take a look into website/vendor folder

@@ -1,0 +1,3524 @@
+{
+"base": [
+{
+	"poi": "Hydrant",
+	"tag_key": "emergency",
+	"tag_value": "fire_hydrant"
+},
+{
+	"poi": "Zeitschriftenläden",
+	"tag_key": "shop",
+	"tag_value": "newsagent"
+},
+{
+	"poi": "Inselchen",
+	"tag_key": "place",
+	"tag_value": "islet"
+},
+{
+	"poi": "Bäckereien",
+	"tag_key": "shop",
+	"tag_value": "bakery"
+},
+{
+	"poi": "Kilometersteine",
+	"tag_key": "highway",
+	"tag_value": "distance_marker"
+},
+{
+	"poi": "Nachtklub",
+	"tag_key": "amenity",
+	"tag_value": "nightclub"
+},
+{
+	"poi": "Wohnblock",
+	"tag_key": "building",
+	"tag_value": "apartments"
+},
+{
+	"poi": "Rennstrecke",
+	"tag_key": "leisure",
+	"tag_value": "track"
+},
+{
+	"poi": "Treppen",
+	"tag_key": "highway",
+	"tag_value": "steps"
+},
+{
+	"poi": "Tabakwarengeschäft",
+	"tag_key": "shop",
+	"tag_value": "tobacco"
+},
+{
+	"poi": "Sauna",
+	"tag_key": "amenity",
+	"tag_value": "sauna"
+},
+{
+	"poi": "Bürogebäude",
+	"tag_key": "building",
+	"tag_value": "office"
+},
+{
+	"poi": "Burg",
+	"tag_key": "historic",
+	"tag_value": "castle"
+},
+{
+	"poi": "Fähranlegestelle",
+	"tag_key": "amenity",
+	"tag_value": "ferry_terminal"
+},
+{
+	"poi": "Notrufpunkte",
+	"tag_key": "highway",
+	"tag_value": "emergency_access_point"
+},
+{
+	"poi": "Universität",
+	"tag_key": "amenity",
+	"tag_value": "university"
+},
+{
+	"poi": "Angelladen",
+	"tag_key": "shop",
+	"tag_value": "fish"
+},
+{
+	"poi": "Garagen",
+	"tag_key": "building",
+	"tag_value": "garage"
+},
+{
+	"poi": "Straße im Bau",
+	"tag_key": "highway",
+	"tag_value": "construction"
+},
+{
+	"poi": "Autobahnen",
+	"tag_key": "highway",
+	"tag_value": "motorway"
+},
+{
+	"poi": "Klippen",
+	"tag_key": "natural",
+	"tag_value": "cliff"
+},
+{
+	"poi": "Kindergärten",
+	"tag_key": "amenity",
+	"tag_value": "kindergarten"
+},
+{
+	"poi": "Studentenwohnheim",
+	"tag_key": "building",
+	"tag_value": "dormitory"
+},
+{
+	"poi": "Autowaschanlage",
+	"tag_key": "amenity",
+	"tag_value": "car_wash"
+},
+{
+	"poi": "Müllhalden",
+	"tag_key": "landuse",
+	"tag_value": "landfill"
+},
+{
+	"poi": "Büsche",
+	"tag_key": "natural",
+	"tag_value": "scrub"
+},
+{
+	"poi": "Wechselstube",
+	"tag_key": "amenity",
+	"tag_value": "bureau_de_change"
+},
+{
+	"poi": "Studentenwohnheime",
+	"tag_key": "building",
+	"tag_value": "dormitory"
+},
+{
+	"poi": "Gebirgspass",
+	"tag_key": "mountain_pass",
+	"tag_value": "yes"
+},
+{
+	"poi": "Campingplatz",
+	"tag_key": "tourism",
+	"tag_value": "camp_site"
+},
+{
+	"poi": "Ruine",
+	"tag_key": "historic",
+	"tag_value": "ruins"
+},
+{
+	"poi": "Anliegerstraße",
+	"tag_key": "highway",
+	"tag_value": "service"
+},
+{
+	"poi": "Altersheim",
+	"tag_key": "amenity",
+	"tag_value": "retirement_home"
+},
+{
+	"poi": "Terrasse",
+	"tag_key": "building",
+	"tag_value": "terrace"
+},
+{
+	"poi": "Tattoo-Studios",
+	"tag_key": "shop",
+	"tag_value": "tattoo"
+},
+{
+	"poi": "Wohnstraßen",
+	"tag_key": "highway",
+	"tag_value": "residential"
+},
+{
+	"poi": "Handygeschäft",
+	"tag_key": "shop",
+	"tag_value": "mobile_phone"
+},
+{
+	"poi": "Restaurants",
+	"tag_key": "amenity",
+	"tag_value": "restaurant"
+},
+{
+	"poi": "Imbisse",
+	"tag_key": "amenity",
+	"tag_value": "fast_food"
+},
+{
+	"poi": "Yachthäfen",
+	"tag_key": "leisure",
+	"tag_value": "marina"
+},
+{
+	"poi": "Botschaft",
+	"tag_key": "amenity",
+	"tag_value": "embassy"
+},
+{
+	"poi": "Höhleneingänge",
+	"tag_key": "natural",
+	"tag_value": "cave_entrance"
+},
+{
+	"poi": "Steinbrüche",
+	"tag_key": "landuse",
+	"tag_value": "quarry"
+},
+{
+	"poi": "Kaps",
+	"tag_key": "natural",
+	"tag_value": "cape"
+},
+{
+	"poi": "Piknikplatz",
+	"tag_key": "tourism",
+	"tag_value": "picnic_site"
+},
+{
+	"poi": "Busbahnhof",
+	"tag_key": "amenity",
+	"tag_value": "bus_station"
+},
+{
+	"poi": "Moor",
+	"tag_key": "natural",
+	"tag_value": "moor"
+},
+{
+	"poi": "Bekleidungsgeschäfte",
+	"tag_key": "shop",
+	"tag_value": "clothes"
+},
+{
+	"poi": "unbebaute Flächen",
+	"tag_key": "landuse",
+	"tag_value": "greenfield"
+},
+{
+	"poi": "Spielwarengeschäfte",
+	"tag_key": "shop",
+	"tag_value": "toys"
+},
+{
+	"poi": "Gemischtwarenladens",
+	"tag_key": "shop",
+	"tag_value": "general"
+},
+{
+	"poi": "Fischgeschäft",
+	"tag_key": "shop",
+	"tag_value": "seafood"
+},
+{
+	"poi": "Gemeindeland",
+	"tag_key": "leisure",
+	"tag_value": "common"
+},
+{
+	"poi": "Bahnsteigs",
+	"tag_key": "railway",
+	"tag_value": "platform"
+},
+{
+	"poi": "Nebenstraßen",
+	"tag_key": "highway",
+	"tag_value": "minor"
+},
+{
+	"poi": "Universitäten",
+	"tag_key": "amenity",
+	"tag_value": "university"
+},
+{
+	"poi": "Imobilienhändler",
+	"tag_key": "shop",
+	"tag_value": "estate_agent"
+},
+{
+	"poi": "Schutzhütte",
+	"tag_key": "amenity",
+	"tag_value": "shelter"
+},
+{
+	"poi": "Dojos",
+	"tag_key": "amenity",
+	"tag_value": "dojo"
+},
+{
+	"poi": "Gute",
+	"tag_key": "historic",
+	"tag_value": "manor"
+},
+{
+	"poi": "Kunstwerke",
+	"tag_key": "tourism",
+	"tag_value": "artwork"
+},
+{
+	"poi": "Insel",
+	"tag_key": "place",
+	"tag_value": "island"
+},
+{
+	"poi": "Wasser",
+	"tag_key": "natural",
+	"tag_value": "water"
+},
+{
+	"poi": "Baustelle",
+	"tag_key": "landuse",
+	"tag_value": "construction"
+},
+{
+	"poi": "Weingeschäfte",
+	"tag_key": "shop",
+	"tag_value": "wine"
+},
+{
+	"poi": "Supermärkte",
+	"tag_key": "shop",
+	"tag_value": "supermarket"
+},
+{
+	"poi": "Hallen",
+	"tag_key": "building",
+	"tag_value": "hall"
+},
+{
+	"poi": "Naherholungsgebiet",
+	"tag_key": "leisure",
+	"tag_value": "recreation_ground"
+},
+{
+	"poi": "Süßwarengeschäft",
+	"tag_key": "shop",
+	"tag_value": "confectionery"
+},
+{
+	"poi": "Grat",
+	"tag_key": "natural",
+	"tag_value": "ridge"
+},
+{
+	"poi": "Wiese",
+	"tag_key": "landuse",
+	"tag_value": "meadow"
+},
+{
+	"poi": "Weiche",
+	"tag_key": "railway",
+	"tag_value": "switch"
+},
+{
+	"poi": "Haltepunkte",
+	"tag_key": "railway",
+	"tag_value": "halt"
+},
+{
+	"poi": "Straßen",
+	"tag_key": "highway",
+	"tag_value": "road"
+},
+{
+	"poi": "Schreine",
+	"tag_key": "historic",
+	"tag_value": "wayside_shrine"
+},
+{
+	"poi": "Eisenbahn im Bau",
+	"tag_key": "railway",
+	"tag_value": "construction"
+},
+{
+	"poi": "Blumenladen",
+	"tag_key": "shop",
+	"tag_value": "florist"
+},
+{
+	"poi": "Kampfgebiete",
+	"tag_key": "historic",
+	"tag_value": "battlefield"
+},
+{
+	"poi": "Reservoir",
+	"tag_key": "landuse",
+	"tag_value": "reservoir"
+},
+{
+	"poi": "Eingänge",
+	"tag_key": "building",
+	"tag_value": "entrance"
+},
+{
+	"poi": "Buchten",
+	"tag_key": "natural",
+	"tag_value": "bay"
+},
+{
+	"poi": "Bach",
+	"tag_key": "waterway",
+	"tag_value": "stream"
+},
+{
+	"poi": "Spielstraße",
+	"tag_key": "highway",
+	"tag_value": "living_street"
+},
+{
+	"poi": "Fernstraßenauffahrt",
+	"tag_key": "highway",
+	"tag_value": "trunk_link"
+},
+{
+	"poi": "Gletscher",
+	"tag_key": "natural",
+	"tag_value": "glacier"
+},
+{
+	"poi": "Piknikplätze",
+	"tag_key": "tourism",
+	"tag_value": "picnic_site"
+},
+{
+	"poi": "Länder",
+	"tag_key": "place",
+	"tag_value": "country"
+},
+{
+	"poi": "Eisenwarenhandlung",
+	"tag_key": "shop",
+	"tag_value": "hardware"
+},
+{
+	"poi": "unbebaute Fläche",
+	"tag_key": "landuse",
+	"tag_value": "greenfield"
+},
+{
+	"poi": "Schlamm",
+	"tag_key": "natural",
+	"tag_value": "mud"
+},
+{
+	"poi": "Pension",
+	"tag_key": "tourism",
+	"tag_value": "guest_house"
+},
+{
+	"poi": "Naturschutzgebiet",
+	"tag_key": "leisure",
+	"tag_value": "nature_reserve"
+},
+{
+	"poi": "Naturschutzgebiete",
+	"tag_key": "leisure",
+	"tag_value": "nature_reserve"
+},
+{
+	"poi": "Tor",
+	"tag_key": "highway",
+	"tag_value": "gate"
+},
+{
+	"poi": "Computergeschäfte",
+	"tag_key": "shop",
+	"tag_value": "computer"
+},
+{
+	"poi": "Bioläden",
+	"tag_key": "shop",
+	"tag_value": "organic"
+},
+{
+	"poi": "Industriegebäude",
+	"tag_key": "building",
+	"tag_value": "industrial"
+},
+{
+	"poi": "Jugendherbergen",
+	"tag_key": "tourism",
+	"tag_value": "hostel"
+},
+{
+	"poi": "Sportplatz",
+	"tag_key": "leisure",
+	"tag_value": "pitch"
+},
+{
+	"poi": "Entwässerungsgräben",
+	"tag_key": "waterway",
+	"tag_value": "drain"
+},
+{
+	"poi": "Trampelpfade",
+	"tag_key": "highway",
+	"tag_value": "path"
+},
+{
+	"poi": "Warenhäuser",
+	"tag_key": "shop",
+	"tag_value": "department_store"
+},
+{
+	"poi": "Straßenbahn-Haltestellen",
+	"tag_key": "railway",
+	"tag_value": "tram_stop"
+},
+{
+	"poi": "Fischereigrund",
+	"tag_key": "leisure",
+	"tag_value": "fishing"
+},
+{
+	"poi": "Eisenbahnen",
+	"tag_key": "landuse",
+	"tag_value": "railway"
+},
+{
+	"poi": "Weingut",
+	"tag_key": "landuse",
+	"tag_value": "vineyard"
+},
+{
+	"poi": "Feuchtgebiete",
+	"tag_key": "natural",
+	"tag_value": "wetland"
+},
+{
+	"poi": "Radweg",
+	"tag_key": "highway",
+	"tag_value": "cycleway"
+},
+{
+	"poi": "Brunnen",
+	"tag_key": "man_made",
+	"tag_value": "water_well"
+},
+{
+	"poi": "Terrassen",
+	"tag_key": "building",
+	"tag_value": "terrace"
+},
+{
+	"poi": "Fahrradverleihe",
+	"tag_key": "amenity",
+	"tag_value": "bicycle_rental"
+},
+{
+	"poi": "Outdoorladen",
+	"tag_key": "shop",
+	"tag_value": "outdoor"
+},
+{
+	"poi": "Krankenhäuser",
+	"tag_key": "amenity",
+	"tag_value": "hospital"
+},
+{
+	"poi": "öffentliches Gebäude",
+	"tag_key": "building",
+	"tag_value": "public"
+},
+{
+	"poi": "Primärauffahrt",
+	"tag_key": "highway",
+	"tag_value": "primary_link"
+},
+{
+	"poi": "Freibäder",
+	"tag_key": "leisure",
+	"tag_value": "beach_resort"
+},
+{
+	"poi": "Motel",
+	"tag_key": "tourism",
+	"tag_value": "motel"
+},
+{
+	"poi": "Autowerkstatt",
+	"tag_key": "shop",
+	"tag_value": "car_repair"
+},
+{
+	"poi": "Wasserpark",
+	"tag_key": "leisure",
+	"tag_value": "water_park"
+},
+{
+	"poi": "Land",
+	"tag_key": "place",
+	"tag_value": "country"
+},
+{
+	"poi": "Straßenbahns",
+	"tag_key": "railway",
+	"tag_value": "tram"
+},
+{
+	"poi": "Inseln",
+	"tag_key": "place",
+	"tag_value": "island"
+},
+{
+	"poi": "Möbelgeschäfte",
+	"tag_key": "shop",
+	"tag_value": "furniture"
+},
+{
+	"poi": "Umgehungsstraße",
+	"tag_key": "highway",
+	"tag_value": "byway"
+},
+{
+	"poi": "Gemeinschaftszentrum",
+	"tag_key": "amenity",
+	"tag_value": "community_centre"
+},
+{
+	"poi": "Bäche",
+	"tag_key": "waterway",
+	"tag_value": "stream"
+},
+{
+	"poi": "Gut",
+	"tag_key": "historic",
+	"tag_value": "manor"
+},
+{
+	"poi": "Almhütte",
+	"tag_key": "tourism",
+	"tag_value": "chalet"
+},
+{
+	"poi": "Rasenflächen",
+	"tag_key": "landuse",
+	"tag_value": "grass"
+},
+{
+	"poi": "Lebensmittelläden",
+	"tag_key": "shop",
+	"tag_value": "food"
+},
+{
+	"poi": "Geschäft",
+	"tag_key": "building",
+	"tag_value": "shop"
+},
+{
+	"poi": "Teppichgeschäfte",
+	"tag_key": "shop",
+	"tag_value": "carpet"
+},
+{
+	"poi": "U-Bahn-Zugänge",
+	"tag_key": "railway",
+	"tag_value": "subway_entrance"
+},
+{
+	"poi": "Kilometerstein",
+	"tag_key": "highway",
+	"tag_value": "distance_marker"
+},
+{
+	"poi": "Umgehungstraßen",
+	"tag_key": "highway",
+	"tag_value": "byway"
+},
+{
+	"poi": "Fleischereien",
+	"tag_key": "shop",
+	"tag_value": "butcher"
+},
+{
+	"poi": "Obst- und Gemüsehandlung",
+	"tag_key": "shop",
+	"tag_value": "greengrocer"
+},
+{
+	"poi": "Windmühlen",
+	"tag_key": "man_made",
+	"tag_value": "windmill"
+},
+{
+	"poi": "Lebensmittelladen",
+	"tag_key": "shop",
+	"tag_value": "food"
+},
+{
+	"poi": "Attraktion",
+	"tag_key": "tourism",
+	"tag_value": "attraction"
+},
+{
+	"poi": "Stadion",
+	"tag_key": "leisure",
+	"tag_value": "stadium"
+},
+{
+	"poi": "Quelle",
+	"tag_key": "natural",
+	"tag_value": "spring"
+},
+{
+	"poi": "Fluss",
+	"tag_key": "waterway",
+	"tag_value": "river"
+},
+{
+	"poi": "Kulturzentren",
+	"tag_key": "amenity",
+	"tag_value": "arts_centre"
+},
+{
+	"poi": "Wohnwagen-Stellplatz",
+	"tag_key": "tourism",
+	"tag_value": "caravan_site"
+},
+{
+	"poi": "Ladesäule",
+	"tag_key": "amenity",
+	"tag_value": "charging_station"
+},
+{
+	"poi": "Kindergarten",
+	"tag_key": "amenity",
+	"tag_value": "kindergarten"
+},
+{
+	"poi": "Grünanlage",
+	"tag_key": "landuse",
+	"tag_value": "village_green"
+},
+{
+	"poi": "Wohltätigkeitsladens",
+	"tag_key": "shop",
+	"tag_value": "charity"
+},
+{
+	"poi": "Optiker",
+	"tag_key": "shop",
+	"tag_value": "optician"
+},
+{
+	"poi": "Obst- und Gemüsehändler",
+	"tag_key": "shop",
+	"tag_value": "greengrocer"
+},
+{
+	"poi": "Springbrunnen",
+	"tag_key": "amenity",
+	"tag_value": "fountain"
+},
+{
+	"poi": "Altersheime",
+	"tag_key": "amenity",
+	"tag_value": "retirement_home"
+},
+{
+	"poi": "Autobahnauffahrt",
+	"tag_key": "highway",
+	"tag_value": "motorway_link"
+},
+{
+	"poi": "Tierarzt",
+	"tag_key": "amenity",
+	"tag_value": "veterinary"
+},
+{
+	"poi": "Kap",
+	"tag_key": "natural",
+	"tag_value": "cape"
+},
+{
+	"poi": "Haltepunkt",
+	"tag_key": "railway",
+	"tag_value": "halt"
+},
+{
+	"poi": "Versicherungsbüro",
+	"tag_key": "office",
+	"tag_value": "insurance"
+},
+{
+	"poi": "Minigolfplätze",
+	"tag_key": "leisure",
+	"tag_value": "miniature_golf"
+},
+{
+	"poi": "Angelläden",
+	"tag_key": "shop",
+	"tag_value": "fish"
+},
+{
+	"poi": "Acker",
+	"tag_key": "landuse",
+	"tag_value": "farmland"
+},
+{
+	"poi": "Notrufsäulen",
+	"tag_key": "amenity",
+	"tag_value": "emergency_phone"
+},
+{
+	"poi": "Sportzentren",
+	"tag_key": "leisure",
+	"tag_value": "sports_centre"
+},
+{
+	"poi": "Marschlandgebiete",
+	"tag_key": "natural",
+	"tag_value": "marsh"
+},
+{
+	"poi": "nichtasphaltierte Straße",
+	"tag_key": "highway",
+	"tag_value": "unsurfaced"
+},
+{
+	"poi": "Straßenbahn",
+	"tag_key": "railway",
+	"tag_value": "tram"
+},
+{
+	"poi": "Gemeinden",
+	"tag_key": "place",
+	"tag_value": "municipality"
+},
+{
+	"poi": "Kunstläden",
+	"tag_key": "shop",
+	"tag_value": "art"
+},
+{
+	"poi": "Wiesen",
+	"tag_key": "landuse",
+	"tag_value": "meadow"
+},
+{
+	"poi": "Fahrradverleih",
+	"tag_key": "amenity",
+	"tag_value": "bicycle_rental"
+},
+{
+	"poi": "Fleischerei",
+	"tag_key": "shop",
+	"tag_value": "butcher"
+},
+{
+	"poi": "Eislaufplatz",
+	"tag_key": "leisure",
+	"tag_value": "ice_rink"
+},
+{
+	"poi": "WCs",
+	"tag_key": "amenity",
+	"tag_value": "toilets"
+},
+{
+	"poi": "Furt",
+	"tag_key": "highway",
+	"tag_value": "ford"
+},
+{
+	"poi": "Trinkwasser",
+	"tag_key": "amenity",
+	"tag_value": "drinking_water"
+},
+{
+	"poi": "Kampfsport",
+	"tag_key": "amenity",
+	"tag_value": "dojo"
+},
+{
+	"poi": "Industriegebiete",
+	"tag_key": "landuse",
+	"tag_value": "industrial"
+},
+{
+	"poi": "Spielfelder",
+	"tag_key": "leisure",
+	"tag_value": "pitch"
+},
+{
+	"poi": "Swingerclubs",
+	"tag_key": "amenity",
+	"tag_value": "swingerclub"
+},
+{
+	"poi": "Weichens",
+	"tag_key": "railway",
+	"tag_value": "switch"
+},
+{
+	"poi": "Buchläden",
+	"tag_key": "shop",
+	"tag_value": "books"
+},
+{
+	"poi": "Rennwege",
+	"tag_key": "highway",
+	"tag_value": "raceway"
+},
+{
+	"poi": "Werft",
+	"tag_key": "waterway",
+	"tag_value": "boatyard"
+},
+{
+	"poi": "Kneipen",
+	"tag_key": "amenity",
+	"tag_value": "pub"
+},
+{
+	"poi": "Wälder",
+	"tag_key": "natural",
+	"tag_value": "wood"
+},
+{
+	"poi": "Höhleneingang",
+	"tag_key": "natural",
+	"tag_value": "cave_entrance"
+},
+{
+	"poi": "Gebäudeblöcke",
+	"tag_key": "building",
+	"tag_value": "block"
+},
+{
+	"poi": "Autovermietungen",
+	"tag_key": "amenity",
+	"tag_value": "car_rental"
+},
+{
+	"poi": "Rathäuser",
+	"tag_key": "building",
+	"tag_value": "city_hall"
+},
+{
+	"poi": "Staudamm",
+	"tag_key": "waterway",
+	"tag_value": "dam"
+},
+{
+	"poi": "Feuerwehren",
+	"tag_key": "amenity",
+	"tag_value": "fire_station"
+},
+{
+	"poi": "Stein",
+	"tag_key": "natural",
+	"tag_value": "rock"
+},
+{
+	"poi": "Docks",
+	"tag_key": "waterway",
+	"tag_value": "dock"
+},
+{
+	"poi": "Berghütte",
+	"tag_key": "tourism",
+	"tag_value": "alpine_hut"
+},
+{
+	"poi": "Häuser",
+	"tag_key": "place",
+	"tag_value": "houses"
+},
+{
+	"poi": "Täler",
+	"tag_key": "natural",
+	"tag_value": "valley"
+},
+{
+	"poi": "Bäcker",
+	"tag_key": "shop",
+	"tag_value": "bakery"
+},
+{
+	"poi": "Dorf",
+	"tag_key": "place",
+	"tag_value": "village"
+},
+{
+	"poi": "Piste",
+	"tag_key": "landuse",
+	"tag_value": "piste"
+},
+{
+	"poi": "Spirituosenladen",
+	"tag_key": "shop",
+	"tag_value": "alcohol"
+},
+{
+	"poi": "Ackerland",
+	"tag_key": "landuse",
+	"tag_value": "farmland"
+},
+{
+	"poi": "kahle Berge",
+	"tag_key": "natural",
+	"tag_value": "fell"
+},
+{
+	"poi": "Eisenbahnkreuzung",
+	"tag_key": "railway",
+	"tag_value": "level_crossing"
+},
+{
+	"poi": "Bar",
+	"tag_key": "amenity",
+	"tag_value": "bar"
+},
+{
+	"poi": "Pfade",
+	"tag_key": "highway",
+	"tag_value": "trail"
+},
+{
+	"poi": "Banken",
+	"tag_key": "amenity",
+	"tag_value": "bank"
+},
+{
+	"poi": "Fischereigründe",
+	"tag_key": "leisure",
+	"tag_value": "fishing"
+},
+{
+	"poi": "Riff",
+	"tag_key": "natural",
+	"tag_value": "reef"
+},
+{
+	"poi": "Almhütten",
+	"tag_key": "tourism",
+	"tag_value": "chalet"
+},
+{
+	"poi": "Vergnügungspark",
+	"tag_key": "tourism",
+	"tag_value": "theme_park"
+},
+{
+	"poi": "Spielplätze",
+	"tag_key": "leisure",
+	"tag_value": "playground"
+},
+{
+	"poi": "Landstraße",
+	"tag_key": "highway",
+	"tag_value": "unclassified"
+},
+{
+	"poi": "Kanäle",
+	"tag_key": "waterway",
+	"tag_value": "canal"
+},
+{
+	"poi": "Seilbahnen",
+	"tag_key": "railway",
+	"tag_value": "funicular"
+},
+{
+	"poi": "Kunstwerk",
+	"tag_key": "tourism",
+	"tag_value": "artwork"
+},
+{
+	"poi": "Tierärzte",
+	"tag_key": "amenity",
+	"tag_value": "veterinary"
+},
+{
+	"poi": "Imbiss",
+	"tag_key": "amenity",
+	"tag_value": "fast_food"
+},
+{
+	"poi": "Tabakwarengeschäfte",
+	"tag_key": "shop",
+	"tag_value": "tobacco"
+},
+{
+	"poi": "Cafés",
+	"tag_key": "amenity",
+	"tag_value": "cafe"
+},
+{
+	"poi": "Wasserfälle",
+	"tag_key": "waterway",
+	"tag_value": "waterfall"
+},
+{
+	"poi": "Militärgebiet",
+	"tag_key": "landuse",
+	"tag_value": "military"
+},
+{
+	"poi": "Staudämme",
+	"tag_key": "waterway",
+	"tag_value": "dam"
+},
+{
+	"poi": "Krematorien",
+	"tag_key": "amenity",
+	"tag_value": "crematorium"
+},
+{
+	"poi": "Fußwege",
+	"tag_key": "highway",
+	"tag_value": "footway"
+},
+{
+	"poi": "Café",
+	"tag_key": "amenity",
+	"tag_value": "cafe"
+},
+{
+	"poi": "Bänke",
+	"tag_key": "amenity",
+	"tag_value": "bench"
+},
+{
+	"poi": "Busch",
+	"tag_key": "natural",
+	"tag_value": "scrub"
+},
+{
+	"poi": "Ärzte",
+	"tag_key": "amenity",
+	"tag_value": "doctors"
+},
+{
+	"poi": "Geschenkeladen",
+	"tag_key": "shop",
+	"tag_value": "gift"
+},
+{
+	"poi": "Textilreinigung",
+	"tag_key": "shop",
+	"tag_value": "dry_cleaning"
+},
+{
+	"poi": "Gehöft",
+	"tag_key": "place",
+	"tag_value": "farm"
+},
+{
+	"poi": "Modegeschäfte",
+	"tag_key": "shop",
+	"tag_value": "fashion"
+},
+{
+	"poi": "Museum",
+	"tag_key": "tourism",
+	"tag_value": "museum"
+},
+{
+	"poi": "Autobahnraststätte",
+	"tag_key": "highway",
+	"tag_value": "services"
+},
+{
+	"poi": "Bauernhof",
+	"tag_key": "landuse",
+	"tag_value": "farm"
+},
+{
+	"poi": "historische Gebäude",
+	"tag_key": "historic",
+	"tag_value": "building"
+},
+{
+	"poi": "Einkaufszentren",
+	"tag_key": "shop",
+	"tag_value": "shopping_centre"
+},
+{
+	"poi": "Autobahnauffahrten",
+	"tag_key": "highway",
+	"tag_value": "motorway_link"
+},
+{
+	"poi": "Busspur",
+	"tag_key": "highway",
+	"tag_value": "bus_guideway"
+},
+{
+	"poi": "Turnhalle",
+	"tag_key": "amenity",
+	"tag_value": "gym"
+},
+{
+	"poi": "Bushaltestellen",
+	"tag_key": "highway",
+	"tag_value": "bus_stop"
+},
+{
+	"poi": "unbenutzte Bahnstrecke",
+	"tag_key": "railway",
+	"tag_value": "disused"
+},
+{
+	"poi": "Elektronikgeschäfte",
+	"tag_key": "shop",
+	"tag_value": "electronics"
+},
+{
+	"poi": "Busspuren",
+	"tag_key": "highway",
+	"tag_value": "bus_guideway"
+},
+{
+	"poi": "Primärstraßen",
+	"tag_key": "highway",
+	"tag_value": "primary"
+},
+{
+	"poi": "Buchgeschäfte",
+	"tag_key": "shop",
+	"tag_value": "books"
+},
+{
+	"poi": "Riffs",
+	"tag_key": "natural",
+	"tag_value": "reef"
+},
+{
+	"poi": "Nachtklubs",
+	"tag_key": "amenity",
+	"tag_value": "nightclub"
+},
+{
+	"poi": "Weiler",
+	"tag_key": "place",
+	"tag_value": "hamlet"
+},
+{
+	"poi": "U-Bahn-Station",
+	"tag_key": "railway",
+	"tag_value": "subway"
+},
+{
+	"poi": "Spital",
+	"tag_key": "building",
+	"tag_value": "hospital"
+},
+{
+	"poi": "Theater",
+	"tag_key": "amenity",
+	"tag_value": "theatre"
+},
+{
+	"poi": "Ruinen",
+	"tag_key": "historic",
+	"tag_value": "ruins"
+},
+{
+	"poi": "Unterhaltungselektronikläden",
+	"tag_key": "shop",
+	"tag_value": "hifi"
+},
+{
+	"poi": "Primärauffahrten",
+	"tag_key": "highway",
+	"tag_value": "primary_link"
+},
+{
+	"poi": "Feldweg",
+	"tag_key": "highway",
+	"tag_value": "track"
+},
+{
+	"poi": "Schreibwarenladen",
+	"tag_key": "shop",
+	"tag_value": "stationery"
+},
+{
+	"poi": "Kleingartenanlagen",
+	"tag_key": "landuse",
+	"tag_value": "allotments"
+},
+{
+	"poi": "Metzgerei",
+	"tag_key": "shop",
+	"tag_value": "butcher"
+},
+{
+	"poi": "Geröllhalden",
+	"tag_key": "natural",
+	"tag_value": "scree"
+},
+{
+	"poi": "Schwimmbecken",
+	"tag_key": "leisure",
+	"tag_value": "swimming_pool"
+},
+{
+	"poi": "Meer",
+	"tag_key": "place",
+	"tag_value": "sea"
+},
+{
+	"poi": "Spielplatz",
+	"tag_key": "leisure",
+	"tag_value": "playground"
+},
+{
+	"poi": "Strände",
+	"tag_key": "natural",
+	"tag_value": "beach"
+},
+{
+	"poi": "Freibad",
+	"tag_key": "leisure",
+	"tag_value": "beach_resort"
+},
+{
+	"poi": "Eisenbahnen im Bau",
+	"tag_key": "railway",
+	"tag_value": "construction"
+},
+{
+	"poi": "Wassergraben",
+	"tag_key": "waterway",
+	"tag_value": "ditch"
+},
+{
+	"poi": "Wasserpunkte",
+	"tag_key": "waterway",
+	"tag_value": "water_point"
+},
+{
+	"poi": "Pass",
+	"tag_key": "mountain_pass",
+	"tag_value": "yes"
+},
+{
+	"poi": "Rastplatz",
+	"tag_key": "highway",
+	"tag_value": "rest_area"
+},
+{
+	"poi": "Sportplätze",
+	"tag_key": "leisure",
+	"tag_value": "pitch"
+},
+{
+	"poi": "Cafe",
+	"tag_key": "amenity",
+	"tag_value": "cafe"
+},
+{
+	"poi": "Fahrradgeschäft",
+	"tag_key": "shop",
+	"tag_value": "bicycle"
+},
+{
+	"poi": "Bauernhöfe",
+	"tag_key": "landuse",
+	"tag_value": "farm"
+},
+{
+	"poi": "Halle",
+	"tag_key": "building",
+	"tag_value": "hall"
+},
+{
+	"poi": "Eisdiele",
+	"tag_key": "amenity",
+	"tag_value": "ice_cream"
+},
+{
+	"poi": "Motorradparkplätze",
+	"tag_key": "amenity",
+	"tag_value": "motorcycle_parking"
+},
+{
+	"poi": "Gärtnerei",
+	"tag_key": "shop",
+	"tag_value": "garden_centre"
+},
+{
+	"poi": "Gemeinde",
+	"tag_key": "place",
+	"tag_value": "municipality"
+},
+{
+	"poi": "Fußgängerzonen",
+	"tag_key": "highway",
+	"tag_value": "pedestrian"
+},
+{
+	"poi": "Autobahnkreuz",
+	"tag_key": "highway",
+	"tag_value": "motorway_junction"
+},
+{
+	"poi": "Schuhgeschäft",
+	"tag_key": "shop",
+	"tag_value": "shoes"
+},
+{
+	"poi": "Stadien",
+	"tag_key": "leisure",
+	"tag_value": "stadium"
+},
+{
+	"poi": "Wechselstuben",
+	"tag_key": "amenity",
+	"tag_value": "bureau_de_change"
+},
+{
+	"poi": "Bordelle",
+	"tag_key": "amenity",
+	"tag_value": "brothel"
+},
+{
+	"poi": "Wehre",
+	"tag_key": "waterway",
+	"tag_value": "weir"
+},
+{
+	"poi": "Landstraßen",
+	"tag_key": "highway",
+	"tag_value": "unclassified"
+},
+{
+	"poi": "Schrein",
+	"tag_key": "historic",
+	"tag_value": "wayside_shrine"
+},
+{
+	"poi": "Massagesalon",
+	"tag_key": "shop",
+	"tag_value": "massage"
+},
+{
+	"poi": "Automaten",
+	"tag_key": "amenity",
+	"tag_value": "vending_machine"
+},
+{
+	"poi": "Spielfeld",
+	"tag_key": "leisure",
+	"tag_value": "pitch"
+},
+{
+	"poi": "Ausgrabungsstätte",
+	"tag_key": "historic",
+	"tag_value": "archaeological_site"
+},
+{
+	"poi": "Schlamme",
+	"tag_key": "natural",
+	"tag_value": "mud"
+},
+{
+	"poi": "Primärstraße",
+	"tag_key": "highway",
+	"tag_value": "primary"
+},
+{
+	"poi": "Buchladen",
+	"tag_key": "shop",
+	"tag_value": "books"
+},
+{
+	"poi": "Bundesländer",
+	"tag_key": "place",
+	"tag_value": "state"
+},
+{
+	"poi": "Videotheken",
+	"tag_key": "shop",
+	"tag_value": "video"
+},
+{
+	"poi": "Outdoorläden",
+	"tag_key": "shop",
+	"tag_value": "outdoor"
+},
+{
+	"poi": "Flughafen",
+	"tag_key": "aeroway",
+	"tag_value": "aerodrome"
+},
+{
+	"poi": "Fahrradstellplätze",
+	"tag_key": "amenity",
+	"tag_value": "bicycle_parking"
+},
+{
+	"poi": "Rathaus",
+	"tag_key": "building",
+	"tag_value": "city_hall"
+},
+{
+	"poi": "Tertiärstraße",
+	"tag_key": "highway",
+	"tag_value": "tertiary"
+},
+{
+	"poi": "Schmalspurbahn",
+	"tag_key": "railway",
+	"tag_value": "narrow_gauge"
+},
+{
+	"poi": "Frisöre",
+	"tag_key": "shop",
+	"tag_value": "hairdresser"
+},
+{
+	"poi": "U-Bahn-Zugang",
+	"tag_key": "railway",
+	"tag_value": "subway_entrance"
+},
+{
+	"poi": "Straße",
+	"tag_key": "highway",
+	"tag_value": "road"
+},
+{
+	"poi": "Flüsse",
+	"tag_key": "waterway",
+	"tag_value": "river"
+},
+{
+	"poi": "Region",
+	"tag_key": "place",
+	"tag_value": "region"
+},
+{
+	"poi": "Fahrschulen",
+	"tag_key": "amenity",
+	"tag_value": "driving_school"
+},
+{
+	"poi": "Briefkasten",
+	"tag_key": "amenity",
+	"tag_value": "post_box"
+},
+{
+	"poi": "Tore",
+	"tag_key": "highway",
+	"tag_value": "gate"
+},
+{
+	"poi": "Wohnwagen-Stellplätze",
+	"tag_key": "tourism",
+	"tag_value": "caravan_site"
+},
+{
+	"poi": "Küstenlinien",
+	"tag_key": "natural",
+	"tag_value": "coastline"
+},
+{
+	"poi": "Straßen im Bau",
+	"tag_key": "highway",
+	"tag_value": "construction"
+},
+{
+	"poi": "Juwelier",
+	"tag_key": "shop",
+	"tag_value": "jewelry"
+},
+{
+	"poi": "Autohäuser",
+	"tag_key": "shop",
+	"tag_value": "car"
+},
+{
+	"poi": "Taxistände",
+	"tag_key": "amenity",
+	"tag_value": "taxi"
+},
+{
+	"poi": "Andachtsstätten",
+	"tag_key": "amenity",
+	"tag_value": "place_of_worship"
+},
+{
+	"poi": "Trampelpfad",
+	"tag_key": "highway",
+	"tag_value": "path"
+},
+{
+	"poi": "Schulgebäude",
+	"tag_key": "building",
+	"tag_value": "school"
+},
+{
+	"poi": "Botschaften",
+	"tag_key": "amenity",
+	"tag_value": "embassy"
+},
+{
+	"poi": "Gebäudeblock",
+	"tag_key": "building",
+	"tag_value": "block"
+},
+{
+	"poi": "Gärten",
+	"tag_key": "leisure",
+	"tag_value": "garden"
+},
+{
+	"poi": "Waschsalon",
+	"tag_key": "shop",
+	"tag_value": "laundry"
+},
+{
+	"poi": "Juweliere",
+	"tag_key": "shop",
+	"tag_value": "jewelry"
+},
+{
+	"poi": "Bank",
+	"tag_key": "amenity",
+	"tag_value": "bench"
+},
+{
+	"poi": "Ortschaft",
+	"tag_key": "place",
+	"tag_value": "locality"
+},
+{
+	"poi": "Salon",
+	"tag_key": "shop",
+	"tag_value": "salon"
+},
+{
+	"poi": "Becken",
+	"tag_key": "landuse",
+	"tag_value": "basin"
+},
+{
+	"poi": "Bordell",
+	"tag_key": "amenity",
+	"tag_value": "brothel"
+},
+{
+	"poi": "unbenutzte Bahnstrecken",
+	"tag_key": "railway",
+	"tag_value": "disused"
+},
+{
+	"poi": "Kinos",
+	"tag_key": "amenity",
+	"tag_value": "cinema"
+},
+{
+	"poi": "Blumenläden",
+	"tag_key": "shop",
+	"tag_value": "florist"
+},
+{
+	"poi": "Wohnung",
+	"tag_key": "building",
+	"tag_value": "flats"
+},
+{
+	"poi": "Ärztezentrum",
+	"tag_key": "amenity",
+	"tag_value": "clinic"
+},
+{
+	"poi": "Heide",
+	"tag_key": "natural",
+	"tag_value": "heath"
+},
+{
+	"poi": "Gehöfte",
+	"tag_key": "place",
+	"tag_value": "farm"
+},
+{
+	"poi": "historisches Bergwerk",
+	"tag_key": "historic",
+	"tag_value": "mine"
+},
+{
+	"poi": "Kampfkunst",
+	"tag_key": "amenity",
+	"tag_value": "dojo"
+},
+{
+	"poi": "Geldautomaten",
+	"tag_key": "amenity",
+	"tag_value": "atm"
+},
+{
+	"poi": "Schiffswracks",
+	"tag_key": "historic",
+	"tag_value": "wreck"
+},
+{
+	"poi": "Slipanlage",
+	"tag_key": "leisure",
+	"tag_value": "slipway"
+},
+{
+	"poi": "Postämter",
+	"tag_key": "amenity",
+	"tag_value": "post_office"
+},
+{
+	"poi": "Städte",
+	"tag_key": "place",
+	"tag_value": "town"
+},
+{
+	"poi": "Bahnhöfe",
+	"tag_key": "railway",
+	"tag_value": "station"
+},
+{
+	"poi": "Biergärten",
+	"tag_key": "amenity",
+	"tag_value": "biergarten"
+},
+{
+	"poi": "Kunstladen",
+	"tag_key": "shop",
+	"tag_value": "art"
+},
+{
+	"poi": "Klinik",
+	"tag_key": "amenity",
+	"tag_value": "clinic"
+},
+{
+	"poi": "WC",
+	"tag_key": "amenity",
+	"tag_value": "toilets"
+},
+{
+	"poi": "Einschienenbahns",
+	"tag_key": "railway",
+	"tag_value": "monorail"
+},
+{
+	"poi": "Fußgängerzone",
+	"tag_key": "highway",
+	"tag_value": "pedestrian"
+},
+{
+	"poi": "Reisebüros",
+	"tag_key": "shop",
+	"tag_value": "travel_agency"
+},
+{
+	"poi": "Hochstand",
+	"tag_key": "amenity",
+	"tag_value": "hunting_stand"
+},
+{
+	"poi": "Hochstände",
+	"tag_key": "amenity",
+	"tag_value": "hunting_stand"
+},
+{
+	"poi": "Teppichgeschäft",
+	"tag_key": "shop",
+	"tag_value": "carpet"
+},
+{
+	"poi": "Siedlung",
+	"tag_key": "landuse",
+	"tag_value": "residential"
+},
+{
+	"poi": "Wohnungen",
+	"tag_key": "building",
+	"tag_value": "flats"
+},
+{
+	"poi": "Spirituosenläden",
+	"tag_key": "shop",
+	"tag_value": "alcohol"
+},
+{
+	"poi": "Kliniken",
+	"tag_key": "amenity",
+	"tag_value": "clinic"
+},
+{
+	"poi": "Pensionen",
+	"tag_key": "tourism",
+	"tag_value": "guest_house"
+},
+{
+	"poi": "Bucht",
+	"tag_key": "natural",
+	"tag_value": "bay"
+},
+{
+	"poi": "Zaunübertritt",
+	"tag_key": "highway",
+	"tag_value": "stile"
+},
+{
+	"poi": "Kleingartenanlage",
+	"tag_key": "landuse",
+	"tag_value": "allotments"
+},
+{
+	"poi": "Schmalspurbahns",
+	"tag_key": "railway",
+	"tag_value": "narrow_gauge"
+},
+{
+	"poi": "Schutzhütten",
+	"tag_key": "amenity",
+	"tag_value": "shelter"
+},
+{
+	"poi": "Erotikshop",
+	"tag_key": "shop",
+	"tag_value": "erotic"
+},
+{
+	"poi": "Schloss",
+	"tag_key": "historic",
+	"tag_value": "castle"
+},
+{
+	"poi": "Ladesäulen",
+	"tag_key": "amenity",
+	"tag_value": "charging_station"
+},
+{
+	"poi": "Studio",
+	"tag_key": "amenity",
+	"tag_value": "studio"
+},
+{
+	"poi": "Wohltätigkeitsladen",
+	"tag_key": "shop",
+	"tag_value": "charity"
+},
+{
+	"poi": "Campingplätze",
+	"tag_key": "tourism",
+	"tag_value": "camp_site"
+},
+{
+	"poi": "Tankstelle",
+	"tag_key": "amenity",
+	"tag_value": "fuel"
+},
+{
+	"poi": "Motorradparkplatz",
+	"tag_key": "amenity",
+	"tag_value": "motorcycle_parking"
+},
+{
+	"poi": "historische Bergwerke",
+	"tag_key": "historic",
+	"tag_value": "mine"
+},
+{
+	"poi": "Wohnstraße",
+	"tag_key": "highway",
+	"tag_value": "residential"
+},
+{
+	"poi": "Pfad",
+	"tag_key": "highway",
+	"tag_value": "trail"
+},
+{
+	"poi": "Standesämter",
+	"tag_key": "amenity",
+	"tag_value": "register_office"
+},
+{
+	"poi": "Erotikshops",
+	"tag_key": "shop",
+	"tag_value": "erotic"
+},
+{
+	"poi": "Turm",
+	"tag_key": "building",
+	"tag_value": "tower"
+},
+{
+	"poi": "bewahrte Bahnstrecken",
+	"tag_key": "railway",
+	"tag_value": "preserved"
+},
+{
+	"poi": "Tertiärstraßen",
+	"tag_key": "highway",
+	"tag_value": "tertiary"
+},
+{
+	"poi": "Bunker",
+	"tag_key": "building",
+	"tag_value": "bunker"
+},
+{
+	"poi": "Frisör",
+	"tag_key": "shop",
+	"tag_value": "hairdresser"
+},
+{
+	"poi": "Dojo",
+	"tag_key": "amenity",
+	"tag_value": "dojo"
+},
+{
+	"poi": "Bezirke",
+	"tag_key": "place",
+	"tag_value": "county"
+},
+{
+	"poi": "Autowerkstatts",
+	"tag_key": "shop",
+	"tag_value": "car_repair"
+},
+{
+	"poi": "Werften",
+	"tag_key": "waterway",
+	"tag_value": "boatyard"
+},
+{
+	"poi": "Krankenhaus",
+	"tag_key": "amenity",
+	"tag_value": "hospital"
+},
+{
+	"poi": "Sexshop",
+	"tag_key": "shop",
+	"tag_value": "erotic"
+},
+{
+	"poi": "Bücherei",
+	"tag_key": "amenity",
+	"tag_value": "library"
+},
+{
+	"poi": "Fischgeschäfte",
+	"tag_key": "shop",
+	"tag_value": "seafood"
+},
+{
+	"poi": "Moors",
+	"tag_key": "natural",
+	"tag_value": "moor"
+},
+{
+	"poi": "Naherholungsgebiete",
+	"tag_key": "leisure",
+	"tag_value": "recreation_ground"
+},
+{
+	"poi": "Furten",
+	"tag_key": "highway",
+	"tag_value": "ford"
+},
+{
+	"poi": "Bäckerei",
+	"tag_key": "shop",
+	"tag_value": "bakery"
+},
+{
+	"poi": "Kapelle",
+	"tag_key": "building",
+	"tag_value": "chapel"
+},
+{
+	"poi": "Friedhöfe",
+	"tag_key": "landuse",
+	"tag_value": "cemetery"
+},
+{
+	"poi": "Getränkemärkte",
+	"tag_key": "shop",
+	"tag_value": "beverages"
+},
+{
+	"poi": "Gefängnisse",
+	"tag_key": "amenity",
+	"tag_value": "prison"
+},
+{
+	"poi": "Tante-Emma-Laden",
+	"tag_key": "shop",
+	"tag_value": "convenience"
+},
+{
+	"poi": "Briefkästen",
+	"tag_key": "amenity",
+	"tag_value": "post_box"
+},
+{
+	"poi": "Zoo",
+	"tag_key": "tourism",
+	"tag_value": "zoo"
+},
+{
+	"poi": "Notrufpunkt",
+	"tag_key": "highway",
+	"tag_value": "emergency_access_point"
+},
+{
+	"poi": "Autobahnparkpätze",
+	"tag_key": "highway",
+	"tag_value": "rest_area"
+},
+{
+	"poi": "Touristen-Informations",
+	"tag_key": "tourism",
+	"tag_value": "information"
+},
+{
+	"poi": "Handygeschäfte",
+	"tag_key": "shop",
+	"tag_value": "mobile_phone"
+},
+{
+	"poi": "Trockentäler",
+	"tag_key": "waterway",
+	"tag_value": "wadi"
+},
+{
+	"poi": "Recyclingeinrichtung",
+	"tag_key": "amenity",
+	"tag_value": "recycling"
+},
+{
+	"poi": "Regionen",
+	"tag_key": "place",
+	"tag_value": "region"
+},
+{
+	"poi": "Feinkostladen",
+	"tag_key": "shop",
+	"tag_value": "deli"
+},
+{
+	"poi": "Fotoladen",
+	"tag_key": "shop",
+	"tag_value": "photo"
+},
+{
+	"poi": "Autobahnparkplatz",
+	"tag_key": "highway",
+	"tag_value": "rest_area"
+},
+{
+	"poi": "Park",
+	"tag_key": "leisure",
+	"tag_value": "park"
+},
+{
+	"poi": "Drogerien",
+	"tag_key": "shop",
+	"tag_value": "chemist"
+},
+{
+	"poi": "Wohngebiete",
+	"tag_key": "landuse",
+	"tag_value": "residential"
+},
+{
+	"poi": "Yachthafen",
+	"tag_key": "leisure",
+	"tag_value": "marina"
+},
+{
+	"poi": "Gewerbegebiet",
+	"tag_key": "landuse",
+	"tag_value": "commercial"
+},
+{
+	"poi": "Pisten",
+	"tag_key": "landuse",
+	"tag_value": "piste"
+},
+{
+	"poi": "Baustellen",
+	"tag_key": "landuse",
+	"tag_value": "construction"
+},
+{
+	"poi": "Hofladen",
+	"tag_key": "shop",
+	"tag_value": "farm"
+},
+{
+	"poi": "Hochschulen",
+	"tag_key": "amenity",
+	"tag_value": "college"
+},
+{
+	"poi": "Kino",
+	"tag_key": "amenity",
+	"tag_value": "cinema"
+},
+{
+	"poi": "Telefonzelle",
+	"tag_key": "amenity",
+	"tag_value": "telephone"
+},
+{
+	"poi": "Geldautomat",
+	"tag_key": "amenity",
+	"tag_value": "atm"
+},
+{
+	"poi": "Versicherungsbüros",
+	"tag_key": "office",
+	"tag_value": "insurance"
+},
+{
+	"poi": "Rasenfläche",
+	"tag_key": "landuse",
+	"tag_value": "grass"
+},
+{
+	"poi": "Wasserparks",
+	"tag_key": "leisure",
+	"tag_value": "water_park"
+},
+{
+	"poi": "Bäume",
+	"tag_key": "natural",
+	"tag_value": "tree"
+},
+{
+	"poi": "Fähranlegestellen",
+	"tag_key": "amenity",
+	"tag_value": "ferry_terminal"
+},
+{
+	"poi": "Höfe",
+	"tag_key": "landuse",
+	"tag_value": "farmyard"
+},
+{
+	"poi": "Kirchen",
+	"tag_key": "building",
+	"tag_value": "church"
+},
+{
+	"poi": "Reservoire",
+	"tag_key": "landuse",
+	"tag_value": "reservoir"
+},
+{
+	"poi": "Kampfgebiet",
+	"tag_key": "historic",
+	"tag_value": "battlefield"
+},
+{
+	"poi": "Gasthäuser",
+	"tag_key": "amenity",
+	"tag_value": "restaurant"
+},
+{
+	"poi": "Flussufer",
+	"tag_key": "waterway",
+	"tag_value": "riverbank"
+},
+{
+	"poi": "Quellen",
+	"tag_key": "natural",
+	"tag_value": "spring"
+},
+{
+	"poi": "Bezirk",
+	"tag_key": "place",
+	"tag_value": "county"
+},
+{
+	"poi": "Burgen",
+	"tag_key": "historic",
+	"tag_value": "castle"
+},
+{
+	"poi": "Automat",
+	"tag_key": "amenity",
+	"tag_value": "vending_machine"
+},
+{
+	"poi": "Eingang",
+	"tag_key": "building",
+	"tag_value": "entrance"
+},
+{
+	"poi": "Zoos",
+	"tag_key": "tourism",
+	"tag_value": "zoo"
+},
+{
+	"poi": "Motorradgeschäft",
+	"tag_key": "shop",
+	"tag_value": "motorcycle"
+},
+{
+	"poi": "Carsharing",
+	"tag_key": "amenity",
+	"tag_value": "car_sharing"
+},
+{
+	"poi": "bewahrte Bahnstrecke",
+	"tag_key": "railway",
+	"tag_value": "preserved"
+},
+{
+	"poi": "Galerien",
+	"tag_key": "shop",
+	"tag_value": "art"
+},
+{
+	"poi": "Tierhandlung",
+	"tag_key": "shop",
+	"tag_value": "pet"
+},
+{
+	"poi": "U-Bahn-Stationen",
+	"tag_key": "railway",
+	"tag_value": "subway"
+},
+{
+	"poi": "Siedlungen",
+	"tag_key": "landuse",
+	"tag_value": "residential"
+},
+{
+	"poi": "Hydranten",
+	"tag_key": "emergency",
+	"tag_value": "fire_hydrant"
+},
+{
+	"poi": "Schuhläden",
+	"tag_key": "shop",
+	"tag_value": "shoes"
+},
+{
+	"poi": "Buchgeschäft",
+	"tag_key": "shop",
+	"tag_value": "books"
+},
+{
+	"poi": "Spielwarengeschäft",
+	"tag_key": "shop",
+	"tag_value": "toys"
+},
+{
+	"poi": "Klippe",
+	"tag_key": "natural",
+	"tag_value": "cliff"
+},
+{
+	"poi": "Wegkreuze",
+	"tag_key": "historic",
+	"tag_value": "wayside_cross"
+},
+{
+	"poi": "Parfümerien",
+	"tag_key": "shop",
+	"tag_value": "beauty"
+},
+{
+	"poi": "Gemeinschaftszentren",
+	"tag_key": "amenity",
+	"tag_value": "community_centre"
+},
+{
+	"poi": "Zeitschriftenladen",
+	"tag_key": "shop",
+	"tag_value": "newsagent"
+},
+{
+	"poi": "Spitäler",
+	"tag_key": "building",
+	"tag_value": "hospital"
+},
+{
+	"poi": "Kiosk",
+	"tag_key": "shop",
+	"tag_value": "kiosk"
+},
+{
+	"poi": "aufgelassene Bahnstrecke",
+	"tag_key": "railway",
+	"tag_value": "abandoned"
+},
+{
+	"poi": "Zahnarzt",
+	"tag_key": "amenity",
+	"tag_value": "dentist"
+},
+{
+	"poi": "Monumente",
+	"tag_key": "historic",
+	"tag_value": "monument"
+},
+{
+	"poi": "Gewerbegebiete",
+	"tag_key": "landuse",
+	"tag_value": "commercial"
+},
+{
+	"poi": "Kirche",
+	"tag_key": "building",
+	"tag_value": "church"
+},
+{
+	"poi": "Tierpensionen",
+	"tag_key": "amenity",
+	"tag_value": "animal_boarding"
+},
+{
+	"poi": "Gipfel",
+	"tag_key": "natural",
+	"tag_value": "peak"
+},
+{
+	"poi": "Schreibwarenläden",
+	"tag_key": "shop",
+	"tag_value": "stationery"
+},
+{
+	"poi": "Attraktionen",
+	"tag_key": "tourism",
+	"tag_value": "attraction"
+},
+{
+	"poi": "Zahnärzte",
+	"tag_key": "amenity",
+	"tag_value": "dentist"
+},
+{
+	"poi": "Schule",
+	"tag_key": "amenity",
+	"tag_value": "school"
+},
+{
+	"poi": "Steine",
+	"tag_key": "natural",
+	"tag_value": "rock"
+},
+{
+	"poi": "Casino",
+	"tag_key": "amenity",
+	"tag_value": "casino"
+},
+{
+	"poi": "Baumärkte",
+	"tag_key": "shop",
+	"tag_value": "doityourself"
+},
+{
+	"poi": "Gewerbegebäude",
+	"tag_key": "building",
+	"tag_value": "commercial"
+},
+{
+	"poi": "Stadtteil",
+	"tag_key": "place",
+	"tag_value": "suburb"
+},
+{
+	"poi": "Casinos",
+	"tag_key": "amenity",
+	"tag_value": "casino"
+},
+{
+	"poi": "Militärgebiete",
+	"tag_key": "landuse",
+	"tag_value": "military"
+},
+{
+	"poi": "Copyshops",
+	"tag_key": "shop",
+	"tag_value": "copyshop"
+},
+{
+	"poi": "Waldwege",
+	"tag_key": "highway",
+	"tag_value": "track"
+},
+{
+	"poi": "Ärztehaus",
+	"tag_key": "amenity",
+	"tag_value": "clinic"
+},
+{
+	"poi": "Autobahn",
+	"tag_key": "highway",
+	"tag_value": "motorway"
+},
+{
+	"poi": "Studios",
+	"tag_key": "amenity",
+	"tag_value": "studio"
+},
+{
+	"poi": "Eislaufplätze",
+	"tag_key": "leisure",
+	"tag_value": "ice_rink"
+},
+{
+	"poi": "Carsharings",
+	"tag_key": "amenity",
+	"tag_value": "car_sharing"
+},
+{
+	"poi": "Autohaus",
+	"tag_key": "shop",
+	"tag_value": "car"
+},
+{
+	"poi": "Vergnügungsparks",
+	"tag_key": "tourism",
+	"tag_value": "theme_park"
+},
+{
+	"poi": "Grünanlagen",
+	"tag_key": "landuse",
+	"tag_value": "village_green"
+},
+{
+	"poi": "Trockental",
+	"tag_key": "waterway",
+	"tag_value": "wadi"
+},
+{
+	"poi": "Andachtsstätte",
+	"tag_key": "amenity",
+	"tag_value": "place_of_worship"
+},
+{
+	"poi": "Touristen-Information",
+	"tag_key": "tourism",
+	"tag_value": "information"
+},
+{
+	"poi": "Pässe",
+	"tag_key": "mountain_pass",
+	"tag_value": "yes"
+},
+{
+	"poi": "Waldweg",
+	"tag_key": "highway",
+	"tag_value": "track"
+},
+{
+	"poi": "Hotels",
+	"tag_key": "tourism",
+	"tag_value": "hotel"
+},
+{
+	"poi": "nichtasphaltierte Straßen",
+	"tag_key": "highway",
+	"tag_value": "unsurfaced"
+},
+{
+	"poi": "Wasserpunkt",
+	"tag_key": "waterway",
+	"tag_value": "water_point"
+},
+{
+	"poi": "Krematorium",
+	"tag_key": "amenity",
+	"tag_value": "crematorium"
+},
+{
+	"poi": "Schuhladen",
+	"tag_key": "shop",
+	"tag_value": "shoes"
+},
+{
+	"poi": "Bahnhof",
+	"tag_key": "railway",
+	"tag_value": "station"
+},
+{
+	"poi": "Pflegeheim",
+	"tag_key": "amenity",
+	"tag_value": "nursing_home"
+},
+{
+	"poi": "Windmühle",
+	"tag_key": "man_made",
+	"tag_value": "windmill"
+},
+{
+	"poi": "Eisenbahn",
+	"tag_key": "landuse",
+	"tag_value": "railway"
+},
+{
+	"poi": "Fußweg",
+	"tag_key": "highway",
+	"tag_value": "footway"
+},
+{
+	"poi": "Rastplätze",
+	"tag_key": "highway",
+	"tag_value": "rest_area"
+},
+{
+	"poi": "Polizei",
+	"tag_key": "amenity",
+	"tag_value": "police"
+},
+{
+	"poi": "Untiefen",
+	"tag_key": "natural",
+	"tag_value": "shoal"
+},
+{
+	"poi": "Grenzstein",
+	"tag_key": "historic",
+	"tag_value": "boundary_stone"
+},
+{
+	"poi": "Turnhallen",
+	"tag_key": "amenity",
+	"tag_value": "gym"
+},
+{
+	"poi": "Fernstraßenauffahrten",
+	"tag_key": "highway",
+	"tag_value": "trunk_link"
+},
+{
+	"poi": "Fahrradstellplatz",
+	"tag_key": "amenity",
+	"tag_value": "bicycle_parking"
+},
+{
+	"poi": "Sportzentrum",
+	"tag_key": "leisure",
+	"tag_value": "sports_centre"
+},
+{
+	"poi": "Rennweg",
+	"tag_key": "highway",
+	"tag_value": "raceway"
+},
+{
+	"poi": "Straßenbahn-Haltestelle",
+	"tag_key": "railway",
+	"tag_value": "tram_stop"
+},
+{
+	"poi": "Musikläden",
+	"tag_key": "shop",
+	"tag_value": "music"
+},
+{
+	"poi": "Wohngebäude",
+	"tag_key": "building",
+	"tag_value": "residential"
+},
+{
+	"poi": "kahler Berg",
+	"tag_key": "natural",
+	"tag_value": "fell"
+},
+{
+	"poi": "Schuhgeschäfte",
+	"tag_key": "shop",
+	"tag_value": "shoes"
+},
+{
+	"poi": "historisches Gebäude",
+	"tag_key": "historic",
+	"tag_value": "building"
+},
+{
+	"poi": "Sportgeschäfte",
+	"tag_key": "shop",
+	"tag_value": "sports"
+},
+{
+	"poi": "Standesamt",
+	"tag_key": "amenity",
+	"tag_value": "register_office"
+},
+{
+	"poi": "Ausbildungsgebäude",
+	"tag_key": "building",
+	"tag_value": "faculty"
+},
+{
+	"poi": "Musikladen",
+	"tag_key": "shop",
+	"tag_value": "music"
+},
+{
+	"poi": "Massagesalons",
+	"tag_key": "shop",
+	"tag_value": "massage"
+},
+{
+	"poi": "Autoteilehändler",
+	"tag_key": "shop",
+	"tag_value": "car_parts"
+},
+{
+	"poi": "Äcker",
+	"tag_key": "landuse",
+	"tag_value": "farmland"
+},
+{
+	"poi": "Marschland",
+	"tag_key": "natural",
+	"tag_value": "marsh"
+},
+{
+	"poi": "Garten",
+	"tag_key": "leisure",
+	"tag_value": "garden"
+},
+{
+	"poi": "Spielwarenläden",
+	"tag_key": "shop",
+	"tag_value": "toys"
+},
+{
+	"poi": "Gefängnis",
+	"tag_key": "amenity",
+	"tag_value": "prison"
+},
+{
+	"poi": "Verwaltungsgrenze",
+	"tag_key": "boundary",
+	"tag_value": "administrative"
+},
+{
+	"poi": "Büchereien",
+	"tag_key": "amenity",
+	"tag_value": "library"
+},
+{
+	"poi": "Zaunübertritts",
+	"tag_key": "highway",
+	"tag_value": "stile"
+},
+{
+	"poi": "Motels",
+	"tag_key": "tourism",
+	"tag_value": "motel"
+},
+{
+	"poi": "Gaststätte",
+	"tag_key": "amenity",
+	"tag_value": "restaurant"
+},
+{
+	"poi": "Slipanlagen",
+	"tag_key": "leisure",
+	"tag_value": "slipway"
+},
+{
+	"poi": "Gemischtwarenladen",
+	"tag_key": "shop",
+	"tag_value": "general"
+},
+{
+	"poi": "Einzelhandel",
+	"tag_key": "landuse",
+	"tag_value": "retail"
+},
+{
+	"poi": "Getränkemarkt",
+	"tag_key": "shop",
+	"tag_value": "beverages"
+},
+{
+	"poi": "Autovermietung",
+	"tag_key": "amenity",
+	"tag_value": "car_rental"
+},
+{
+	"poi": "Dock",
+	"tag_key": "waterway",
+	"tag_value": "dock"
+},
+{
+	"poi": "Streugutcontainer",
+	"tag_key": "amenity",
+	"tag_value": "grit_bin"
+},
+{
+	"poi": "Toilette",
+	"tag_key": "amenity",
+	"tag_value": "toilets"
+},
+{
+	"poi": "Süßwarengeschäfte",
+	"tag_key": "shop",
+	"tag_value": "confectionery"
+},
+{
+	"poi": "Golfplatz",
+	"tag_key": "leisure",
+	"tag_value": "golf_course"
+},
+{
+	"poi": "Videothek",
+	"tag_key": "shop",
+	"tag_value": "video"
+},
+{
+	"poi": "Grate",
+	"tag_key": "natural",
+	"tag_value": "ridge"
+},
+{
+	"poi": "Biergarten",
+	"tag_key": "amenity",
+	"tag_value": "biergarten"
+},
+{
+	"poi": "Weingeschäft",
+	"tag_key": "shop",
+	"tag_value": "wine"
+},
+{
+	"poi": "Notrufsäule",
+	"tag_key": "amenity",
+	"tag_value": "emergency_phone"
+},
+{
+	"poi": "Supermarkt",
+	"tag_key": "shop",
+	"tag_value": "supermarket"
+},
+{
+	"poi": "Wohngebiet",
+	"tag_key": "landuse",
+	"tag_value": "residential"
+},
+{
+	"poi": "Sportgeschäft",
+	"tag_key": "shop",
+	"tag_value": "sports"
+},
+{
+	"poi": "Gebäude",
+	"tag_key": "building",
+	"tag_value": "yes"
+},
+{
+	"poi": "Restaurant",
+	"tag_key": "amenity",
+	"tag_value": "restaurant"
+},
+{
+	"poi": "Swingerclub",
+	"tag_key": "amenity",
+	"tag_value": "swingerclub"
+},
+{
+	"poi": "Elektronikgeschäft",
+	"tag_key": "shop",
+	"tag_value": "electronics"
+},
+{
+	"poi": "Bestattungsunternehmen",
+	"tag_key": "shop",
+	"tag_value": "funeral_directors"
+},
+{
+	"poi": "Flughäfen",
+	"tag_key": "aeroway",
+	"tag_value": "aerodrome"
+},
+{
+	"poi": "Busbahnhöfe",
+	"tag_key": "amenity",
+	"tag_value": "bus_station"
+},
+{
+	"poi": "Wasserfall",
+	"tag_key": "waterway",
+	"tag_value": "waterfall"
+},
+{
+	"poi": "Aussichtspunkt",
+	"tag_key": "tourism",
+	"tag_value": "viewpoint"
+},
+{
+	"poi": "Geschäfte",
+	"tag_key": "building",
+	"tag_value": "shop"
+},
+{
+	"poi": "Tal",
+	"tag_key": "natural",
+	"tag_value": "valley"
+},
+{
+	"poi": "Fotoläden",
+	"tag_key": "shop",
+	"tag_value": "photo"
+},
+{
+	"poi": "Verwaltungsgrenzen",
+	"tag_key": "boundary",
+	"tag_value": "administrative"
+},
+{
+	"poi": "Reitweg",
+	"tag_key": "highway",
+	"tag_value": "bridleway"
+},
+{
+	"poi": "Geschenkeläden",
+	"tag_key": "shop",
+	"tag_value": "gift"
+},
+{
+	"poi": "Stadtteile",
+	"tag_key": "place",
+	"tag_value": "suburb"
+},
+{
+	"poi": "Wehr",
+	"tag_key": "waterway",
+	"tag_value": "weir"
+},
+{
+	"poi": "Telefonzellen",
+	"tag_key": "amenity",
+	"tag_value": "telephone"
+},
+{
+	"poi": "Kulturzentrum",
+	"tag_key": "amenity",
+	"tag_value": "arts_centre"
+},
+{
+	"poi": "Brachfläche",
+	"tag_key": "landuse",
+	"tag_value": "brownfield"
+},
+{
+	"poi": "Tierpension",
+	"tag_key": "amenity",
+	"tag_value": "animal_boarding"
+},
+{
+	"poi": "Ausgrabungsstätten",
+	"tag_key": "historic",
+	"tag_value": "archaeological_site"
+},
+{
+	"poi": "Friedhof",
+	"tag_key": "landuse",
+	"tag_value": "cemetery"
+},
+{
+	"poi": "Bekleidungsgeschäft",
+	"tag_key": "shop",
+	"tag_value": "clothes"
+},
+{
+	"poi": "Bioladen",
+	"tag_key": "shop",
+	"tag_value": "organic"
+},
+{
+	"poi": "Aufgelassener Kanals",
+	"tag_key": "waterway",
+	"tag_value": "derelict_canal"
+},
+{
+	"poi": "Industriegebiet",
+	"tag_key": "landuse",
+	"tag_value": "industrial"
+},
+{
+	"poi": "Türme",
+	"tag_key": "building",
+	"tag_value": "tower"
+},
+{
+	"poi": "Imobilienmakler",
+	"tag_key": "shop",
+	"tag_value": "estate_agent"
+},
+{
+	"poi": "Vulkane",
+	"tag_key": "natural",
+	"tag_value": "volcano"
+},
+{
+	"poi": "Wassergrabens",
+	"tag_key": "waterway",
+	"tag_value": "ditch"
+},
+{
+	"poi": "Feldwege",
+	"tag_key": "highway",
+	"tag_value": "track"
+},
+{
+	"poi": "Plattform",
+	"tag_key": "highway",
+	"tag_value": "platform"
+},
+{
+	"poi": "Spielwarenladen",
+	"tag_key": "shop",
+	"tag_value": "toys"
+},
+{
+	"poi": "aufgelassene Bahnstrecken",
+	"tag_key": "railway",
+	"tag_value": "abandoned"
+},
+{
+	"poi": "Baum",
+	"tag_key": "natural",
+	"tag_value": "tree"
+},
+{
+	"poi": "Küstenlinie",
+	"tag_key": "natural",
+	"tag_value": "coastline"
+},
+{
+	"poi": "Untiefe",
+	"tag_key": "natural",
+	"tag_value": "shoal"
+},
+{
+	"poi": "Jugendherberge",
+	"tag_key": "tourism",
+	"tag_value": "hostel"
+},
+{
+	"poi": "Schnellimbisse",
+	"tag_key": "amenity",
+	"tag_value": "fast_food"
+},
+{
+	"poi": "Strand",
+	"tag_key": "natural",
+	"tag_value": "beach"
+},
+{
+	"poi": "Copyshop",
+	"tag_key": "shop",
+	"tag_value": "copyshop"
+},
+{
+	"poi": "Metzgereien",
+	"tag_key": "shop",
+	"tag_value": "butcher"
+},
+{
+	"poi": "Cafes",
+	"tag_key": "amenity",
+	"tag_value": "cafe"
+},
+{
+	"poi": "Weingüter",
+	"tag_key": "landuse",
+	"tag_value": "vineyard"
+},
+{
+	"poi": "Taxistand",
+	"tag_key": "amenity",
+	"tag_value": "taxi"
+},
+{
+	"poi": "Schlösser",
+	"tag_key": "historic",
+	"tag_value": "castle"
+},
+{
+	"poi": "Schiffswrack",
+	"tag_key": "historic",
+	"tag_value": "wreck"
+},
+{
+	"poi": "Garage",
+	"tag_key": "building",
+	"tag_value": "garage"
+},
+{
+	"poi": "Fahrradgeschäfte",
+	"tag_key": "shop",
+	"tag_value": "bicycle"
+},
+{
+	"poi": "Treppe",
+	"tag_key": "highway",
+	"tag_value": "steps"
+},
+{
+	"poi": "öffentliche Gebäude",
+	"tag_key": "building",
+	"tag_value": "public"
+},
+{
+	"poi": "Bahnsteig",
+	"tag_key": "railway",
+	"tag_value": "platform"
+},
+{
+	"poi": "Bars",
+	"tag_key": "amenity",
+	"tag_value": "bar"
+},
+{
+	"poi": "Radwege",
+	"tag_key": "highway",
+	"tag_value": "cycleway"
+},
+{
+	"poi": "Recyclingeinrichtungen",
+	"tag_key": "amenity",
+	"tag_value": "recycling"
+},
+{
+	"poi": "Hochschule",
+	"tag_key": "amenity",
+	"tag_value": "college"
+},
+{
+	"poi": "Ärztehäuser",
+	"tag_key": "amenity",
+	"tag_value": "clinic"
+},
+{
+	"poi": "Reisebüro",
+	"tag_key": "shop",
+	"tag_value": "travel_agency"
+},
+{
+	"poi": "Universitätsgebäude",
+	"tag_key": "building",
+	"tag_value": "university"
+},
+{
+	"poi": "Wohnblöcke",
+	"tag_key": "building",
+	"tag_value": "apartments"
+},
+{
+	"poi": "Einschienenbahn",
+	"tag_key": "railway",
+	"tag_value": "monorail"
+},
+{
+	"poi": "Baumarkt",
+	"tag_key": "shop",
+	"tag_value": "doityourself"
+},
+{
+	"poi": "Feuerwehr",
+	"tag_key": "amenity",
+	"tag_value": "fire_station"
+},
+{
+	"poi": "Salons",
+	"tag_key": "shop",
+	"tag_value": "salon"
+},
+{
+	"poi": "Gebirgspässe",
+	"tag_key": "mountain_pass",
+	"tag_value": "yes"
+},
+{
+	"poi": "Gaststätten",
+	"tag_key": "amenity",
+	"tag_value": "restaurant"
+},
+{
+	"poi": "Schulen",
+	"tag_key": "amenity",
+	"tag_value": "school"
+},
+{
+	"poi": "Apotheken",
+	"tag_key": "amenity",
+	"tag_value": "pharmacy"
+},
+{
+	"poi": "Arzt",
+	"tag_key": "amenity",
+	"tag_value": "doctors"
+},
+{
+	"poi": "Drogerie",
+	"tag_key": "shop",
+	"tag_value": "chemist"
+},
+{
+	"poi": "Kioske",
+	"tag_key": "shop",
+	"tag_value": "kiosk"
+},
+{
+	"poi": "Eisenwarenhändler",
+	"tag_key": "shop",
+	"tag_value": "hardware"
+},
+{
+	"poi": "Fahrschule",
+	"tag_key": "amenity",
+	"tag_value": "driving_school"
+},
+{
+	"poi": "Tante-Emma-Läden",
+	"tag_key": "shop",
+	"tag_value": "convenience"
+},
+{
+	"poi": "Autobahnkreuze",
+	"tag_key": "highway",
+	"tag_value": "motorway_junction"
+},
+{
+	"poi": "Computergeschäft",
+	"tag_key": "shop",
+	"tag_value": "computer"
+},
+{
+	"poi": "Gasthaus",
+	"tag_key": "amenity",
+	"tag_value": "restaurant"
+},
+{
+	"poi": "Seilbahn",
+	"tag_key": "railway",
+	"tag_value": "funicular"
+},
+{
+	"poi": "Meere",
+	"tag_key": "place",
+	"tag_value": "sea"
+},
+{
+	"poi": "Fernverkehrsstraßen",
+	"tag_key": "highway",
+	"tag_value": "trunk"
+},
+{
+	"poi": "Hotel",
+	"tag_key": "tourism",
+	"tag_value": "hotel"
+},
+{
+	"poi": "Eisdielen",
+	"tag_key": "amenity",
+	"tag_value": "ice_cream"
+},
+{
+	"poi": "Bushaltestelle",
+	"tag_key": "highway",
+	"tag_value": "bus_stop"
+},
+{
+	"poi": "Brachflächen",
+	"tag_key": "landuse",
+	"tag_value": "brownfield"
+},
+{
+	"poi": "Rennstrecken",
+	"tag_key": "leisure",
+	"tag_value": "track"
+},
+{
+	"poi": "Steinbruch",
+	"tag_key": "landuse",
+	"tag_value": "quarry"
+},
+{
+	"poi": "Motorradgeschäfte",
+	"tag_key": "shop",
+	"tag_value": "motorcycle"
+},
+{
+	"poi": "Unterhaltungselektronikladen",
+	"tag_key": "shop",
+	"tag_value": "hifi"
+},
+{
+	"poi": "Müllhalde",
+	"tag_key": "landuse",
+	"tag_value": "landfill"
+},
+{
+	"poi": "Vulkan",
+	"tag_key": "natural",
+	"tag_value": "volcano"
+},
+{
+	"poi": "Tankstellen",
+	"tag_key": "amenity",
+	"tag_value": "fuel"
+},
+{
+	"poi": "Entwässerungsgraben",
+	"tag_key": "waterway",
+	"tag_value": "drain"
+},
+{
+	"poi": "Feuchtgebiet",
+	"tag_key": "natural",
+	"tag_value": "wetland"
+},
+{
+	"poi": "Sexshops",
+	"tag_key": "shop",
+	"tag_value": "erotic"
+},
+{
+	"poi": "Gedenkstätte",
+	"tag_key": "historic",
+	"tag_value": "memorial"
+},
+{
+	"poi": "Nebenstraße",
+	"tag_key": "highway",
+	"tag_value": "minor"
+},
+{
+	"poi": "Einkaufszentrum",
+	"tag_key": "shop",
+	"tag_value": "shopping_centre"
+},
+{
+	"poi": "Saunen",
+	"tag_key": "amenity",
+	"tag_value": "sauna"
+},
+{
+	"poi": "Fernverkehrsstraße",
+	"tag_key": "highway",
+	"tag_value": "trunk"
+},
+{
+	"poi": "Stromschnellen",
+	"tag_key": "waterway",
+	"tag_value": "rapids"
+},
+{
+	"poi": "Autobahnraststätten",
+	"tag_key": "highway",
+	"tag_value": "services"
+},
+{
+	"poi": "Hofläden",
+	"tag_key": "shop",
+	"tag_value": "farm"
+},
+{
+	"poi": "Wald",
+	"tag_key": "natural",
+	"tag_value": "wood"
+},
+{
+	"poi": "Möbelgeschäft",
+	"tag_key": "shop",
+	"tag_value": "furniture"
+},
+{
+	"poi": "Textilreinigungen",
+	"tag_key": "shop",
+	"tag_value": "dry_cleaning"
+},
+{
+	"poi": "Golfplätze",
+	"tag_key": "leisure",
+	"tag_value": "golf_course"
+},
+{
+	"poi": "Kanal",
+	"tag_key": "waterway",
+	"tag_value": "canal"
+},
+{
+	"poi": "Aussichtspunkte",
+	"tag_key": "tourism",
+	"tag_value": "viewpoint"
+},
+{
+	"poi": "Wegkreuz",
+	"tag_key": "historic",
+	"tag_value": "wayside_cross"
+},
+{
+	"poi": "Modegeschäft",
+	"tag_key": "shop",
+	"tag_value": "fashion"
+},
+{
+	"poi": "Museen",
+	"tag_key": "tourism",
+	"tag_value": "museum"
+},
+{
+	"poi": "Geröll",
+	"tag_key": "natural",
+	"tag_value": "scree"
+},
+{
+	"poi": "Schnellimbiss",
+	"tag_key": "amenity",
+	"tag_value": "fast_food"
+},
+{
+	"poi": "Hof",
+	"tag_key": "landuse",
+	"tag_value": "farmyard"
+},
+{
+	"poi": "Apotheke",
+	"tag_key": "amenity",
+	"tag_value": "pharmacy"
+},
+{
+	"poi": "Tattoo-Studio",
+	"tag_key": "shop",
+	"tag_value": "tattoo"
+},
+{
+	"poi": "Kapellen",
+	"tag_key": "building",
+	"tag_value": "chapel"
+},
+{
+	"poi": "Parks",
+	"tag_key": "leisure",
+	"tag_value": "park"
+},
+{
+	"poi": "Waschsalons",
+	"tag_key": "shop",
+	"tag_value": "laundry"
+},
+{
+	"poi": "Toiletten",
+	"tag_key": "amenity",
+	"tag_value": "toilets"
+},
+{
+	"poi": "Ortschaften",
+	"tag_key": "place",
+	"tag_value": "locality"
+},
+{
+	"poi": "Autowaschanlagen",
+	"tag_key": "amenity",
+	"tag_value": "car_wash"
+},
+{
+	"poi": "Postamt",
+	"tag_key": "amenity",
+	"tag_value": "post_office"
+},
+{
+	"poi": "Bundesland",
+	"tag_key": "place",
+	"tag_value": "state"
+},
+{
+	"poi": "Haus",
+	"tag_key": "place",
+	"tag_value": "house"
+},
+{
+	"poi": "Eisenbahnkreuzungs",
+	"tag_key": "railway",
+	"tag_value": "level_crossing"
+},
+{
+	"poi": "Gericht",
+	"tag_key": "amenity",
+	"tag_value": "courthouse"
+},
+{
+	"poi": "Galerie",
+	"tag_key": "shop",
+	"tag_value": "art"
+},
+{
+	"poi": "Gedenkstätten",
+	"tag_key": "historic",
+	"tag_value": "memorial"
+},
+{
+	"poi": "Reitwege",
+	"tag_key": "highway",
+	"tag_value": "bridleway"
+},
+{
+	"poi": "Pflegeheime",
+	"tag_key": "amenity",
+	"tag_value": "nursing_home"
+},
+{
+	"poi": "Plattformen",
+	"tag_key": "highway",
+	"tag_value": "platform"
+},
+{
+	"poi": "Grenzsteine",
+	"tag_key": "historic",
+	"tag_value": "boundary_stone"
+},
+{
+	"poi": "Kneipe",
+	"tag_key": "amenity",
+	"tag_value": "pub"
+},
+{
+	"poi": "Berghütten",
+	"tag_key": "tourism",
+	"tag_value": "alpine_hut"
+},
+{
+	"poi": "Spielstraßen",
+	"tag_key": "highway",
+	"tag_value": "living_street"
+},
+{
+	"poi": "Monument",
+	"tag_key": "historic",
+	"tag_value": "monument"
+},
+{
+	"poi": "Aufgelassener Kanal",
+	"tag_key": "waterway",
+	"tag_value": "derelict_canal"
+},
+{
+	"poi": "Autoteilehändlers",
+	"tag_key": "shop",
+	"tag_value": "car_parts"
+},
+{
+	"poi": "Mülleimer",
+	"tag_key": "amenity",
+	"tag_value": "waste_basket"
+},
+{
+	"poi": "Dojang",
+	"tag_key": "amenity",
+	"tag_value": "dojo"
+},
+{
+	"poi": "Einzelhandelsgebäude",
+	"tag_key": "building",
+	"tag_value": "retail"
+},
+{
+	"poi": "Anliegerstraßen",
+	"tag_key": "highway",
+	"tag_value": "service"
+},
+{
+	"poi": "Dörfer",
+	"tag_key": "place",
+	"tag_value": "village"
+},
+{
+	"poi": "Ärztezentren",
+	"tag_key": "amenity",
+	"tag_value": "clinic"
+},
+{
+	"poi": "Tierhandlungen",
+	"tag_key": "shop",
+	"tag_value": "pet"
+},
+{
+	"poi": "Gärtnereien",
+	"tag_key": "shop",
+	"tag_value": "garden_centre"
+},
+{
+	"poi": "Stadt",
+	"tag_key": "place",
+	"tag_value": "town"
+},
+{
+	"poi": "Minigolf",
+	"tag_key": "leisure",
+	"tag_value": "miniature_golf"
+},
+{
+	"poi": "Parfümerie",
+	"tag_key": "shop",
+	"tag_value": "beauty"
+},
+{
+	"poi": "Gerichte",
+	"tag_key": "amenity",
+	"tag_value": "courthouse"
+},
+{
+	"poi": "Feinkostläden",
+	"tag_key": "shop",
+	"tag_value": "deli"
+}
+]
+}
