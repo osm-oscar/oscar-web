@@ -295,7 +295,8 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 					"sortorder" : "desc",
 					"page": "1",
 					"rp" : "10"
-				}
+				},
+				timeout : 2000
 			};
 			var idx = query.indexOf(":");
 			var key = (idx >= 0 ? query.slice(0, idx) : query);
@@ -332,24 +333,40 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 				response( result );
 			};
 			settings["error"] = function (jqXHR, textStatus, errorThrown) {
-				tools.defErrorCB(textStatus, errorThrown);
+				response([])
+				// tools.defErrorCB(textStatus, errorThrown);
 			}
 			jQuery.ajax(settings);
 		}
     };
 
-	jQuery.ajax({
-		type: "GET",
-		url: "data/tag-completion/en.json",
-		mimeType: "application/json",
-		success: function (jsondesc) {
-			data.specialphrases = jsondesc;
-			data.specialphrases.base.forEach(t => t.poiPrepared = fuzzysort.prepare(t.poi))
-		},
-		error: function (jqXHR, textStatus, errorThrown) {
-			errorCB(textStatus, errorThrown);
+	var languageName = window.navigator.userLanguage || window.navigator.language;
+	languageName = languageName.substr(0, 2);
+	
+	var retrieve_specialphrases = function (lang, successCB, errorCB) {
+		jQuery.ajax({
+			type: "GET",
+			url: "data/tag-completion/" + lang + ".json",
+			mimeType: "application/json",
+			success: function (jsondesc) {
+				successCB(jsondesc)
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				errorCB(textStatus, errorThrown);
+			}
+		});
+	};
+
+	var parse_specialphrases = function(jsondesc) {
+		search.data.specialphrases = jsondesc;
+		search.data.specialphrases.base.forEach(t => t.poiPrepared = fuzzysort.prepare(t.poi))
+	}
+
+	retrieve_specialphrases(languageName, parse_specialphrases, 
+		function(textStatus, errorThrown) {
+			retrieve_specialphrases("en", parse_specialphrases, defErrorCB)
 		}
-	});
+	);
 
 	return search;
 });
