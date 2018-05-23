@@ -47,12 +47,25 @@ void KVClustering::get() {
 	}
 	cqr = m_dataPtr->completer->cqrComplete(cqs, sg, m_dataPtr->treedCQR);
 	uint32_t itemCount = cqr.maxItems();
+
+	uint32_t n = 0;
 	
-	
-	
+
 	
 	std::ostream & out = response().out();
-	
+
+
+	for(sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it){
+		for(uint32_t x : it.idx()) {
+			auto item = store.at(x);
+			out << item.id() << ";";
+			for (uint32_t i = 0; i < item.size(); ++i) {
+				out << item.key(i) << "=" << item.value(i) << ";";
+			}
+		}
+
+	}
+
 	ttm.end();
 	writeLogStats("get", cqs, ttm, cqr.cellCount(), itemCount);
 }
