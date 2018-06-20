@@ -169,6 +169,20 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 	
+	{ //preload data
+		std::vector<std::string> fns = dbfile.get< std::vector<std::string> >("preload", std::vector<std::string>());
+		for(const std::string & fn : fns) {
+			auto fc = liboscar::fileConfigFromString(fn);
+			if (fc != liboscar::FC_INVALID) {
+				auto d = data.completer->data(fc);
+				d.advice(sserialize::UByteArrayAdapter::AT_LOAD, d.size());
+			}
+			else {
+				std::cerr << "preload: invalid file spec: " << fn << std::endl;
+			}	
+		}
+	}
+	
 	if (data.completer->indexStore().indexTypes() & sserialize::ItemIndex::T_MULTIPLE) {
 		std::cerr << "Index store with different index types are not supported" << std::endl;
 		return -1;

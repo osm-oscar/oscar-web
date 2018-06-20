@@ -32,7 +32,8 @@
             "geotextcompleter" : 0,
             "geocompleter" : 0,
 	    	"treedCQR" : true,
-			"treedCQRThreads": 8
+			"treedCQRThreads": 8,
+			"preload" : ["index", "kvstore", "textsearch"]
         },
     "ghfilters" :
 		[
