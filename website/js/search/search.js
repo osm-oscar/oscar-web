@@ -99,8 +99,10 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
             window.history.pushState({"q": myRealQuery}, undefined, location.pathname + "?q=" + encodeURIComponent(myRealQuery));
 
             //lift-off
+			var spinnerId = state.startLoadingSpinner();
             callFunc(myRealQuery,
                 function (cqr) {
+					state.endLoadingSpinner(spinnerId);
                     //orbit reached, iniate coupling with user
                     if (state.queries.lastReturned < myQueryCounter) {
                         state.queries.lastReturned = myQueryCounter + 0;
@@ -116,6 +118,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
                     }
                 },
                 function (jqXHR, textStatus, errorThrown) {
+					state.endLoadingSpinner(spinnerId);
                     //BOOM!
                     alert("Failed to retrieve completion results. textstatus=" + textStatus + "; errorThrown=" + errorThrown);
                 });

@@ -1,4 +1,4 @@
-define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], function ($, tools, state, spinner, oscar, dag, storage) {
+define(["jquery", "tools", "state", "oscar", "dag", "storage"], function ($, tools, state, oscar, dag, storage) {
 	var regionChildrenExpander = storage.IndexedDataStore();
 	
 	regionChildrenExpander.m_cfg = {
@@ -512,7 +512,6 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 			//if cb is called, all relevant items should be in the cache
 			//items2FetchPerCell is currently unsupported
 			expandCellItems: function(cellIds, cb, items2FetchPerCell) {
-				spinner.startLoadingSpinner();
 				if (! $.isArray(cellIds) ) {
 					cellIds = [parseInt(cellIds)];
 				}
@@ -520,8 +519,9 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				for(let cellId of cellIds) {
 					request.push({cellId: parseInt(cellId), count: items2FetchPerCell}); 
 				}
+				var spinnerId = state.startLoadingSpinner();
 				this.cellItemExpander.fetch(function() {
-					spinner.endLoadingSpinner();
+					state.endLoadingSpinner(spinnerId);
 					cb();
 				}, request);
 			},
@@ -530,9 +530,9 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				if (! $.isArray(regionIds) ) {
 					regionIds = [parseInt(regionIds)];
 				}
-				spinner.startLoadingSpinner();
+				var spinnerId = state.startLoadingSpinner();
 				this.regionCellExpander.fetch(function() {
-					spinner.endLoadingSpinner();
+					state.endLoadingSpinner(spinnerId);
 					cb();
 				}, regionIds);
 			},
@@ -541,9 +541,9 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				if (! $.isArray(regionIds) ) {
 					regionIds = [parseInt(regionIds)];
 				}
-				spinner.startLoadingSpinner();
+				var spinnerId = state.startLoadingSpinner();
 				this.regionChildrenExpander.fetch(function() {
-					spinner.endLoadingSpinner();
+					state.endLoadingSpinner(spinnerId);
 					cb();
 				}, regionIds);
 			},
@@ -552,9 +552,9 @@ define(["jquery", "tools", "state", "spinner", "oscar", "dag", "storage"], funct
 				if (! $.isArray(cellIds) ) {
 					cellIds = [parseInt(cellIds)];
 				}
-				spinner.startLoadingSpinner();
+				var spinnerId = state.startLoadingSpinner();
 				this.cellDataFetcher.fetch(function() {
-					spinner.endLoadingSpinner();
+					state.endLoadingSpinner(spinnerId);
 					cb();
 				}, cellIds);
 			}

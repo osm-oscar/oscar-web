@@ -7,7 +7,6 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
         dag: dag.dag(),
         sidebar: undefined,
         handler: undefined,
-        loadingtasks: 0,
         cqr: {},
         cqrRegExp: undefined,
         queries: {
@@ -16,6 +15,11 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
             lastSubmited: 0,
             lastQuery: "",
             queryInBound: false
+        },
+        spinner : {
+            widget: new spinner(config.spinnerOpts),
+            loadingtasks: 0,
+            seqId: 0
         },
         timers: {
             spatialquery: undefined,
@@ -129,6 +133,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
         },
 
         clearViews: function () {
+            state.resetLoadingSpinner();
             state.mapHandler.clear();
 			state.items.activeItem = undefined;
 			state.items.inspectItem = undefined;
@@ -155,7 +160,59 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
 			search_text.val(qstr);
 			search_text.focus();
 		},
-        
+        /**
+         * displays the spinner
+         */
+        displayLoadingSpinner: function () {
+            if (state.timers.loadingSpinner !== undefined) {
+                clearTimeout(state.timers.loadingSpinner);
+                state.timers.loadingSpinner = undefined;
+            }
+            if (state.spinner.loadingtasks > 0) {
+                var target = document.getElementById('loader'); // TODO: use jquery
+                state.spinner.widget.spin(target);
+            }
+        },
+
+        /**
+         * start the loading spinner, which displays after a timeout the spinner
+         */
+        startLoadingSpinner: function () {
+            if (state.timers.loadingSpinner === undefined) {
+                state.timers.loadingSpinner = setTimeout(state.displayLoadingSpinner, config.timeouts.loadingSpinner);
+            }
+            state.spinner.loadingtasks += 1;
+            return state.spinner.seqId;
+        },
+
+        /**
+         * ends a spinner instance
+         */
+        endLoadingSpinner: function (spinnerId) {
+            if (spinnerId != state.spinner.seqId) {
+                return;
+            }
+            if (state.spinner.loadingtasks === 1) {
+                state.spinner.loadingtasks = 0;
+                if (state.timers.loadingSpinner !== undefined) {
+                    clearTimeout(state.timers.loadingSpinner);
+                    state.timers.loadingSpinner = undefined;
+                }
+                state.spinner.widget.stop();
+            }
+            else {
+                state.spinner.loadingtasks -= 1;
+            }
+        },
+        resetLoadingSpinner: function() {
+            if (state.timers.loadingSpinner !== undefined) {
+                clearTimeout(state.timers.loadingSpinner);
+                state.timers.loadingSpinner = undefined;
+            }
+            state.spinner.seqId += 1;
+            state.spinner.loadingtasks = 0;
+            state.spinner.widget.stop();
+        }
     };
 
     return state;

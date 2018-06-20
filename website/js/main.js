@@ -34,7 +34,6 @@ requirejs.config({
         "jbinary": "vendor/jbinary/jbinary",
 		//and now our own stuff
         "sidebar": "js/leaflet-sidebar/js/leaflet-sidebar",
-        "spinner": "js/spinner/spinner",
         "sserialize": "js/sserialize/sserialize",
         "oscar": "js/oscar/oscar",
 		"storage": "js/storage/storage",

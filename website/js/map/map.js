@@ -1,7 +1,6 @@
 //This module handles most stuff associated with the map-gui. It HAS to be a singleton!
-define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "spinner", "leaflet", "leafletCluster", "awesomeMarkers", "dag", "dagexp", "leafletBing"],
+define(["require", "state", "jquery", "conf", "oscar", "flickr", "tools", "tree", "bootstrap", "leaflet", "leafletCluster", "awesomeMarkers", "dag", "dagexp", "leafletBing"],
 function (require, state, $, config, oscar, flickr, tools, tree) {
-    var spinner = require("spinner");
 	var L = require("leaflet");
 	var dag = require("dag");
 	var dagexp = require("dagexp");
@@ -2286,9 +2285,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		//it then hand everything off to mapViewChanged
 		startClustering: function() {
 			var cqr = state.cqr;
-			spinner.startLoadingSpinner();
+			var spinnerId = state.startLoadingSpinner();
 			map.dagExpander.expandRegionChildren(([0xFFFFFFFF]).concat(cqr.ohPath()), function() {
-				spinner.endLoadingSpinner();
+				state.endLoadingSpinner(spinnerId);
 				//everything is there
 				var rid = 0xFFFFFFFF;
 				// fit the viewport to the target region
@@ -2359,12 +2358,12 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
         minZoom: 0,
         maxZoom: 22
     });
-	var bingLayer = L.tileLayer.bing(config.map.apikeys.bing);
-    var fmiLayer = L.tileLayer('https://tiles.fmi.uni-stuttgart.de/planet/{z}/{x}/{y}.png', {
-        attribution: osmAttr,
-        minZoom: 0,
-        maxZoom: 20
-    });
+	// var bingLayer = L.tileLayer.bing(config.map.apikeys.bing);
+    // var fmiLayer = L.tileLayer('https://tiles.fmi.uni-stuttgart.de/planet/{z}/{x}/{y}.png', {
+        // attribution: osmAttr,
+        // minZoom: 0,
+        // maxZoom: 20
+    // });
 	
 	//state.map.addLayer(fmiLayer); //currently not available
 	state.map.addLayer(osmLayer);
