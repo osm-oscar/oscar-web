@@ -21,6 +21,7 @@ private:
 	liboscar::Static::OsmKeyValueObjectStore m_store;
 private:
 	void writeLogStats(const std::string & fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize);
+	std::string escapeJsonString(const std::string &input);
 };
 
 

@@ -6,6 +6,7 @@
 #include <cppcms/json.h>
 #include <cppcms/util.h>
 #include <sserialize/spatial/CellQueryResult.h>
+#include <boost/algorithm/string/replace.hpp>
 
 namespace oscar_web {
 
@@ -93,23 +94,72 @@ void KVClustering::get() {
 		}
 	}
 
-	for(auto it : keyMap){
+	struct keyCountComparator
+    {
+        bool operator() (const std::pair<std::string, std::pair<std::unordered_map<std::string, uint32_t>, uint32_t>>& v1,
+                const std::pair<std::string, std::pair<std::unordered_map<std::string, uint32_t>, uint32_t>>& v2){
+            return (v1.second.second > v2.second.second);
+        }
+    };
+
+	//putting the map into a vector and sort
+	std::vector<std::pair<std::string, std::pair<std::unordered_map<std::string, uint32_t>, uint32_t>>> elems(keyMap.begin(), keyMap.end());
+	std::sort(elems.begin(), elems.end(), keyCountComparator());
+
+	//returning result in json
+    out << "{\"clustering\":[";
+    bool first0 = true;
+	for(auto it : elems){
 	    if(it.second.second > itemCount * 0.1f){
-            out << (it.first) << "{" << it.second.second << "}" << ":" << "[";
+	        if(!first0) out << ",";
+	        first0 = false;
+		    out << "{";
+            out << '"' << escapeJsonString(it.first) << '"' << ':' << "{ \"count\" : " << it.second.second << "," << "\"keys\" :" << "[";
+            bool first = true;
             for(auto ite : it.second.first){
-                out << "(" << (ite.first) << "," << (ite.second) << ")";
+                if(!first) out << ",";
+                out << '"'  << escapeJsonString(ite.first)  << '"'  << "," << '"'  << ite.second << '"';
+                first = false;
             }
-            out << "]";
+
+            out << "]}}";
 	    }
 	}
+	out << "]}";
 
 	ttm.end();
 	writeLogStats("get", cqs, ttm, cqr.cellCount(), itemCount);
 }
 
+
+
+	//ecapes strings for json source: https://stackoverflow.com/questions/7724448/simple-json-string-escape-for-c/33799784#33799784
+
+	std::string KVClustering::escapeJsonString(const std::string& input) {
+		std::ostringstream ss;
+		for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
+			//C++98/03:
+			//for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
+			switch (*iter) {
+				case '\\': ss << "\\\\"; break;
+				case '"': ss << "\\\""; break;
+				case '/': ss << "\\/"; break;
+				case '\b': ss << "\\b"; break;
+				case '\f': ss << "\\f"; break;
+				case '\n': ss << "\\n"; break;
+				case '\r': ss << "\\r"; break;
+				case '\t': ss << "\\t"; break;
+				default: ss << *iter; break;
+			}
+		}
+		return ss.str();
+	}
+
 void KVClustering::writeLogStats(const std::string& fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize) {
 	*(m_dataPtr->log) << "CQRItems::" << fn << ": t=" << tm.beginTime() << "s, rip=" << request().remote_addr() << ", q=[" << query << "], rs=" << cqrSize <<  " is=" << idxSize << ", ct=" << tm.elapsedMilliSeconds() << "ms" << std::endl;
 }
+
+
 
 
 }//end namespace oscar_web
