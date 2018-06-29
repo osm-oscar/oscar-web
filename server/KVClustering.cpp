@@ -107,23 +107,33 @@ void KVClustering::get() {
 	std::sort(elems.begin(), elems.end(), keyCountComparator());
 
 	//returning result in json
-    out << "{\"clustering\":[";
+    out << "{\"kvclustering\":[";
     bool first0 = true;
 	for(auto it : elems){
-	    if(it.second.second > itemCount * 0.1f){
-	        if(!first0) out << ",";
-	        first0 = false;
-		    out << "{";
-            out << '"' << escapeJsonString(it.first) << '"' << ':' << "{ \"count\" : " << it.second.second << "," << "\"keys\" :" << "[";
+        if(it.second.second > itemCount*0.1f) {
+            if (!first0) out << ",";
+            first0 = false;
+            out << "{";
+            out << '"' << escapeJsonString(it.first) << '"' << ':' << "{ \"count\" : " << it.second.second << ","
+                << "\"keys\" :" << "[";
+            std::int32_t others = 0;
             bool first = true;
-            for(auto ite : it.second.first){
-                if(!first) out << ",";
-                out << '"'  << escapeJsonString(ite.first)  << '"'  << "," << '"'  << ite.second << '"';
-                first = false;
+            for (auto ite : it.second.first) {
+                if (ite.second > it.second.second * 0.1f) {
+                    if (!first) out << ",";
+                    first = false;
+                    out << "{\"value\":\"" << escapeJsonString(ite.first) << '"' << "," << "\"count\":" << ite.second << "}";
+                } else {
+                    others += ite.second;
+                }
+            }
+            if(others > 0){
+                if (!first) out << ",";
+                out << "{\"value\":\"" << "others" << '"' << "," << "\"count\":" << others << "}";
             }
 
             out << "]}}";
-	    }
+        }
 	}
 	out << "]}";
 
@@ -133,7 +143,7 @@ void KVClustering::get() {
 
 
 
-	//ecapes strings for json source: https://stackoverflow.com/questions/7724448/simple-json-string-escape-for-c/33799784#33799784
+	//ecapes strings for json, source: https://stackoverflow.com/questions/7724448/simple-json-string-escape-for-c/33799784#33799784
 
 	std::string KVClustering::escapeJsonString(const std::string& input) {
 		std::ostringstream ss;
