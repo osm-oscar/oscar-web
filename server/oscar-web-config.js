@@ -22,7 +22,8 @@
 			"geocompleter" : 0, //select geocompleter
 			"treedCQR" : false //Use treed cqr calculation instead of normal one
 			"treedCQRThreads": 1, //Use this many threads for treed cqr calculation
-			"preload" : ["index", "kvstore", "textsearch"] //pre-load respective files
+			"preload" : ["index", "kvstore", "textsearch"], //pre-load respective files
+			"celldistance" : "annulus|mass|sphere|minsphere" //set the cell distance function
 		},
 	"ghfilters" :
 		[

@@ -204,6 +204,21 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 	
+	
+	std::string celldistance = dbfile.get<std::string>("celldistance", "mass");
+	if (celldistance == "annulus") {
+		data.completer->setCellDistance(liboscar::Static::OsmCompleter::CDT_ANULUS, 0);
+	}
+	else if (celldistance == "sphere") {
+		data.completer->setCellDistance(liboscar::Static::OsmCompleter::CDT_SPHERE, 0);
+	}
+	else if (celldistance == "minsphere") {
+		data.completer->setCellDistance(liboscar::Static::OsmCompleter::CDT_MIN_SPHERE, 0);
+	}
+	else {
+		data.completer->setCellDistance(liboscar::Static::OsmCompleter::CDT_CENTER_OF_MASS, 0);
+	}
+	
 	if (data.textSearchers.size()) {
 		for(const auto & x : data.textSearchers) {
 			if(!data.completer->setTextSearcher((liboscar::TextSearch::Type)x.first, x.second)) {

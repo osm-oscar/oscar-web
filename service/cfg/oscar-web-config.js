@@ -33,7 +33,8 @@
             "geocompleter" : 0,
 	    	"treedCQR" : true,
 			"treedCQRThreads": 8,
-			"preload" : ["index", "kvstore", "textsearch"]
+			"preload" : ["index", "kvstore", "textsearch"],
+			"celldistance" : "mass"
         },
     "ghfilters" :
 		[
