@@ -12,6 +12,15 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 	
 	var data = {
 		specialphrases: encompletion,
+		operators: {
+			"in" : ":in",
+			"near" : ":near",
+			"north of" : ":north-of",
+			"east of" : ":east-of",
+			"south of" : ":south-of",
+			"west of" : ":west-of",
+			"between" : ":between"
+		}
 	}
 	var search = {
 		data : data,
@@ -51,8 +60,8 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
         doCompletion: function () {
             if ($("#search_text").val() === state.queries.lastQuery) {
                 return;
-            }
-            state.clearViews();
+			}
+			state.clearViews();
 
             $("#showCategories a").click();
             state.sidebar.open("search");
@@ -98,7 +107,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
             //push our query as history state
             window.history.pushState({"q": myRealQuery}, undefined, location.pathname + "?q=" + encodeURIComponent(myRealQuery));
 
-            //lift-off
+			//lift-off
 			var spinnerId = state.startLoadingSpinner();
             callFunc(myRealQuery,
                 function (cqr) {
@@ -119,7 +128,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
                 },
                 function (jqXHR, textStatus, errorThrown) {
 					state.endLoadingSpinner(spinnerId);
-                    //BOOM!
+					//BOOM!
                     alert("Failed to retrieve completion results. textstatus=" + textStatus + "; errorThrown=" + errorThrown);
                 });
         },

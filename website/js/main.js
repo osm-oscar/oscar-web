@@ -92,7 +92,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 				state.setQuery(this.firstChild.data.trim());
             });
         });
-
+        $("#sidebar-pane-legal").load('template/legal.html');
         $(document).ready(function () {
             $("#tree").resizable();
 
