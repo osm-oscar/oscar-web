@@ -1,0 +1,4 @@
+.fa-paragraph:before {
+    font-weight: bold;
+    content: '§';
+}
