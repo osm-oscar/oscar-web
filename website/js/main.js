@@ -47,7 +47,8 @@ requirejs.config({
         "query": "js/query/query",
         "search": "js/search/search",
 		"dag": "js/dag/dag",
-		"dagexp" : "js/dag/dagexp"
+		"dagexp" : "js/dag/dagexp",
+        "kv-clustering" : "js/kv-clustering/kv-clustering"
     },
     shim: {
         'bootstrap': {deps: ['jquery']},
@@ -60,7 +61,7 @@ requirejs.config({
     waitSeconds: 20
 });
 
-requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf",  "switch", "state", "map", "tree", "query", "tools", "search"],
+requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf",  "switch", "state", "map", "tree", "query", "tools", "search", "kv-clustering"],
     function () {
         var L = require("leaflet");
 		var jQuery = require("jquery");
@@ -76,6 +77,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         var query = require("query");
 		var tools = require("tools");
         var search = require("search");
+        var kvClustering = require("kv-clustering");
 		
 		//set the map handler
 		state.mapHandler = map;
@@ -103,6 +105,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 e.preventDefault();
 				$("#search_text").autocomplete("close");
                 search.instantCompletion();
+                kvClustering.fillTable();
             });
 			search.bindTagCompletion('#search_text');
 			
