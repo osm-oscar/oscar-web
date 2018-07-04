@@ -57,7 +57,7 @@ void KVClustering::get() {
 
 	//count all key value pairs like described in BA_Benjamin_Kopf_2017 4.1
 	//keyMap has the key as key and an (unordered_map, int) pair as value. the unordered_pair contains the values and the count of each value. the int counts in how many items the key is present.
-	auto keyMap = std::unordered_map<std::string, std::pair<std::unordered_map<std::string, uint32_t>, uint32_t >>();
+	auto keyMap = std::unordered_map<std::uint32_t, std::pair<std::unordered_map<std::uint32_t , uint32_t>, std::uint32_t >>();
 
 	//iterate over all query result items
 	for(sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it){
@@ -65,11 +65,11 @@ void KVClustering::get() {
 			auto item = store.at(x);
 			//iterate over all item keys
 			for (uint32_t i = 0; i < item.size(); ++i) {
-			    auto keySearch = keyMap.find(item.key(i));
+			    auto keySearch = keyMap.find(item.keyId(i));
 			    if(keySearch == keyMap.end()){
 			        //key is not present in keyMap
-                    auto valueMap = std::unordered_map<std::string, uint32_t>();
-                    auto keyMapPair = std::make_pair(item.key(i), std::make_pair(valueMap, 1));
+                    auto valueMap = std::unordered_map<std::uint32_t, uint32_t>();
+                    auto keyMapPair = std::make_pair(item.keyId(i), std::make_pair(valueMap, 1));
                     keyMap.emplace(keyMapPair);
 			    } else {
 			        //key is present
@@ -77,17 +77,17 @@ void KVClustering::get() {
                     (keySearch -> second).second++;
 			    }
 			    //fetch the updated key
-			    keySearch = keyMap.find(item.key(i));
+			    keySearch = keyMap.find(item.keyId(i));
 
 			    //try to find the value in the valueMap
-			    auto valueSearch = keySearch -> second.first.find(item.value(i));
+			    auto valueSearch = keySearch -> second.first.find(item.valueId(i));
 			    if(valueSearch != keySearch -> second.first.end()){
 			        //value found -> increment count
 			    	valueSearch -> second++;
 			    }
 			    else{
 			        //value not found -> insert it
-			    	auto valueCountPair = std::make_pair(item.value(i), 1);
+			    	auto valueCountPair = std::make_pair(item.valueId(i), 1);
                     keySearch -> second.first.emplace(valueCountPair);
 			    }
 			}
@@ -96,14 +96,14 @@ void KVClustering::get() {
 
 	struct keyCountComparator
     {
-        bool operator() (const std::pair<std::string, std::pair<std::unordered_map<std::string, uint32_t>, uint32_t>>& v1,
-                const std::pair<std::string, std::pair<std::unordered_map<std::string, uint32_t>, uint32_t>>& v2){
+        bool operator() (const std::pair<std::uint32_t , std::pair<std::unordered_map<std::uint32_t , uint32_t>, uint32_t>>& v1,
+                const std::pair<std::uint32_t , std::pair<std::unordered_map<std::uint32_t , uint32_t>, uint32_t>>& v2){
             return (v1.second.second > v2.second.second);
         }
     };
 
 	//putting the map into a vector and sort
-	std::vector<std::pair<std::string, std::pair<std::unordered_map<std::string, uint32_t>, uint32_t>>> elems(keyMap.begin(), keyMap.end());
+	std::vector<std::pair<std::uint32_t , std::pair<std::unordered_map<std::uint32_t , uint32_t>, uint32_t>>> elems(keyMap.begin(), keyMap.end());
 	std::sort(elems.begin(), elems.end(), keyCountComparator());
 
 	//returning result in json
@@ -114,7 +114,7 @@ void KVClustering::get() {
             if (!first0) out << ",";
             first0 = false;
             out << "{";
-            out << "\"name\":" << '"' << escapeJsonString(it.first) << '"' << ',' << " \"count\" : " << it.second.second << ","
+            out << "\"name\":" << '"' << escapeJsonString(store.keyStringTable().at(it.first)) << '"' << ',' << " \"count\" : " << it.second.second << ","
                 << "\"clValues\" :" << "[";
             std::int32_t others = 0;
             bool first = true;
@@ -122,7 +122,7 @@ void KVClustering::get() {
                 if (ite.second > it.second.second * 0.1f) {
                     if (!first) out << ",";
                     first = false;
-                    out << R"({"name":")" << escapeJsonString(ite.first) << '"' << "," << "\"count\":" << ite.second << "}";
+                    out << R"({"name":")" << escapeJsonString(store.valueStringTable().at(ite.first)) << '"' << "," << "\"count\":" << ite.second << "}";
                 } else {
                     others += ite.second;
                 }
