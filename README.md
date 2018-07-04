@@ -19,3 +19,12 @@ an additional search field, that queries the [taginfo](http://taginfo.openstreet
 ## Used libraries
 
 - A lot! Take a look into website/vendor folder
+
+## Builds
+
+### Ultra builds
+CMAKE_GCC_VERSION_FOR_LTO=6 cmake ../ -DCMAKE_BUILD_TYPE=ultra
+
+Replace 6 with an appropriate version
+
+
