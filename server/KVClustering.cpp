@@ -57,6 +57,7 @@ void KVClustering::get() {
 
 	auto keyValueMap = std::unordered_map<std::uint64_t, std::uint32_t>();
 
+	auto keyMap = std::unordered_map<std::uint32_t, std::pair<std::uint32_t, std::vector<std::uint32_t >>>();
 
 
 	//iterate over all query result items
@@ -65,12 +66,11 @@ void KVClustering::get() {
 			auto item = store.at(x);
 			//iterate over all item keys
 			for (uint32_t i = 0; i < item.size(); ++i) {
-			    //combine two ids into one
-			    uint32_t  key = item.keyId(i);
+			    //combine valueId and keyId into one
+			    uint32_t key = item.keyId(i);
 			    uint32_t value = item.valueId(i);
-			    uint64_t  keyValue = ((uint64_t)item.keyId(i)) << 32;
+			    uint64_t keyValue = ((uint64_t)item.keyId(i)) << 32;
 			    keyValue += item.valueId(i);
-
 
 			    std::unordered_map<std::uint64_t, std::uint32_t>::const_iterator keyValueSearch = keyValueMap.find(keyValue);
 			    if(keyValueSearch == keyValueMap.end()){
@@ -86,7 +86,6 @@ void KVClustering::get() {
 		}
 	}
 
-	auto keyMap = std::unordered_map<std::uint32_t, std::pair<std::uint32_t, std::vector<std::pair<std::uint32_t, std::uint32_t >>>>();
 
 	for(auto keyValue : keyValueMap){
 		auto value = (uint32_t) keyValue.first;
