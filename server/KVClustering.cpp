@@ -73,15 +73,7 @@ void KVClustering::get() {
 			    keyValue += item.valueId(i);
 
 			    std::unordered_map<std::uint64_t, std::uint32_t>::const_iterator keyValueSearch = keyValueMap.find(keyValue);
-			    if(keyValueSearch == keyValueMap.end()){
-			        //keyValue is not present in keyValueMap
-                    auto keyValueMapPair = std::make_pair(keyValue, 0);
-                    keyValueMap.emplace(keyValueMapPair);
-			    } else {
-			        //key is present
-			        //increment keyValue count
-                    keyValueSearch++;
-			    }
+			    keyValueMap[keyValue]++;
 			}
 		}
 	}
@@ -91,12 +83,7 @@ void KVClustering::get() {
 		auto value = (uint32_t) keyValue.first;
 		auto key = static_cast<uint32_t>(keyValue.first >> 32);
 		uint32_t keyValueCount = keyValue.second;
-		std::unordered_map<std::uint32_t, std::pair<std::uint32_t, std::vector<std::pair<std::uint32_t, std::uint32_t >>>>::const_iterator keySearch = keyMap.find(key);
-		if(keySearch == keyMap.cend()){
-		    auto valueVector = std::vector<std::pair<std::uint32_t, std::uint32_t >>();
-		    valueVector.push_back(std::make_pair(value, keyValueCount));
-		    auto keyMapPair = std::make_pair(key, std::make_pair(keyValueCount, valueVector));
-		}
+		out << "key: " << store.keyStringTable().at(key) << "\n" << "value: " << store.valueStringTable().at(value) << "\n" << "keyValueCount: " << keyValueCount << "\n";
 	}
 
 
