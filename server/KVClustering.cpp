@@ -67,21 +67,60 @@ void KVClustering::get() {
 			auto item = store.at(x);
 			//iterate over all item keys
 			for (uint32_t i = 0; i < item.size(); ++i) {
-			    //combine valueId and keyId into one
 			    uint32_t key = item.keyId(i);
 			    uint32_t value = item.valueId(i);
 			    auto keyValuePair = std::make_pair(key, value);
+			    //make_pair is faster
 			    //uint64_t keyValuePair = ((uint64_t)item.keyId(i)) << 32;
 			    //keyValuePair += item.valueId(i);
+                auto keyValueSearch = keyValueCountMap.find(keyValuePair);
+                if(keyValueSearch == keyValueCountMap.cend())
+                    keyValueMap[key].push_back(value);
 
-			    keyValueCountMap[keyValuePair]++;
+                keyValueCountMap[keyValuePair]++;
+
 			    keyCountMap[key]++;
-			    keyValueMap[key].push_back(value);
 
 			}
 		}
 	}
 
+	out << "{\"kvclustering\":[";
+	bool first0 = true;
+	for(const auto &keyValue : keyValueMap){
+        uint32_t keyId = keyValue.first;
+        std::vector<uint32_t> valueVector = keyValue.second;
+        std::uint32_t keyCount = keyCountMap[keyId];
+        if (keyCount > itemCount*0.1f && keyCount > 1) {
+            if (!first0) out << ",";
+            first0 = false;
+            out << "{";
+            out << "\"name\":" << '"' << escapeJsonString(store.keyStringTable().at(keyId)) << '"' << ',' << " \"count\" : " << keyCountMap.at(keyId) << ","
+                << "\"clValues\" :" << "[";
+            std::int32_t others = 0;
+
+            bool first = true;
+
+            for(uint32_t valueId: valueVector){
+                auto keyValuePair = std::make_pair(keyId, valueId);
+                uint32_t valueCount = keyValueCountMap.at(keyValuePair);
+                if(valueCount > keyCount*0.1f){
+                    if (!first) out << ",";
+                    first = false;
+                    out << R"({"name":")" << escapeJsonString(store.valueStringTable().at(valueId)) << '"' << "," << "\"count\":" << valueCount << "}";
+                } else {
+                    others += valueCount;
+                }
+            }
+            if(others > 0){
+                if (!first) out << ",";
+                out << R"({"name":")" << "others" << '"' << "," << "\"count\":" << others << "}";
+            }
+            out << "]}";
+        }
+	}
+
+    out << "]}";
 
 	ttm.end();
 	writeLogStats("get..", cqs, ttm, cqr.cellCount(), itemCount);
