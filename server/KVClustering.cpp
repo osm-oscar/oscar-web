@@ -57,6 +57,8 @@ void KVClustering::get() {
 
 	auto keyValueMap = std::unordered_map<std::uint64_t, std::uint32_t>();
 
+
+
 	//iterate over all query result items
 	for(sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it){
 		for(uint32_t x : it.idx()) {
@@ -64,20 +66,37 @@ void KVClustering::get() {
 			//iterate over all item keys
 			for (uint32_t i = 0; i < item.size(); ++i) {
 			    //combine two ids into one
-			    uint64_t keyValue = ((uint64_t)item.keyId(i)) << 32;
+			    uint32_t  key = item.keyId(i);
+			    uint32_t value = item.valueId(i);
+			    uint64_t  keyValue = ((uint64_t)item.keyId(i)) << 32;
 			    keyValue += item.valueId(i);
 
-			    std::unordered_map<std::uint64_t, std::uint32_t>::const_iterator keySearch = keyValueMap.find(keyValue);
-			    if(keySearch == keyValueMap.end()){
+
+			    std::unordered_map<std::uint64_t, std::uint32_t>::const_iterator keyValueSearch = keyValueMap.find(keyValue);
+			    if(keyValueSearch == keyValueMap.end()){
 			        //keyValue is not present in keyValueMap
                     auto keyValueMapPair = std::make_pair(keyValue, 0);
                     keyValueMap.emplace(keyValueMapPair);
 			    } else {
 			        //key is present
 			        //increment keyValue count
-                    keySearch++;
+                    keyValueSearch++;
 			    }
 			}
+		}
+	}
+
+	auto keyMap = std::unordered_map<std::uint32_t, std::pair<std::uint32_t, std::vector<std::pair<std::uint32_t, std::uint32_t >>>>();
+
+	for(auto keyValue : keyValueMap){
+		auto value = (uint32_t) keyValue.first;
+		auto key = static_cast<uint32_t>(keyValue.first >> 32);
+		uint32_t keyValueCount = keyValue.second;
+		std::unordered_map<std::uint32_t, std::pair<std::uint32_t, std::vector<std::pair<std::uint32_t, std::uint32_t >>>>::const_iterator keySearch = keyMap.find(key);
+		if(keySearch == keyMap.cend()){
+		    auto valueVector = std::vector<std::pair<std::uint32_t, std::uint32_t >>();
+		    valueVector.push_back(std::make_pair(value, keyValueCount));
+		    auto keyMapPair = std::make_pair(key, std::make_pair(keyValueCount, valueVector));
 		}
 	}
 
@@ -85,7 +104,6 @@ void KVClustering::get() {
 	ttm.end();
 	writeLogStats("get..", cqs, ttm, cqr.cellCount(), itemCount);
 }
-
 
 
 	//ecapes strings for json, source: https://stackoverflow.com/questions/7724448/simple-json-string-escape-for-c/33799784#33799784
