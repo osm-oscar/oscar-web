@@ -49,15 +49,16 @@ void KVClustering::get() {
 	cqr = m_dataPtr->completer->cqrComplete(cqs, sg, m_dataPtr->treedCQR);
 	uint32_t itemCount = cqr.maxItems();
 
-	uint32_t n = 0;
 	
 
 	
 	std::ostream & out = response().out();
 
-	auto keyValueMap = std::unordered_map<std::uint64_t, std::uint32_t>();
+	auto keyValueCountMap = std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::uint32_t>();
 
-	auto keyMap = std::unordered_map<std::uint32_t, std::pair<std::uint32_t, std::vector<std::uint32_t >>>();
+	auto keyCountMap = std::unordered_map<std::uint32_t, std::uint32_t>();
+
+	auto keyValueMap = std::unordered_map<std::uint32_t, std::vector<uint32_t>>();
 
 
 	//iterate over all query result items
@@ -69,21 +70,16 @@ void KVClustering::get() {
 			    //combine valueId and keyId into one
 			    uint32_t key = item.keyId(i);
 			    uint32_t value = item.valueId(i);
-			    uint64_t keyValue = ((uint64_t)item.keyId(i)) << 32;
-			    keyValue += item.valueId(i);
+			    auto keyValuePair = std::make_pair(key, value);
+			    //uint64_t keyValuePair = ((uint64_t)item.keyId(i)) << 32;
+			    //keyValuePair += item.valueId(i);
 
-			    std::unordered_map<std::uint64_t, std::uint32_t>::const_iterator keyValueSearch = keyValueMap.find(keyValue);
-			    keyValueMap[keyValue]++;
+			    keyValueCountMap[keyValuePair]++;
+			    keyCountMap[key]++;
+			    keyValueMap[key].push_back(value);
+
 			}
 		}
-	}
-
-
-	for(auto keyValue : keyValueMap){
-		auto value = (uint32_t) keyValue.first;
-		auto key = static_cast<uint32_t>(keyValue.first >> 32);
-		uint32_t keyValueCount = keyValue.second;
-		out << "key: " << store.keyStringTable().at(key) << "\n" << "value: " << store.valueStringTable().at(value) << "\n" << "keyValueCount: " << keyValueCount << "\n";
 	}
 
 
