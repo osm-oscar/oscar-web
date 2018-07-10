@@ -55,9 +55,7 @@ void KVClustering::get() {
 	
 	std::ostream & out = response().out();
 
-	//count all key value pairs like described in BA_Benjamin_Kopf_2017 4.1
-	//keyMap has the key as key and an (unordered_map, int) pair as value. the unordered_pair contains the values and the count of each value. the int counts in how many items the key is present.
-	auto keyMap = std::unordered_map<std::uint32_t, std::pair<std::unordered_map<std::uint32_t , uint32_t>, std::uint32_t >>();
+	auto keyValueMap = std::unordered_map<std::uint64_t, std::uint32_t>();
 
 	//iterate over all query result items
 	for(sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it){
@@ -65,77 +63,24 @@ void KVClustering::get() {
 			auto item = store.at(x);
 			//iterate over all item keys
 			for (uint32_t i = 0; i < item.size(); ++i) {
-			    auto keySearch = keyMap.find(item.keyId(i));
-			    if(keySearch == keyMap.end()){
-			        //key is not present in keyMap
-                    auto valueMap = std::unordered_map<std::uint32_t, uint32_t>();
-                    auto keyMapPair = std::make_pair(item.keyId(i), std::make_pair(valueMap, 1));
-                    keyMap.emplace(keyMapPair);
+			    //combine two ids into one
+			    uint64_t keyValue = ((uint64_t)item.keyId(i)) << 32;
+			    keyValue += item.valueId(i);
+
+			    std::unordered_map<std::uint64_t, std::uint32_t>::const_iterator keySearch = keyValueMap.find(keyValue);
+			    if(keySearch == keyValueMap.end()){
+			        //keyValue is not present in keyValueMap
+                    auto keyValueMapPair = std::make_pair(keyValue, 0);
+                    keyValueMap.emplace(keyValueMapPair);
 			    } else {
 			        //key is present
-			        //increment key count
-                    (keySearch -> second).second++;
-			    }
-			    //fetch the updated key
-			    keySearch = keyMap.find(item.keyId(i));
-
-			    //try to find the value in the valueMap
-			    auto valueSearch = keySearch -> second.first.find(item.valueId(i));
-			    if(valueSearch != keySearch -> second.first.end()){
-			        //value found -> increment count
-			    	valueSearch -> second++;
-			    }
-			    else{
-			        //value not found -> insert it
-			    	auto valueCountPair = std::make_pair(item.valueId(i), 1);
-                    keySearch -> second.first.emplace(valueCountPair);
+			        //increment keyValue count
+                    keySearch++;
 			    }
 			}
 		}
 	}
 
-	struct keyCountComparator
-    {
-        bool operator() (const std::pair<std::uint32_t , std::pair<std::unordered_map<std::uint32_t , uint32_t>, uint32_t>>& v1,
-                const std::pair<std::uint32_t , std::pair<std::unordered_map<std::uint32_t , uint32_t>, uint32_t>>& v2){
-            return (v1.second.second > v2.second.second);
-        }
-    };
-
-	//putting the map into a vector and sort
-	std::vector<std::pair<std::uint32_t , std::pair<std::unordered_map<std::uint32_t , uint32_t>, uint32_t>>> elems(keyMap.begin(), keyMap.end());
-	std::sort(elems.begin(), elems.end(), keyCountComparator());
-
-	//returning result in json
-    out << "{\"kvclustering\":[";
-    bool first0 = true;
-	for(auto it : elems){
-        if(it.second.second > itemCount*0.1f && it.second.second > 1) {
-            if (!first0) out << ",";
-            first0 = false;
-            out << "{";
-            out << "\"name\":" << '"' << escapeJsonString(store.keyStringTable().at(it.first)) << '"' << ',' << " \"count\" : " << it.second.second << ","
-                << "\"clValues\" :" << "[";
-            std::int32_t others = 0;
-            bool first = true;
-            for (auto ite : it.second.first) {
-                if (ite.second > it.second.second * 0.1f) {
-                    if (!first) out << ",";
-                    first = false;
-                    out << R"({"name":")" << escapeJsonString(store.valueStringTable().at(ite.first)) << '"' << "," << "\"count\":" << ite.second << "}";
-                } else {
-                    others += ite.second;
-                }
-            }
-            if(others > 0){
-                if (!first) out << ",";
-                out << R"({"name":")" << "others" << '"' << "," << "\"count\":" << others << "}";
-            }
-
-            out << "]}";
-        }
-	}
-	out << "]}";
 
 	ttm.end();
 	writeLogStats("get..", cqs, ttm, cqr.cellCount(), itemCount);
