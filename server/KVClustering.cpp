@@ -36,6 +36,7 @@ void KVClustering::get() {
 	std::string cqs = request().get("q");
 	std::string regionFilter = request().get("rf");
 	std::string format = request().get("format");
+	std::string queryId = request().get("queryId");
 
 	sserialize::CellQueryResult cqr;
 	sserialize::spatial::GeoHierarchySubGraph sg;
@@ -120,7 +121,7 @@ void KVClustering::get() {
         }
 	}
 
-    out << "]}";
+    out << "], \"queryId\":" + queryId + "}";
 
 	ttm.end();
 	writeLogStats("get..", cqs, ttm, cqr.cellCount(), itemCount);
