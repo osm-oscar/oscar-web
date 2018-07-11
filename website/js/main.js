@@ -167,9 +167,9 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 }
             });
 
-            $(document).on('click', '#kvclustering-list li' ,(function () {
+            $(document).on('click', '#kvclustering-list li.refinement' ,(function () {
                $('#search_text').val(this.id);
-                search.instantCompletion();
+               search.instantCompletion();
             }));
 			
 			$('#display_cluster_shapes_checkbox').click(function() {
