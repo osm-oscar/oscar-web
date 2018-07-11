@@ -61,7 +61,7 @@ requirejs.config({
     waitSeconds: 20
 });
 
-requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf",  "switch", "state", "map", "tree", "query", "tools", "search", "kv-clustering"],
+requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf",  "switch", "state", "map", "tree", "query", "tools", "search"],
     function () {
         var L = require("leaflet");
 		var jQuery = require("jquery");
@@ -77,7 +77,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         var query = require("query");
 		var tools = require("tools");
         var search = require("search");
-        var kvClustering = require("kv-clustering");
 		
 		//set the map handler
 		state.mapHandler = map;
@@ -105,7 +104,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 e.preventDefault();
 				$("#search_text").autocomplete("close");
                 search.instantCompletion();
-                kvClustering.fillTable();
             });
 			search.bindTagCompletion('#search_text');
 			
@@ -168,6 +166,11 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                     flickr.show();
                 }
             });
+
+            $(document).on('click', '#kvclustering-list li' ,(function () {
+               $('#search_text').val(this.id);
+                search.instantCompletion();
+            }));
 			
 			$('#display_cluster_shapes_checkbox').click(function() {
 				var enabled = $(this).is(':checked');

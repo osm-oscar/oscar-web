@@ -143,6 +143,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
 			dlelem.attr('href', "");
 			$("#empty_result_info").addClass("hidden");
 			$("#result_list_container").addClass("hidden");
+			$("#kvclustering-list").addClass("hidden");
         },
         
         addSingleQueryStatementToQuery: function (qstr) {

@@ -1,4 +1,4 @@
-define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, tools, config, oscar, map, fuzzysort){
+define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "kv-clustering"], function(state, tools, config, oscar, map, fuzzysort, kvClustering){
 	var encompletion = {
 		"base": [
 		{
@@ -73,6 +73,8 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 
             //query has changed, ddos the server!
             var myQuery = $("#search_text").val();
+
+
             
             state.queries.lastQuery = myQuery + "";//make sure state hold a copy
 
@@ -96,8 +98,10 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 				};
 			}
 
+
 			var myRealQuery =  search.replaceSpatialObjects(myQuery);
-			
+
+
             if ($('#searchModi input').is(":checked")) {
                 //TODO: wrong placement of markers if clustering is active. Cause: region midpoint is outside of search rectangle
 				
@@ -128,6 +132,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 						dlelem.attr('data-base-href', dllink);
 						dlelem.attr('href', dllink);
 						search.updateDownloadLink();
+                        kvClustering.fillTable(myQuery);
                     }
                 },
                 function (jqXHR, textStatus, errorThrown) {
@@ -135,6 +140,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 					//BOOM!
                     alert("Failed to retrieve completion results. textstatus=" + textStatus + "; errorThrown=" + errorThrown);
                 });
+
         },
 	   
         instantCompletion: function () {
