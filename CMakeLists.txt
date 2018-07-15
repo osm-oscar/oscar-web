@@ -9,17 +9,10 @@ set(CMAKE_MODULE_PATH
 
 include(add_buildtype_lto)
 include(add_buildtype_ultra)
-include(set_highest_cpp)
-
 add_subdirectory(vendor/liboscar liboscar)
 
 find_package(CPPCMS REQUIRED)
 find_package(LIBRT)
-
-include_directories(
-	${LIBOSCAR_INCLUDE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
-)
 
 set(OSCAR_WEB_SOURCES_CPP
 	server/ItemSerializer.cpp
@@ -33,26 +26,13 @@ set(OSCAR_WEB_SOURCES_CPP
 	server/oscarweb.cpp
 	server/MainHandler.cpp
 )
-
-set(MY_C_FLAGS "-std=c99 -fopenmp")
-set(MY_CXX_FLAGS "-fopenmp")
-set(MY_DEBUG_FLAGS "")
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MY_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MY_CXX_FLAGS}")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${MY_DEBUG_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${MY_DEBUG_FLAGS}")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} ${MY_DEBUG_FLAGS}")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${MY_DEBUG_FLAGS}")
-
-
 SET(OSCAR_WEB_LINK_LIBS
-	${LIBOSCAR_LINK_LIBRARIES}
+	liboscar
+	sserialize
 	${LIBRT_LIBRARIES}
 	${CPPCMS_LIBRARY}
 	${BOOSTER_LIBRARY}
 )
 
 add_executable(${PROJECT_NAME} ${OSCAR_WEB_SOURCES_CPP})
-add_dependencies(${PROJECT_NAME} liboscar sserialize)
 target_link_libraries(${PROJECT_NAME} ${OSCAR_WEB_LINK_LIBS})
