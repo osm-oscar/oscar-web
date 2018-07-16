@@ -124,7 +124,7 @@ void KVClustering::get() {
     out << "], \"queryId\":" + queryId + "}";
 
 	ttm.end();
-	writeLogStats("get:", cqs, ttm, cqr.cellCount(), items.size());
+	writeLogStats("get", cqs, ttm, cqr.cellCount(), itemCount);
 }
 
 
