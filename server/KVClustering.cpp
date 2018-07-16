@@ -124,7 +124,7 @@ void KVClustering::get() {
     out << "], \"queryId\":" + queryId + "}";
 
 	ttm.end();
-	writeLogStats("get..", cqs, ttm, cqr.cellCount(), itemCount);
+	writeLogStats("get:", cqs, ttm, cqr.cellCount(), items.size());
 }
 
 
@@ -151,7 +151,7 @@ void KVClustering::get() {
 	}
 
 void KVClustering::writeLogStats(const std::string& fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize) {
-	*(m_dataPtr->log) << "CQRItems::" << fn << ": t=" << tm.beginTime() << "s, rip=" << request().remote_addr() << ", q=[" << query << "], rs=" << cqrSize <<  " is=" << idxSize << ", ct=" << tm.elapsedMilliSeconds() << "ms" << std::endl;
+	*(m_dataPtr->log) << "KVClustering::" << fn << ": t=" << tm.beginTime() << "s, rip=" << request().remote_addr() << ", q=[" << query << "], rs=" << cqrSize <<  " is=" << idxSize << ", ct=" << tm.elapsedMilliSeconds() << "ms" << std::endl;
 }
 
 
