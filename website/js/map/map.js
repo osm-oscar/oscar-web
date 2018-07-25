@@ -1734,7 +1734,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 			
 			if (map.resultListTabs.size() && map.cfg.resultList.showItemShapes) {
-				wantItemMarkers = map.resultListTabs.activeTab();
 				var removedIds = tools.SimpleSet();
 				var missingIds = tools.SimpleSet();
 				tools.getMissing(wantItemMarkers, map.itemShapes.layers(), removedIds, missingIds);
@@ -1912,7 +1911,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					
 					var childNode = state.dag.region(childId);
 					var myOverlap = tools.percentOfOverlap(state.map, childNode.bbox);
-					if (myOverlap >= 0 && state.map.getZoom() === state.map.getMaxZoom()) {
+					if (myOverlap >= 0 && state.map.getZoom() >= map.cfg.clustering.maxZoomLevel) {
 						myOverlap = 100;
 					}
 
@@ -2020,16 +2019,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			var maxOverlapRegionId = -1;
 			state.dag.bottomUp(state.dag.region(0xFFFFFFFF), function(node) {
 				if (node.displayState & dag.DisplayStates.InResultsTab) {
-					var ok = false;
-					var hasMaxOverlapCell = false;
-					var xCells = [];
+					let ok = false;
+					let hasMaxOverlapCell = false;
+					let xCells = [];
 					for(let cellId of node.cells.builtinset()) {
-						var cellNode = state.dag.cell(cellId);
-						var ds = cellNode.displayState & (dag.DisplayStates.HasRegionClusterMarker | dag.DisplayStates.InResultsTab2);
-						var xMap = currentMapBounds.intersects(cellNode.bbox);
-						var pOv = tools.percentOfOverlap(state.map, cellNode.bbox);
+						let cellNode = state.dag.cell(cellId);
+						let ds = cellNode.displayState & (dag.DisplayStates.HasRegionClusterMarker | dag.DisplayStates.InResultsTab2);
+						let xMap = currentMapBounds.intersects(cellNode.bbox);
 						if (ds === 0 && xMap) {
-							if (pOv >= config.clusters.shapeOverlap) {
+							let pOv = tools.percentOfOverlap(state.map, cellNode.bbox);
+							if (pOv >= config.clusters.shapeOverlap || state.map.getZoom() >= map.cfg.clustering.maxZoomLevel) {
 								ok = true;
 								cellNode.displayState |= dag.DisplayStates.InResultsTab2;
 								if (pOv > maxOverlap) {
@@ -2045,7 +2044,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					}
 					
 					if (ok) {
-						////at least one cell is large enough to bew shown, add all intersecting cells as-well
+						////at least one cell is large enough to be shown, add all intersecting cells as-well
 						//TODO: add cell cluster markers instead
 						for(let cellId of xCells) {
 							var cellNode = state.dag.cell(cellId);

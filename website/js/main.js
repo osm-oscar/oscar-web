@@ -185,6 +185,12 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 				map.mapViewChanged();
 			});
 			
+			$('#cluster_max_zoom_level_spinner').change(function() {
+				var th = parseInt($(this).val());
+				map.cfg.clustering.maxZoomLevel = th;
+				map.mapViewChanged();
+			});
+			
 // 			state.sidebar.on('tab-closed', function(e) {});
 // 			state.sidebar.on('tab-opened', function(e) {});
 
