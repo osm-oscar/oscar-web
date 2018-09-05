@@ -21,7 +21,11 @@ private:
 	liboscar::Static::OsmKeyValueObjectStore m_store;
 private:
 	void writeLogStats(const std::string & fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize);
-	std::string escapeJsonString(const std::string &input);
+	std::string generateOutput(std::unordered_map<std::uint32_t, std::vector<uint32_t>> keyValueMap,
+						std::unordered_map<std::uint32_t, std::uint32_t> keyCountMap,
+						std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::uint32_t> keyValueCountMap,
+						uint32_t itemCount,
+						std::string queryId);
 };
 
 

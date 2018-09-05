@@ -86,74 +86,65 @@ void KVClustering::get() {
 		}
 	}
 
-	out << "{\"kvclustering\":[";
-	bool first0 = true;
-	for(const auto &keyValue : keyValueMap){
-        uint32_t keyId = keyValue.first;
-        std::vector<uint32_t> valueVector = keyValue.second;
-        std::uint32_t keyCount = keyCountMap[keyId];
-        if (keyCount > itemCount*0.1f && keyCount > 1) {
-            if (!first0) out << ",";
-            first0 = false;
-            out << "{";
-            out << "\"name\":" << '"' << escapeJsonString(store.keyStringTable().at(keyId)) << '"' << ',' << " \"count\" : " << keyCountMap.at(keyId) << ","
-                << "\"clValues\" :" << "[";
-            std::int32_t others = 0;
-
-            bool first = true;
-
-            for(uint32_t valueId: valueVector){
-                auto keyValuePair = std::make_pair(keyId, valueId);
-                uint32_t valueCount = keyValueCountMap.at(keyValuePair);
-                if(valueCount > keyCount*0.1f){
-                    if (!first) out << ",";
-                    first = false;
-                    out << R"({"name":")" << escapeJsonString(store.valueStringTable().at(valueId)) << '"' << "," << "\"count\":" << valueCount << "}";
-                } else {
-                    others += valueCount;
-                }
-            }
-            if(others > 0){
-                if (!first) out << ",";
-                out << R"({"name":")" << "others" << '"' << "," << "\"count\":" << others << "}";
-            }
-            out << "]}";
-        }
-	}
-
-    out << "], \"queryId\":" + queryId + "}";
+	out << generateOutput(keyValueMap, keyCountMap, keyValueCountMap, itemCount, queryId);
 
 	ttm.end();
 	writeLogStats("get", cqs, ttm, cqr.cellCount(), itemCount);
 }
 
 
-	//ecapes strings for json, source: https://stackoverflow.com/questions/7724448/simple-json-string-escape-for-c/33799784#33799784
-
-	std::string KVClustering::escapeJsonString(const std::string& input) {
-		std::ostringstream ss;
-		for (auto iter = input.cbegin(); iter != input.cend(); iter++) {
-			//C++98/03:
-			//for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
-			switch (*iter) {
-				case '\\': ss << "\\\\"; break;
-				case '"': ss << "\\\""; break;
-				case '/': ss << "\\/"; break;
-				case '\b': ss << "\\b"; break;
-				case '\f': ss << "\\f"; break;
-				case '\n': ss << "\\n"; break;
-				case '\r': ss << "\\r"; break;
-				case '\t': ss << "\\t"; break;
-				default: ss << *iter; break;
-			}
-		}
-		return ss.str();
-	}
-
 void KVClustering::writeLogStats(const std::string& fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize) {
 	*(m_dataPtr->log) << "KVClustering::" << fn << ": t=" << tm.beginTime() << "s, rip=" << request().remote_addr() << ", q=[" << query << "], rs=" << cqrSize <<  " is=" << idxSize << ", ct=" << tm.elapsedMilliSeconds() << "ms" << std::endl;
 }
 
+	std::string KVClustering::generateOutput(std::unordered_map<std::uint32_t, std::vector<uint32_t>> keyValueMap,
+									  std::unordered_map<std::uint32_t, std::uint32_t> keyCountMap,
+									  std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::uint32_t> keyValueCountMap,
+									  uint32_t itemCount,
+									  std::string queryId)
+	{
+		sserialize::JsonEscaper je;
+		const auto & store = m_dataPtr->completer->store();
+		std::stringstream out;
+		out << "{\"kvclustering\":[";
+		bool first0 = true;
+		for(const auto &keyValue : keyValueMap){
+			uint32_t keyId = keyValue.first;
+			std::vector<uint32_t> valueVector = keyValue.second;
+			std::uint32_t keyCount = keyCountMap[keyId];
+			if (keyCount > itemCount*0.1f && keyCount > 1) {
+				if (!first0) out << ",";
+				first0 = false;
+				out << "{";
+				out << "\"name\":" << '"' << je.escape(store.keyStringTable().at(keyId)) << '"' << ',' << " \"count\" : " << keyCountMap.at(keyId) << ","
+					<< "\"clValues\" :" << "[";
+				std::int32_t others = 0;
+
+				bool first = true;
+
+				for(uint32_t valueId: valueVector){
+					auto keyValuePair = std::make_pair(keyId, valueId);
+					uint32_t valueCount = keyValueCountMap.at(keyValuePair);
+					if(valueCount > keyCount*0.1f){
+						if (!first) out << ",";
+						first = false;
+						out << R"({"name":")" << je.escape(store.valueStringTable().at(valueId)) << '"' << "," << "\"count\":" << valueCount << "}";
+					} else {
+						others += valueCount;
+					}
+				}
+				if(others > 0){
+					if (!first) out << ",";
+					out << R"({"name":")" << "others" << '"' << "," << "\"count\":" << others << "}";
+				}
+				out << "]}";
+			}
+		}
+
+
+		out << "], \"queryId\":" + queryId + "}";
+		return out.str();
+	}
 
 
 
