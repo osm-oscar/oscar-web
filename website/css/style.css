@@ -92,6 +92,11 @@ body {
     float: left;
 }
 
+#clusterModi {
+    margin-top: 5px;
+    float: left;
+}
+
 #tree {
     display: none;
     background-color: rgba(255,255,255,0.7);

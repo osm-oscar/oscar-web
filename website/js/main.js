@@ -154,6 +154,11 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 off_label: 'Global'
             });
 
+            $("#clusterModi input").switchButton({
+                on_label: 'Parent',
+                off_label: 'Key-Value'
+            });
+
             $('#show_tree').click(function () {
                 $('#results_tree_parent').toggle();
             });
