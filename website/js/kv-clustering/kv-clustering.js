@@ -25,16 +25,16 @@ define(["require", "state", "jquery", "search"],
                         kvClusteringList.removeClass("hidden");
                     });
                 } else {
-                    $.get("/oscar/kvclustering/get?q=" + cqr + "&queryId=" + state.queries.activeCqrId + "&type=p", function (data) {
+                    $.get("/oscar/kvclustering/get?q=" + cqr + "&rf=admin_level&queryId=" + state.queries.activeCqrId + "&type=p", function (data) {
                         if(state.queries.activeCqrId!==data.queryId)
                             return;
+                        console.log(data);
                         const kvClusteringList = $("#kvclustering-list");
                         kvClusteringList.empty();
                         let liAdded = false;
-                        console.log("hallo");
                         data.parentClustering.forEach(function(parent){
                             liAdded = true;
-                            kvClusteringList.append(`<li class="refinement" id=""style="margin-top: 5px"><b>${parent.parentId}(${parent.itemCount})</b></li>`);
+                            kvClusteringList.append(`<li class="refinement" id="&quot;${parent.parentName}&quot; ${cqr}"  "style="margin-top: 5px"><a href="#">${parent.parentName}(${parent.itemCount})</a></li>`);
                         });
                         if(!liAdded){
                             kvClusteringList.append(`<li style="margin-top: 5px">no refinements for this query</li>`);

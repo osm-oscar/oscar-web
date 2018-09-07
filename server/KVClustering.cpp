@@ -150,6 +150,7 @@ namespace oscar_web {
 		}
 
 	}
+
 	void KVClustering::generateKvOutput(std::ostream & out,
 			std::unordered_map<std::uint32_t, std::vector<uint32_t>> keyValueMap,
 			std::unordered_map<std::uint32_t, std::uint32_t> keyCountMap,
@@ -217,7 +218,7 @@ namespace oscar_web {
 		auto result = std::vector<std::pair<uint32_t , std::set<uint32_t >>>();
 		auto itI = parentKeyVec.begin()+1;
 		bool startParentsFound = false;
-		for(; itI != parentKeyVec.end(); ++itI) {
+		for(itI; itI != parentKeyVec.end(); ++itI) {
 			for (auto itJ = parentKeyVec.begin(); itJ != itI; ++itJ) {
 				std::uint32_t parentI = (*itI).first;
 				std::uint32_t parentJ = (*itJ).first;
@@ -272,7 +273,7 @@ namespace oscar_web {
 		const auto & store = m_dataPtr->completer->store();
         const auto & gh = store.geoHierarchy();
 		sserialize::JsonEscaper je;
-		out << "{\"parentId\": \"" << je.escape(store.at(gh.ghIdToStoreId(parentId)).value("name"))  << "\", \"itemCount\":" << itemCount
+		out << "{\"parentName\": \"" << je.escape(store.at(gh.ghIdToStoreId(parentId)).value("name"))  << "\", \"itemCount\":" << itemCount
 		 << ",\"cellId\":" << parentId << "}";
 	}
 
