@@ -40,9 +40,9 @@ namespace oscar_web {
         bool debug = request().get("debug") == "true";
 
         std::uint8_t mode = 0;
-        if(clusteringType == "k")
+        if (clusteringType == "k")
             mode = 1;
-        if(clusteringType == "p")
+        if (clusteringType == "p")
             mode = 2;
 
         sserialize::CellQueryResult cqr;
@@ -94,7 +94,7 @@ namespace oscar_web {
                 stm.end();
                 debugStr << ",\"timeToSort\":" << stm.elapsedMilliSeconds();
 
-                out << "{\"keyValueClustering\":[";
+                out << "{\"clustering\":[";
 
                 writeParentsWithNoIntersection(out, keyValueItemVec, mode, store, numberOfRefinements, debugStr);
 
@@ -105,7 +105,7 @@ namespace oscar_web {
 
                 sortMap(keyItemMap, keyItemVec, debugStr);
 
-                out << "{\"keyClustering\":[";
+                out << "{\"clustering\":[";
 
                 writeParentsWithNoIntersection(out, keyItemVec, mode, store, numberOfRefinements, debugStr);
 
@@ -142,14 +142,14 @@ namespace oscar_web {
 
             //begin printing
 
-            out << "{\"parentClustering\":[";
+            out << "{\"clustering\":[";
 
             writeParentsWithNoIntersection(out, parentItemVec, mode, store, numberOfRefinements, debugStr);
 
             out << "]";
         }
 
-        if(debug){
+        if (debug) {
             ttm.end();
             debugStr << ",\"totalTime\":" << ttm.elapsedMilliSeconds();
             debugStr << "}";
@@ -173,7 +173,7 @@ namespace oscar_web {
     void KVClustering::kvClustering(
             std::unordered_map<std::uint32_t, std::set<uint32_t>> &keyItemMap,
             std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>> &keyValueItemMap,
-            const sserialize::CellQueryResult &cqr, const std::uint8_t &mode, std::stringstream& debug) {
+            const sserialize::CellQueryResult &cqr, const std::uint8_t &mode, std::stringstream &debug) {
         //iterate over all query result items
         sserialize::TimeMeasurer gtm;
         gtm.begin();
@@ -182,17 +182,17 @@ namespace oscar_web {
             for (uint32_t x : it.idx()) {
                 auto item = store.at(x);
                 //iterate over all item keys
-                    for (uint32_t i = 0; i < item.size(); ++i) {
-                        uint32_t key = item.keyId(i);
-                        uint32_t value = item.valueId(i);
-                        auto keyValuePair = std::make_pair(key, value);
-                        //add key and item to key to keyItemMap
-                        if(mode == 1)
-                            keyItemMap[key].insert(item.id());
+                for (uint32_t i = 0; i < item.size(); ++i) {
+                    uint32_t key = item.keyId(i);
+                    uint32_t value = item.valueId(i);
+                    auto keyValuePair = std::make_pair(key, value);
+                    //add key and item to key to keyItemMap
+                    if (mode == 1)
+                        keyItemMap[key].insert(item.id());
 
-                        if(mode == 0)
-                            keyValueItemMap[keyValuePair].insert(item.id());
-                    }
+                    if (mode == 0)
+                        keyValueItemMap[keyValuePair].insert(item.id());
+                }
             }
         }
         gtm.end();
@@ -227,9 +227,8 @@ namespace oscar_web {
                                                       const std::vector<std::pair<mapKey, std::set<uint32_t>>> &parentKeyVec,
                                                       const std::uint8_t &mode,
                                                       const liboscar::Static::OsmKeyValueObjectStore &store,
-                                                      const uint32_t& numberOfRefinements,
-                                                      std::stringstream& debug
-    ) {
+                                                      const uint32_t &numberOfRefinements,
+                                                      std::stringstream &debug) {
         //derive startParents BA-Kopf Page 18
         sserialize::TimeMeasurer fptm;
         fptm.begin();
@@ -246,7 +245,8 @@ namespace oscar_web {
                 std::set<uint32_t> setJ = (*itJ).second;
                 maxNumberOfIntersections = mode == 3 ? 0 : (setI.size() + setJ.size()) / 200;
                 if (!hasIntersection(setI, setJ, maxNumberOfIntersections)) {
-                    //no intersection add both parents to results and print them
+                    // no intersection or required amount
+                    // add both parents to results and print them
                     result.emplace_back(parentJ, setJ);
                     result.emplace_back(parentI, setI);
 
@@ -270,7 +270,7 @@ namespace oscar_web {
         sserialize::TimeMeasurer nptm;
         nptm.begin();
         if (startParentsFound) {
-            for (auto itK = itI + 1; itK != parentKeyVec.end() && result.size()<=numberOfRefinements; ++itK) {
+            for (auto itK = itI + 1; itK != parentKeyVec.end() && result.size() <= numberOfRefinements; ++itK) {
                 bool discarded = false;
                 for (auto parentPair : result) {
                     maxNumberOfIntersections =
@@ -292,7 +292,7 @@ namespace oscar_web {
         }
         nptm.end();
 
-        debug << ",\"timeToFindParents\":" << nptm.elapsedMilliSeconds();
+        debug << ",\"timeToFindOtherParents\":" << nptm.elapsedMilliSeconds();
     }
 
     void KVClustering::printResult(const std::uint32_t &id, const long &itemCount, std::ostream &out,
@@ -302,12 +302,12 @@ namespace oscar_web {
         sserialize::JsonEscaper je;
 
         if (mode == 1) {
-            out << R"({"keyName": ")" << je.escape(store.keyStringTable().at(id)) << R"(", "itemCount":)" << itemCount
-                << ",\"keyId\":" << id << "}";
+            out << R"({"name": ")" << je.escape(store.keyStringTable().at(id)) << R"(", "itemCount":)" << itemCount
+                << ",\"id\":" << id << "}";
         } else if (mode == 2) {
-            out << R"({"parentName": ")" << je.escape(store.at(gh.ghIdToStoreId(id)).value("name"))
+            out << R"({"name": ")" << je.escape(store.at(gh.ghIdToStoreId(id)).value("name"))
                 << R"(", "itemCount":)" << itemCount
-                << ",\"cellId\":" << id << "}";
+                << ",\"id\":" << id << "}";
         }
     }
 
@@ -315,13 +315,14 @@ namespace oscar_web {
                                    std::ostream &out, const std::uint8_t &mode,
                                    const liboscar::Static::OsmKeyValueObjectStore &store) {
         sserialize::JsonEscaper je;
-        out << R"({"parentName": ")" << je.escape(store.keyStringTable().at(id.first)) << ":"
+        out << R"({"name": ")" << je.escape(store.keyStringTable().at(id.first)) << ":"
             << je.escape(store.valueStringTable().at(id.second)) << R"(", "itemCount":)" << itemCount
-            << ",\"keyId\":" << id.first << ",\"valueId\":" << id.second << "}";
+            << ",\"id\":" << id.first << ",\"valueId\":" << id.second << "}";
     }
 
     void KVClustering::sortMap(std::unordered_map<std::uint32_t, std::set<uint32_t>> &parentItemMap,
-                               std::vector<std::pair<std::uint32_t, std::set<uint32_t>>> &parentItemVec, std::stringstream& debug) {
+                               std::vector<std::pair<std::uint32_t, std::set<uint32_t>>> &parentItemVec,
+                               std::stringstream &debug) {
 
         sserialize::TimeMeasurer stm;
         stm.begin();

@@ -50,11 +50,10 @@ namespace oscar_web {
         void printResult(const std::pair<std::uint32_t, std::uint32_t> &id, const long &itemCount, std::ostream &out,
                          const std::uint8_t &mode, const liboscar::Static::OsmKeyValueObjectStore &store);
 
-        void sortMap(std::unordered_map<std::uint32_t, std::set<uint32_t>>& parentItemMap, std::vector<std::pair<std::uint32_t, std::set<uint32_t>>>& parentItemVec, std::stringstream& debug);
+        void sortMap(std::unordered_map<std::uint32_t, std::set<uint32_t>>& parentItemMap,
+                std::vector<std::pair<std::uint32_t, std::set<uint32_t>>>& parentItemVec, std::stringstream& debug);
 
     };
-
-
 
 
 }//end namespace
