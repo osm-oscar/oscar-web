@@ -79,7 +79,7 @@ namespace oscar_web {
                 sserialize::TimeMeasurer stm;
 
                 stm.begin();
-                std::vector<std::pair<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>>> keyValueItemVec;
+                auto keyValueItemVec = std::vector<std::pair<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>>>();
 
                 std::copy(keyValueItemMap.begin(), keyValueItemMap.end(),
                           std::back_inserter<std::vector<std::pair<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>>>>(
@@ -224,7 +224,7 @@ namespace oscar_web {
 
     template<typename mapKey>
     void KVClustering::writeParentsWithNoIntersection(std::ostream &out,
-                                                      const std::vector<std::pair<mapKey, std::set<uint32_t>>> &parentKeyVec,
+                                                      const std::vector<std::pair<mapKey, std::set<uint32_t>>> &parentItemVec,
                                                       const std::uint8_t &mode,
                                                       const liboscar::Static::OsmKeyValueObjectStore &store,
                                                       const uint32_t &numberOfRefinements,
@@ -234,11 +234,11 @@ namespace oscar_web {
         fptm.begin();
 
         auto result = std::vector<std::pair<mapKey, std::set<uint32_t >>>();
-        auto itI = parentKeyVec.begin() + 1;
+        auto itI = parentItemVec.begin() + 1;
         bool startParentsFound = false;
         std::float_t maxNumberOfIntersections;
-        for (; itI != parentKeyVec.end(); ++itI) {
-            for (auto itJ = parentKeyVec.begin(); itJ != itI; ++itJ) {
+        for (; itI < parentItemVec.end(); ++itI) {
+            for (auto itJ = parentItemVec.begin(); itJ < itI; ++itJ) {
                 auto parentI = (*itI).first;
                 auto parentJ = (*itJ).first;
                 std::set<uint32_t> setI = (*itI).second;
@@ -270,7 +270,7 @@ namespace oscar_web {
         sserialize::TimeMeasurer nptm;
         nptm.begin();
         if (startParentsFound) {
-            for (auto itK = itI + 1; itK != parentKeyVec.end() && result.size() <= numberOfRefinements; ++itK) {
+            for (auto itK = itI + 1; itK < parentItemVec.end() && result.size() <= numberOfRefinements; ++itK) {
                 bool discarded = false;
                 for (auto parentPair : result) {
                     maxNumberOfIntersections =

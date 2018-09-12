@@ -27,7 +27,7 @@ namespace oscar_web {
 
         template<typename mapKey>
         void writeParentsWithNoIntersection(std::ostream &out,
-                                            const std::vector<std::pair<mapKey, std::set<uint32_t>>> &parentKeyVec,
+                                            const std::vector<std::pair<mapKey, std::set<uint32_t>>> &parentItemVec,
                                             const std::uint8_t &mode,
                                             const liboscar::Static::OsmKeyValueObjectStore &store,
                                             const uint32_t& numberOfRefinements,
