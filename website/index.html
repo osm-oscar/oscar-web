@@ -275,15 +275,13 @@
                             <div id="refinements">
                                 Active Refinements:<br>
                             </div>
-							<form id="clusterModi" action="">
-								<p>Clustering Type:</p>
-								<input checked type="radio" id="parentClustering" name="clustering" value="p">
-								<label for="parentClustering"> Parent</label>
-								<input type="radio" id="keyClustering" name="clustering" value="k">
-								<label for="keyClustering"> Key</label>
-								<input type="radio" id="keyValueClustering" name="clustering" value="kv">
-								<label for="keyValueClustering"> Key-Value</label>
-							</form>
+                            <br>
+                            <label for="refinement_type">Refinement Type</label>
+                            <select class="form-control" id="refinement_type">
+                                <option value="p" selected="selected">Parent</option>
+                                <option value="k">Key</option>
+                                <option value="kv">Key Value</option>
+                            </select>
 							<br>
 							<h4>Refinelist</h4>
 							<ul style="list-style-type: none; margin-left: -40px" id="kvclustering-list">

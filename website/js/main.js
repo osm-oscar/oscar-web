@@ -172,10 +172,15 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                kvClustering.addRefinement(this.id);
                search.instantCompletion();
             }));
+
             $(document).on('click', '#refinements span.active-refinement' ,(function () {
                 kvClustering.removeRefinement(this);
                 search.instantCompletion();
             }));
+
+            $("#refinement_type").change(function () {
+               kvClustering.fillTable($('#search_text').val());
+            });
 
 			
 			$('#display_cluster_shapes_checkbox').click(function() {

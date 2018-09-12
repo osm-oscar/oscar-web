@@ -11,22 +11,28 @@ define(["require", "state", "jquery", "search"],
             },
 
             addRefinement: function(refinement){
-                $('#refinements').append(`<span class="badge badge-primary active-refinement">${refinement}</span>`);
+                let clusteringType = $('#refinement_type option:selected').val();
+
+                if(clusteringType === 'p'){
+                    $('#refinements').append(`<span class="badge badge-primary active-refinement">&quot;${refinement}&quot;</span>`);
+                } else {
+                    $('#refinements').append(`<span class="badge badge-primary active-refinement">@${refinement}</span>`);
+                }
             },
 
             removeRefinement: function(refinement){
                 $(refinement).remove();
             },
 
-            fillTable: function(cqr) {
+            fillTable: function(cqr, force) {
 
-                let clusteringType = $('input[name=clustering]:checked', '#clusterModi').val();
+                let clusteringType = $('#refinement_type option:selected').val();
 
                 let queryRequest = "/oscar/kvclustering/get?q=" + cqr + "&rf=admin_level&queryId=" + state.queries.activeCqrId
                     + "&type=" + clusteringType + "&maxRefinements=10";
 
                 $.get(queryRequest, function (data) {
-                    if(state.queries.activeCqrId!==data.queryId)
+                    if(state.queries.activeCqrId!==data.queryId && !force)
                         return;
                     console.log(data);
                     const kvClusteringList = $("#kvclustering-list");
@@ -34,7 +40,7 @@ define(["require", "state", "jquery", "search"],
                     let liAdded = false;
                     data.clustering.forEach(function(parent){
                         liAdded = true;
-                        kvClusteringList.append(`<li class="refinement" id="&quot;${parent.name}&quot;"  "style="margin-top: 5px"><a href="#">${parent.name}(${parent.itemCount})</a></li>`);
+                        kvClusteringList.append(`<li class="refinement" id="${parent.name}"  "style="margin-top: 5px"><a href="#">${parent.name}(${parent.itemCount})</a></li>`);
                     });
                     if(!liAdded){
                         kvClusteringList.append(`<li style="margin-top: 5px">no refinements for this query</li>`);

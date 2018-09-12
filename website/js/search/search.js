@@ -130,7 +130,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "kv-clustering"],
 						dlelem.attr('data-base-href', dllink);
 						dlelem.attr('href', dllink);
 						search.updateDownloadLink();
-                        kvClustering.fillTable(myQuery);
+                        kvClustering.fillTable(myQuery, false);
                     }
                 },
                 function (jqXHR, textStatus, errorThrown) {
