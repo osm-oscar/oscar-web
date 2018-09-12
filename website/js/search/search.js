@@ -62,7 +62,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "kv-clustering"],
 			return res;
 	   },
         doCompletion: function () {
-            if ($("#search_text").val() === state.queries.lastQuery) {
+            if (kvClustering.addRefinementToQuery($("#search_text").val()) === state.queries.lastQuery) {
                 return;
 			}
 			state.clearViews();
@@ -72,9 +72,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "kv-clustering"],
             $("#flickr").hide("slide", {direction: "right"}, config.styles.slide.speed);
 
             //query has changed, ddos the server!
-            var myQuery = $("#search_text").val();
-
-
+            var myQuery = kvClustering.addRefinementToQuery($("#search_text").val());
             
             state.queries.lastQuery = myQuery + "";//make sure state hold a copy
 
@@ -359,7 +357,10 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "kv-clustering"],
 				// tools.defErrorCB(textStatus, errorThrown);
 			}
 			jQuery.ajax(settings);
-		}
+		},
+
+
+
     };
 
 	var languageName = window.navigator.userLanguage || window.navigator.language;

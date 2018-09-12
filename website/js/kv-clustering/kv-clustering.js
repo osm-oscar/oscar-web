@@ -2,6 +2,22 @@ define(["require", "state", "jquery", "search"],
     function (require, state, $, search) {
         var kvClustering = {
 
+            addRefinementToQuery: function(query) {
+                let refinementString = "";
+                $('.active-refinement').each(function (i, obj) {
+                    refinementString += this.innerHTML + " ";
+                });
+                return refinementString + query;
+            },
+
+            addRefinement: function(refinement){
+                $('#refinements').append(`<span class="badge badge-primary active-refinement">${refinement}</span>`);
+            },
+
+            removeRefinement: function(refinement){
+                $(refinement).remove();
+            },
+
             fillTable: function(cqr) {
 
                 let clusteringType = $('input[name=clustering]:checked', '#clusterModi').val();
@@ -18,7 +34,7 @@ define(["require", "state", "jquery", "search"],
                     let liAdded = false;
                     data.clustering.forEach(function(parent){
                         liAdded = true;
-                        kvClusteringList.append(`<li class="refinement" id="&quot;${parent.name}&quot; ${cqr}"  "style="margin-top: 5px"><a href="#">${parent.name}(${parent.itemCount})</a></li>`);
+                        kvClusteringList.append(`<li class="refinement" id="&quot;${parent.name}&quot;"  "style="margin-top: 5px"><a href="#">${parent.name}(${parent.itemCount})</a></li>`);
                     });
                     if(!liAdded){
                         kvClusteringList.append(`<li style="margin-top: 5px">no refinements for this query</li>`);
@@ -66,6 +82,7 @@ define(["require", "state", "jquery", "search"],
                 //     });
                 // }
             }
+
         };
         return kvClustering;
     });

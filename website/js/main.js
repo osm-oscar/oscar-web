@@ -77,6 +77,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
         var query = require("query");
 		var tools = require("tools");
         var search = require("search");
+        var kvClustering = require("kv-clustering");
 		
 		//set the map handler
 		state.mapHandler = map;
@@ -168,9 +169,14 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             });
 
             $(document).on('click', '#kvclustering-list li.refinement' ,(function () {
-               $('#search_text').val(this.id);
+               kvClustering.addRefinement(this.id);
                search.instantCompletion();
             }));
+            $(document).on('click', '#refinements span.active-refinement' ,(function () {
+                kvClustering.removeRefinement(this);
+                search.instantCompletion();
+            }));
+
 			
 			$('#display_cluster_shapes_checkbox').click(function() {
 				var enabled = $(this).is(':checked');
