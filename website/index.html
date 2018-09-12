@@ -272,8 +272,14 @@
 							</div>
 						</div>
 						<div class="sidebar-pane" id="sidebar-pane-clustering">
-							<form id="clusterModi" data-toggle="tooltip" data-placement="right" title="Use Parent to cluster by Parents">
-								<input type="checkbox" name="clusterModi" class="form-control">
+							<form id="clusterModi" action="">
+								<p>Clustering Type:</p>
+								<input checked type="radio" id="parentClustering" name="clustering" value="p">
+								<label for="parentClustering"> Parent</label>
+								<input type="radio" id="keyClustering" name="clustering" value="k">
+								<label for="keyClustering"> Key</label>
+								<input type="radio" id="keyValueClustering" name="clustering" value="kv">
+								<label for="keyValueClustering"> Key-Value</label>
 							</form>
 							<br>
 							<h4>Refinelist</h4>
