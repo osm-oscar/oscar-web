@@ -132,14 +132,6 @@ define([], function() {
         geoquery: {
             samplecount: 10
         },
-        functionality: {
-            shapes: {
-                highlightListItemOnClick: {
-                    items: true,
-                    relatives: false
-                }
-            }
-        },
         timeouts: {
             query: 0,
             loadingSpinner: 1000,
