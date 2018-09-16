@@ -27,11 +27,12 @@ namespace oscar_web {
 
         template<typename mapKey>
         void writeParentsWithNoIntersection(std::ostream &out,
-                                            const std::vector<std::pair<mapKey, std::set<uint32_t>>> &parentItemVec,
-                                            const std::uint8_t &mode,
-                                            const liboscar::Static::OsmKeyValueObjectStore &store,
-                                            const uint32_t& numberOfRefinements,
-                                            std::stringstream& debug);
+                                                          const std::unordered_map<mapKey, std::set<std::uint32_t >> &parentItemMap,
+                                                          const std::vector<std::pair<mapKey, std::uint32_t >> &parentItemVec,
+                                                          const std::uint8_t &mode,
+                                                          const liboscar::Static::OsmKeyValueObjectStore &store,
+                                                          const uint32_t &numberOfRefinements,
+                                                          std::stringstream &debugStr);
 
         void writeLogStats(const std::string &fn, const std::string &query, const sserialize::TimeMeasurer &tm,
                            uint32_t cqrSize, uint32_t idxSize);
@@ -51,7 +52,7 @@ namespace oscar_web {
                          const std::uint8_t &mode, const liboscar::Static::OsmKeyValueObjectStore &store);
 
         void sortMap(std::unordered_map<std::uint32_t, std::set<uint32_t>>& parentItemMap,
-                std::vector<std::pair<std::uint32_t, std::set<uint32_t>>>& parentItemVec, std::stringstream& debug);
+                std::vector<std::pair<std::uint32_t, std::uint32_t>>& parentItemVec, std::stringstream& debug);
 
     };
 

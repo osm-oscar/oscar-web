@@ -79,16 +79,16 @@ namespace oscar_web {
                 sserialize::TimeMeasurer stm;
 
                 stm.begin();
-                auto keyValueItemVec = std::vector<std::pair<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>>>();
+                auto keyValueItemVec = std::vector<std::pair<std::pair<std::uint32_t, std::uint32_t>, std::uint32_t >>();
 
-                std::copy(keyValueItemMap.begin(), keyValueItemMap.end(),
-                          std::back_inserter<std::vector<std::pair<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>>>>(
-                                  keyValueItemVec));
+                for (auto& keyItem: keyValueItemMap) {
+                    keyValueItemVec.emplace_back(keyItem.first, keyItem.second.size());
+                }
 
                 std::sort(keyValueItemVec.begin(), keyValueItemVec.end(),
-                          [](std::pair<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>> const &a,
-                             std::pair<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>> const &b) {
-                              return a.second.size() != b.second.size() ? a.second.size() > b.second.size() :
+                          [](std::pair<std::pair<std::uint32_t, std::uint32_t>, std::uint32_t> const &a,
+                             std::pair<std::pair<std::uint32_t, std::uint32_t>, std::uint32_t> const &b) {
+                              return a.second != b.second ? a.second > b.second :
                                      a.first.first < b.first.first || a.first.second < b.first.second;
                           });
                 stm.end();
@@ -96,36 +96,36 @@ namespace oscar_web {
 
                 out << "{\"clustering\":[";
 
-                writeParentsWithNoIntersection(out, keyValueItemVec, mode, store, numberOfRefinements, debugStr);
-
+                writeParentsWithNoIntersection(out, keyValueItemMap, keyValueItemVec,  mode, store, numberOfRefinements, debugStr);
 
                 out << "]";
             } else {
-                std::vector<std::pair<std::uint32_t, std::set<uint32_t>>> keyItemVec;
+                std::vector<std::pair<std::uint32_t, uint32_t>> keyItemVec;
 
                 sortMap(keyItemMap, keyItemVec, debugStr);
 
                 out << "{\"clustering\":[";
 
-                writeParentsWithNoIntersection(out, keyItemVec, mode, store, numberOfRefinements, debugStr);
+                writeParentsWithNoIntersection(out, keyItemMap, keyItemVec, mode, store, numberOfRefinements, debugStr);
 
                 out << "]";
             }
 
-        } else if (clusteringType == "p") {
+        } else {
             sserialize::TimeMeasurer gtm;
             gtm.begin();
-            auto parentItemMap = std::unordered_map<std::uint32_t, std::set<uint32_t>>();
+            std::unordered_map<std::uint32_t, std::set<uint32_t>> parentItemMap;
 
             //get all parents and their items
+
+            std::vector<std::pair<std::uint32_t, std::uint32_t >> parentItemVec;
 
             for (sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
                 auto cellParents = sg.cellParents(it.cellId());
                 if (!cellParents.empty()) {
                     for (uint32_t &cellParent : cellParents) {
-                        for (uint32_t x : it.idx()) {
-                            auto item = store.at(x);
-                            parentItemMap[cellParent].insert(item.id());
+                        for (const uint32_t &x : it.idx()) {
+                            parentItemMap[cellParent].insert(store.at(x).id());
                         }
                     }
                 }
@@ -136,7 +136,8 @@ namespace oscar_web {
 
             //transform parentItemMap to vector and sort descending by number of keys
 
-            std::vector<std::pair<std::uint32_t, std::set<uint32_t>>> parentItemVec;
+            sserialize::TimeMeasurer ctm;
+            ctm.begin();
 
             sortMap(parentItemMap, parentItemVec, debugStr);
 
@@ -144,7 +145,7 @@ namespace oscar_web {
 
             out << "{\"clustering\":[";
 
-            writeParentsWithNoIntersection(out, parentItemVec, mode, store, numberOfRefinements, debugStr);
+            writeParentsWithNoIntersection(out, parentItemMap, parentItemVec, mode, store, numberOfRefinements, debugStr);
 
             out << "]";
         }
@@ -224,35 +225,34 @@ namespace oscar_web {
 
     template<typename mapKey>
     void KVClustering::writeParentsWithNoIntersection(std::ostream &out,
-                                                      const std::vector<std::pair<mapKey, std::set<uint32_t>>> &parentItemVec,
+                                                      const std::unordered_map<mapKey, std::set<std::uint32_t >> &parentItemMap,
+                                                      const std::vector<std::pair<mapKey, std::uint32_t >> &parentItemVec,
                                                       const std::uint8_t &mode,
                                                       const liboscar::Static::OsmKeyValueObjectStore &store,
                                                       const uint32_t &numberOfRefinements,
-                                                      std::stringstream &debug) {
+                                                      std::stringstream &debugStr) {
         //derive startParents BA-Kopf Page 18
         sserialize::TimeMeasurer fptm;
         fptm.begin();
 
-        auto result = std::vector<std::pair<mapKey, std::set<uint32_t >>>();
+        std::vector<std::pair<mapKey , std::uint32_t >> result;
         auto itI = parentItemVec.begin() + 1;
         bool startParentsFound = false;
         std::float_t maxNumberOfIntersections;
         for (; itI < parentItemVec.end(); ++itI) {
             for (auto itJ = parentItemVec.begin(); itJ < itI; ++itJ) {
-                auto parentI = (*itI).first;
-                auto parentJ = (*itJ).first;
-                std::set<uint32_t> setI = (*itI).second;
-                std::set<uint32_t> setJ = (*itJ).second;
-                maxNumberOfIntersections = mode == 3 ? 0 : (setI.size() + setJ.size()) / 200;
+                const std::set<uint32_t> &setI = parentItemMap.at((*itI).first);
+                const std::set<uint32_t> &setJ = parentItemMap.at((*itJ).first);
+                maxNumberOfIntersections = mode == 3 ? 0 : ((*itI).second + (*itJ).second) / 200;
                 if (!hasIntersection(setI, setJ, maxNumberOfIntersections)) {
                     // no intersection or required amount
                     // add both parents to results and print them
-                    result.emplace_back(parentJ, setJ);
-                    result.emplace_back(parentI, setI);
+                    result.emplace_back((*itJ).first,(*itJ).second);
+                    result.emplace_back((*itI).first,(*itI).second);
 
-                    printResult(parentJ, setJ.size(), out, mode, store);
+                    printResult((*itJ).first, (*itJ).second, out, mode, store);
                     out << ",";
-                    printResult(parentI, setI.size(), out, mode, store);
+                    printResult((*itI).first, (*itI).second, out, mode, store);
 
                     //end the algorithm
                     startParentsFound = true;
@@ -264,7 +264,7 @@ namespace oscar_web {
                 break;
         }
         fptm.end();
-        debug << ",\"timeToFindFirstParents\":" << fptm.elapsedMilliSeconds();
+        debugStr << ",\"timeToFindFirstParents\":" << fptm.elapsedMilliSeconds();
 
         //get other parents which don't have an intersection with the startParents(BA-Kopf page 19)
         sserialize::TimeMeasurer nptm;
@@ -272,10 +272,10 @@ namespace oscar_web {
         if (startParentsFound) {
             for (auto itK = itI + 1; itK < parentItemVec.end() && result.size() <= numberOfRefinements; ++itK) {
                 bool discarded = false;
-                for (auto parentPair : result) {
+                for (auto& parentPair : result) {
                     maxNumberOfIntersections =
-                            mode == 3 ? 0 : (parentPair.second.size() + (*itK).second.size()) / 200;
-                    if (hasIntersection((*itK).second, parentPair.second, maxNumberOfIntersections)) {
+                            mode == 3 ? 0 : (parentPair.second + (*itK).second) / 200;
+                    if (hasIntersection(parentItemMap.at((*itK).first), parentItemMap.at(parentPair.first), maxNumberOfIntersections)) {
                         discarded = true;
                         break;
                     }
@@ -283,16 +283,15 @@ namespace oscar_web {
                 if (!discarded) {
                     //parent does not intersect with previous found parents; add to results and print
                     result.emplace_back(*itK);
-                    auto parentId = (*itK).first;
-                    auto itemCount = (*itK).second.size();
                     out << ",";
-                    printResult(parentId, itemCount, out, mode, store);
+                    printResult((*itK).first, (*itK).second, out, mode, store);
                 }
             }
         }
         nptm.end();
 
-        debug << ",\"timeToFindOtherParents\":" << nptm.elapsedMilliSeconds();
+        debugStr << ",\"timeToFindOtherParents\":" << nptm.elapsedMilliSeconds();
+
     }
 
     void KVClustering::printResult(const std::uint32_t &id, const long &itemCount, std::ostream &out,
@@ -321,19 +320,29 @@ namespace oscar_web {
     }
 
     void KVClustering::sortMap(std::unordered_map<std::uint32_t, std::set<uint32_t>> &parentItemMap,
-                               std::vector<std::pair<std::uint32_t, std::set<uint32_t>>> &parentItemVec,
+                               std::vector<std::pair<std::uint32_t, uint32_t>> &parentItemVec,
                                std::stringstream &debug) {
+
+        sserialize::TimeMeasurer ctm;
+        ctm.begin();
+
+        uint32_t parentCount = 0;
+
+        for(auto& parent : parentItemMap){
+           parentItemVec.emplace_back(std::make_pair(parent.first, parent.second.size()));
+        }
+
+        ctm.end();
+        debug << ",\"timeToCopy" << parentCount << "\":" << ctm.elapsedMilliSeconds();
 
         sserialize::TimeMeasurer stm;
         stm.begin();
-        std::copy(parentItemMap.begin(), parentItemMap.end(),
-                  std::back_inserter<std::vector<std::pair<std::uint32_t, std::set<uint32_t>>>>(parentItemVec));
-
         std::sort(parentItemVec.begin(), parentItemVec.end(),
-                  [](std::pair<std::uint32_t, std::set<uint32_t>> const &a,
-                     std::pair<std::uint32_t, std::set<uint32_t>> const &b) {
-                      return a.second.size() != b.second.size() ? a.second.size() > b.second.size() : a.first < b.first;
+                  [](std::pair<std::uint32_t, std::uint32_t> const &a,
+                     std::pair<std::uint32_t, std::uint32_t> const &b) {
+                      return a.second != b.second ? a.second > b.second : a.first < b.first;
                   });
+
 
         stm.end();
         debug << ",\"timeToSort\":" << stm.elapsedMilliSeconds();
