@@ -321,10 +321,19 @@ namespace oscar_web {
         sserialize::TimeMeasurer ctm;
         ctm.begin();
 
+        auto parentCount = static_cast<uint32_t>(parentItemMap.size());
+
+        debug << ",\"parentCount\":" << parentCount;
+
+        uint32_t pairCount = 0;
+
 
         for(auto& parent : parentItemMap){
            parentItemVec.emplace_back(std::make_pair(parent.first, parent.second.size()));
+           pairCount += parent.second.size();
         }
+        debug << ",\"pairCount\":" << pairCount;
+
 
         ctm.end();
         debug << ",\"timeToCopy\":" << ctm.elapsedMilliSeconds();
