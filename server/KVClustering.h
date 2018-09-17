@@ -27,20 +27,20 @@ namespace oscar_web {
 
         template<typename mapKey>
         void writeParentsWithNoIntersection(std::ostream &out,
-                                                          const std::unordered_map<mapKey, std::set<std::uint32_t >> &parentItemMap,
-                                                          const std::vector<std::pair<mapKey, std::uint32_t >> &parentItemVec,
-                                                          const std::uint8_t &mode,
-                                                          const liboscar::Static::OsmKeyValueObjectStore &store,
-                                                          const uint32_t &numberOfRefinements,
-                                                          std::stringstream &debugStr);
+                                            const std::unordered_map<mapKey, std::set<std::uint32_t >> &parentItemMap,
+                                            const std::vector<std::pair<mapKey, std::uint32_t >> &parentItemVec,
+                                            const std::uint8_t &mode,
+                                            const liboscar::Static::OsmKeyValueObjectStore &store,
+                                            const uint32_t &numberOfRefinements,
+                                            std::stringstream &debugStr);
 
         void writeLogStats(const std::string &fn, const std::string &query, const sserialize::TimeMeasurer &tm,
                            uint32_t cqrSize, uint32_t idxSize);
 
-        void kvClustering(std::unordered_map<std::uint32_t, std::set<uint32_t>> &keyItemMap,
-                          std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>> &keyValueItemMap,
-                          const sserialize::CellQueryResult &cqr, const std::uint8_t& mode,
-                          std::stringstream& debug);
+        template<typename mapKey>
+        void generateKeyItemMap(std::unordered_map<mapKey, std::set<uint32_t>> &keyItemMap,
+                                const sserialize::CellQueryResult &cqr,
+                                std::stringstream &debug, const std::vector<mapKey>& exceptions);
 
         bool
         hasIntersection(const std::set<uint32_t> &set1, const std::set<uint32_t> &set2, const std::float_t &minNumber);
@@ -51,8 +51,15 @@ namespace oscar_web {
         void printResult(const std::pair<std::uint32_t, std::uint32_t> &id, const long &itemCount, std::ostream &out,
                          const std::uint8_t &mode, const liboscar::Static::OsmKeyValueObjectStore &store);
 
-        void sortMap(std::unordered_map<std::uint32_t, std::set<uint32_t>>& parentItemMap,
-                std::vector<std::pair<std::uint32_t, std::uint32_t>>& parentItemVec, std::stringstream& debug);
+        template<typename mapKey>
+        void sortMap(std::unordered_map<mapKey, std::set<uint32_t>>& parentItemMap,
+                std::vector<std::pair<mapKey, std::uint32_t>>& parentItemVec, std::stringstream& debug);
+
+        void insertKey(std::unordered_map<std::uint32_t, std::set<uint32_t>> &keyItemMap, const liboscar::Static::OsmKeyValueObjectStoreItem& item, const uint32_t& i,
+                       const std::vector<uint32_t>& exceptions);
+
+        void insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>>& keyValueItemMap, const liboscar::Static::OsmKeyValueObjectStoreItem& item, const uint32_t& i, const std::vector<std::pair<uint32_t , uint32_t >>& exceptions);
+
 
     };
 
