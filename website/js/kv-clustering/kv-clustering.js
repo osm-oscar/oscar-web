@@ -39,7 +39,7 @@ define(["require", "state", "jquery", "search", "tools"],
                 exceptionString += "]";
                 console.log(exceptionString);
                 let queryRequest = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level&queryId=" + state.queries.activeCqrId
-                    + "&type=k&maxRefinements=10"+exceptionString;
+                    + "&type=k&maxRefinements=10";
                 $.get(queryRequest, function (data) {
                     state.clustering.kRefinements = tools.SimpleHash();
                     if(state.queries.activeCqrId!==data.queryId && !force)
