@@ -168,15 +168,36 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 }
             });
 
-            $(document).on('click', '#kvclustering-list li.refinement' ,(function () {
+            $(document).on('click', '#refinementTabContent a.refinement' ,(function () {
                kvClustering.addRefinement(this.id);
+               search.instantCompletion();
+            }));
+            $(document).on('click', '#refinementTabContent a.kRefinement-exception' ,(function () {
+               kvClustering.addKException(this.id);
+               kvClustering.drawKExceptions();
                search.instantCompletion();
             }));
 
             $(document).on('click', '#refinements span.active-refinement' ,(function () {
-                kvClustering.removeRefinement(this);
+                kvClustering.removeRefinement(this.id);
                 search.instantCompletion();
             }));
+
+            $(document).on('click', '#kException-list a.active-exception' ,(function () {
+                console.log(this.id);
+                kvClustering.removeKException(this.id);
+                kvClustering.drawKExceptions();
+            }));
+
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function(e){
+               if(e.target.id==="k-tab"){
+                    kvClustering.fetchKRefinements($('#search_text').val(), false);
+               } else if(e.target.id==="kv-tab"){
+                    kvClustering.fetchKvRefinements($('#search_text').val(), false)
+               } else if(e.target.id==="p-tab"){
+                    kvClustering.fetchPRefinements($('#search_text').val(), false)
+               }
+            });
 
             $("#refinement_type").change(function () {
                kvClustering.fillTable($('#search_text').val());

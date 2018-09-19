@@ -45,6 +45,20 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
 			activeItem: undefined,
 			inspectItem: undefined
 		},
+
+        clustering : {
+            mode : 2,
+            refinementenKvId : -1,
+            refinementenKId : -1,
+            refinementenPId : -1,
+            kRefinements : tools.SimpleHash(), // keyId -> {name : String, itemCount: int}
+            pRefinements : tools.SimpleHash(), // parentId -> {name : String, itemCount: int}
+            kvRefinements : tools.SimpleHash(), // {keyId: int, valueId: int} -> {name : String, itemCount: int}
+            activeRefinements: [],
+            kvExceptions: [],
+            kExceptions: tools.SimpleHash() // keyId -> {name: String, itemCount: int}
+        },
+
 		//e = {type : type, id : internalId, name : name}
 		spatialQueryTableRowTemplateDataFromSpatialObject: function(e) {
 			var t = "invalid";

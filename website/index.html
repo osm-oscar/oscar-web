@@ -272,21 +272,49 @@
 							</div>
 						</div>
 						<div class="sidebar-pane" id="sidebar-pane-clustering">
-                            <div id="refinements">
-                                Active Refinements:<br>
-                            </div>
-                            <br>
-                            <label for="refinement_type">Refinement Type</label>
-                            <select class="form-control" id="refinement_type">
-                                <option value="p" selected="selected">Parent</option>
-                                <option value="k">Key</option>
-                                <option value="kv">Key Value</option>
-                            </select>
-							<br>
-							<h4>Refinelist</h4>
-							<ul style="list-style-type: none; margin-left: -40px" id="kvclustering-list">
-								<li>No refinements for this query.</li>
+							<div id="refinements">
+								Active Refinements:<br>
+							</div>
+							<ul class="nav nav-tabs" id="myTab" role="tablist">
+								<li class="nav-item refinement-type">
+									<a class="nav-link active" id="kv-tab" data-toggle="tab" href="#kv-content" role="tab" aria-controls="kv-content" aria-selected="true">Key-Value</a>
+								</li>
+								<li class="nav-item refinement-type">
+									<a class="nav-link" id="k-tab" data-toggle="tab" href="#k-content" role="tab" aria-controls="k-content" aria-selected="false">Key</a>
+								</li>
+								<li class="nav-item refinement-type">
+									<a class="nav-link" id="p-tab" data-toggle="tab" href="#p-content" role="tab" aria-controls="p-content" aria-selected="false">Parent</a>
+								</li>
 							</ul>
+							<div class="tab-content" id="refinementTabContent">
+								<div class="tab-pane fade" id="p-content" role="tabpanel" aria-labelledby="p-tab">
+									<h4>Refinelist</h4>
+									<ul style="list-style-type: none; margin-left: -40px" id="pClustering-list">
+										<li>No refinements for this query.</li>
+									</ul>
+								</div>
+								<div class="tab-pane fade" id="k-content" role="tabpanel" aria-labelledby="k-tab">
+									<h4>Refinelist</h4>
+									<ul style="list-style-type: none; margin-left: -40px" id="kClustering-list">
+										<li>No refinements for this query.</li>
+									</ul>
+									<h4>Exceptions</h4>
+									<ul style="list-style-type: none; margin-left: -40px" id="kException-list">
+
+									</ul>
+								</div>
+								<div class="tab-pane fade show active" id="kv-content" role="tabpanel" aria-labelledby="kv-tab">
+									<h4>Refinelist</h4>
+									<ul style="list-style-type: none; margin-left: -40px" id="kvClustering-list">
+										<li>No refinements for this query.</li>
+									</ul>
+									<h4>Exceptions</h4>
+									<ul style="list-style-type: none; margin-left: -40px" id="kvException-list">
+
+									</ul>
+								</div>
+							</div>
+                            <br>
 						</div>
 						<div class="sidebar-pane" id="sidebar-pane-legal"></div>
 					</div>

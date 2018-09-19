@@ -286,6 +286,10 @@ label {
 	overflow-wrap: break-word;
 }
 
+.refinement-type{
+    width: 33%;
+}
+
 ::-moz-scrollbar {
 	width: 6px;
 	height: 6px;
