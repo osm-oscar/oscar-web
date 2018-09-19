@@ -67,7 +67,7 @@ namespace oscar_web {
 
         std::stringstream debugStr;
 
-        debugStr << ",\"debugInfo\":{";
+        debugStr << R"(,"debugInfo":{"itemCount":)" << itemCount;
 
         if (mode < 2) {
 
@@ -119,12 +119,11 @@ namespace oscar_web {
 
             //get all parents and their items
 
-            std::vector<std::pair<std::uint32_t, std::uint32_t >> parentItemVec;
 
             for (sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
-                auto cellParents = sg.cellParents(it.cellId());
+                const auto &cellParents = sg.cellParents(it.cellId());
                 if (!cellParents.empty()) {
-                    for (uint32_t &cellParent : cellParents) {
+                    for (const uint32_t &cellParent : cellParents) {
                         for (const uint32_t &x : it.idx()) {
                             parentItemMap[cellParent].insert(store.at(x).id());
                         }
@@ -133,12 +132,14 @@ namespace oscar_web {
             }
             gtm.end();
 
-            debugStr << "\"timeToGenerateMap\":" << gtm.elapsedMilliSeconds();
+            debugStr << ",\"timeToGenerateMap\":" << gtm.elapsedMilliSeconds();
 
             //transform parentItemMap to vector and sort descending by number of keys
 
             sserialize::TimeMeasurer ctm;
             ctm.begin();
+
+            std::vector<std::pair<std::uint32_t, std::uint32_t >> parentItemVec;
 
             sortMap(parentItemMap, parentItemVec, debugStr);
 
@@ -192,7 +193,7 @@ namespace oscar_web {
         }
         gtm.end();
 
-        debug << "\"timeToGenerateMap\":" << gtm.elapsedMilliSeconds();
+        debug << ",\"timeToGenerateMap\":" << gtm.elapsedMilliSeconds();
 
     }
 
@@ -359,9 +360,9 @@ namespace oscar_web {
         keyItemMap[item.keyId(i)].emplace(item.id());
     }
 
-    void KVClustering::insertKey(
-            std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>> &keyValueItemMap,
-            const liboscar::Static::OsmKeyValueObjectStoreItem &item, const uint32_t &i, const std::vector<std::pair<std::uint32_t , std::uint32_t >>& exceptions) {
+    void KVClustering::insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>> &keyValueItemMap,
+                                const liboscar::Static::OsmKeyValueObjectStoreItem &item, const uint32_t &i,
+                                const std::vector<std::pair<std::uint32_t , std::uint32_t >>& exceptions) {
         const std::pair<std::uint32_t , std::uint32_t >& keyValuePair = std::make_pair(item.keyId(i), item.valueId(i));
         if(std::find(exceptions.begin(), exceptions.end(), keyValuePair) == exceptions.end())
             keyValueItemMap[keyValuePair].emplace(item.id());
