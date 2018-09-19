@@ -81,7 +81,7 @@ namespace oscar_web {
                     exceptions.emplace_back(exceptionVec[0], exceptionVec[1]);
                 }
 
-                std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>> keyValueItemMap;
+                std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t>> keyValueItemMap;
 
                 generateKeyItemMap(keyValueItemMap, cqr, debugStr, exceptions);
 
@@ -97,7 +97,7 @@ namespace oscar_web {
             } else {
                 std::vector<uint32_t> exceptions = parseJsonArray<uint32_t>(exceptionsString, parsingCorrect);
 
-                std::unordered_map<std::uint32_t , std::set<uint32_t>> keyItemMap;
+                std::unordered_map<std::uint32_t , std::vector<uint32_t>> keyItemMap;
 
                 generateKeyItemMap(keyItemMap, cqr, debugStr, exceptions);
 
@@ -115,7 +115,7 @@ namespace oscar_web {
         } else {
             sserialize::TimeMeasurer gtm;
             gtm.begin();
-            std::unordered_map<std::uint32_t, std::set<uint32_t>> parentItemMap;
+            std::unordered_map<std::uint32_t, std::vector<uint32_t>> parentItemMap;
 
             //get all parents and their items
 
@@ -125,7 +125,7 @@ namespace oscar_web {
                 if (!cellParents.empty()) {
                     for (const uint32_t &cellParent : cellParents) {
                         for (const uint32_t &x : it.idx()) {
-                            parentItemMap[cellParent].insert(store.at(x).id());
+                            parentItemMap[cellParent].emplace_back(store.at(x).id());
                         }
                     }
                 }
@@ -175,7 +175,7 @@ namespace oscar_web {
 
     template<typename mapKey>
     void KVClustering::generateKeyItemMap(
-            std::unordered_map<mapKey, std::set<uint32_t>> &keyItemMap,
+            std::unordered_map<mapKey, std::vector<uint32_t>> &keyItemMap,
             const sserialize::CellQueryResult &cqr, std::stringstream &debug, const std::vector<mapKey>& exceptions) {
         //iterate over all query result items
         sserialize::TimeMeasurer gtm;
@@ -198,7 +198,7 @@ namespace oscar_web {
     }
 
     //returns true if the number of intersections is greater than minNumber
-    bool KVClustering::hasIntersection(const std::set<uint32_t> &set1, const std::set<uint32_t> &set2,
+    bool KVClustering::hasIntersection(const std::vector<uint32_t> &set1, const std::vector<uint32_t> &set2,
                                        const std::float_t &minNumber) {
         std::uint32_t intersectionCount = 0;
         auto itSet1 = set1.begin();
@@ -220,7 +220,7 @@ namespace oscar_web {
 
     template<typename mapKey>
     void KVClustering::writeParentsWithNoIntersection(std::ostream &out,
-                                                      const std::unordered_map<mapKey, std::set<std::uint32_t >> &parentItemMap,
+                                                      const std::unordered_map<mapKey, std::vector  <std::uint32_t >> &parentItemMap,
                                                       const std::vector<std::pair<mapKey, std::uint32_t >> &parentItemVec,
                                                       const std::uint8_t &mode,
                                                       const liboscar::Static::OsmKeyValueObjectStore &store,
@@ -236,8 +236,8 @@ namespace oscar_web {
         std::float_t maxNumberOfIntersections;
         for (; itI < parentItemVec.end(); ++itI) {
             for (auto itJ = parentItemVec.begin(); itJ < itI; ++itJ) {
-                const std::set<uint32_t> &setI = parentItemMap.at((*itI).first);
-                const std::set<uint32_t> &setJ = parentItemMap.at((*itJ).first);
+                const std::vector<uint32_t> &setI = parentItemMap.at((*itI).first);
+                const std::vector<uint32_t> &setJ = parentItemMap.at((*itJ).first);
                 maxNumberOfIntersections = mode == 3 ? 0 : ((*itI).second + (*itJ).second) / 200;
                 if (!hasIntersection(setI, setJ, maxNumberOfIntersections)) {
                     // no intersection or required amount
@@ -315,7 +315,7 @@ namespace oscar_web {
     }
 
     template<typename mapKey>
-    void KVClustering::sortMap(std::unordered_map<mapKey, std::set<uint32_t>> &parentItemMap,
+    void KVClustering::sortMap(std::unordered_map<mapKey, std::vector<uint32_t>> &parentItemMap,
                                std::vector<std::pair<mapKey, uint32_t>> &parentItemVec,
                                std::stringstream &debug) {
 
@@ -330,6 +330,7 @@ namespace oscar_web {
 
 
         for(auto& parent : parentItemMap){
+           std::sort(parent.second.begin(), parent.second.end());
            parentItemVec.emplace_back(std::make_pair(parent.first, parent.second.size()));
            pairCount += parent.second.size();
         }
@@ -353,18 +354,18 @@ namespace oscar_web {
 
     }
 
-    void KVClustering::insertKey(std::unordered_map<std::uint32_t, std::set<uint32_t>> &keyItemMap,
+    void KVClustering::insertKey(std::unordered_map<std::uint32_t, std::vector<uint32_t>> &keyItemMap,
                                  const liboscar::Static::OsmKeyValueObjectStoreItem &item, const uint32_t &i,
                                  const std::vector<uint32_t>& exceptions) {
         if(std::find(exceptions.begin(), exceptions.end(), item.keyId(i)) == exceptions.end())
-        keyItemMap[item.keyId(i)].emplace(item.id());
+        keyItemMap[item.keyId(i)].emplace_back(item.id());
     }
 
-    void KVClustering::insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::set<uint32_t>> &keyValueItemMap,
+    void KVClustering::insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t>> &keyValueItemMap,
                                 const liboscar::Static::OsmKeyValueObjectStoreItem &item, const uint32_t &i,
                                 const std::vector<std::pair<std::uint32_t , std::uint32_t >>& exceptions) {
         const std::pair<std::uint32_t , std::uint32_t >& keyValuePair = std::make_pair(item.keyId(i), item.valueId(i));
         if(std::find(exceptions.begin(), exceptions.end(), keyValuePair) == exceptions.end())
-            keyValueItemMap[keyValuePair].emplace(item.id());
+            keyValueItemMap[keyValuePair].emplace_back(item.id());
     }
 }//end namespace oscar_web
