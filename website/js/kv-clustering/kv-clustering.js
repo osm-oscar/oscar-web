@@ -14,7 +14,7 @@ define(["require", "state", "jquery", "search", "tools"],
                     kRefinements : tools.SimpleHash(), // keyId -> {name : String, itemCount: int}
                     pRefinements : tools.SimpleHash(), // parentId -> {name : String, itemCount: int}
                     kvRefinements : tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name: String, itemCount: int}
-                    activeRefinements: [],
+                    activeRefinements: state.clustering.activeRefinements,
                     kvExceptions: tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name : String, itemCount: int}
                     kExceptions: tools.SimpleHash() // keyId -> {name: String, itemCount: int}
                 };
@@ -23,6 +23,7 @@ define(["require", "state", "jquery", "search", "tools"],
                 kvClustering.drawKvRefinements();
                 kvClustering.drawKExceptions();
                 kvClustering.drawKvExceptions();
+                kvClustering.drawActiveRefinements();
             },
 
             drawKRefinements: function(){

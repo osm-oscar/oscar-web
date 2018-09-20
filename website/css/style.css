@@ -290,7 +290,7 @@ label {
     width: 33%;
 }
 .refinement-loading--refinement{
-    height: 10px;
+    height: 12px;
     margin-top: 13px;
     margin-bottom: 13px;
     animation: pulse 1s infinite ease-in-out;
