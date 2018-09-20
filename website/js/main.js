@@ -175,7 +175,10 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             $(document).on('click', '#refinementTabContent a.kRefinement-exception' ,(function () {
                kvClustering.addKException(this.id);
                kvClustering.drawKExceptions();
-               search.instantCompletion();
+            }));
+            $(document).on('click', '#refinementTabContent a.kvRefinement-exception' ,(function () {
+               kvClustering.addKvException(this.id);
+               kvClustering.drawKvExceptions();
             }));
 
             $(document).on('click', '#refinements span.active-refinement' ,(function () {
@@ -186,6 +189,10 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             $(document).on('click', '#kException-list a.active-exception' ,(function () {
                 console.log(this.id);
                 kvClustering.removeKException(this.id);
+                kvClustering.drawKExceptions();
+            }));
+            $(document).on('click', '#kvException-list a.active-exception' ,(function () {
+                kvClustering.removeKvException(this.id);
                 kvClustering.drawKExceptions();
             }));
 

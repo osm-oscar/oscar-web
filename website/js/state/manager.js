@@ -47,15 +47,14 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
 		},
 
         clustering : {
-            mode : 2,
-            refinementenKvId : -1,
-            refinementenKId : -1,
-            refinementenPId : -1,
+            kvQueryId : -1,
+            kQueryId : -1,
+            pQueryId : -1,
             kRefinements : tools.SimpleHash(), // keyId -> {name : String, itemCount: int}
             pRefinements : tools.SimpleHash(), // parentId -> {name : String, itemCount: int}
-            kvRefinements : tools.SimpleHash(), // {keyId: int, valueId: int} -> {name : String, itemCount: int}
+            kvRefinements : tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name: String, itemCount: int}
             activeRefinements: [],
-            kvExceptions: [],
+            kvExceptions: tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name : String, itemCount: int}
             kExceptions: tools.SimpleHash() // keyId -> {name: String, itemCount: int}
         },
 
