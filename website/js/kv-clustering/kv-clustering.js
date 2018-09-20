@@ -2,6 +2,29 @@ define(["require", "state", "jquery", "search", "tools"],
     function (require, state, $, search, tools) {
         var kvClustering = {
 
+            closeClustering: function(){
+                $('#kv-content').removeClass('show active');
+                $('#p-content').removeClass('show active');
+                $('#k-content').removeClass('show active');
+                $('.nav-item.refinement-type.active').removeClass('active');
+                state.clustering = {
+                    kvQueryId : state.clustering.kvQueryId,
+                    kQueryId : state.clustering.kQueryId,
+                    pQueryId : state.clustering.pQueryId,
+                    kRefinements : tools.SimpleHash(), // keyId -> {name : String, itemCount: int}
+                    pRefinements : tools.SimpleHash(), // parentId -> {name : String, itemCount: int}
+                    kvRefinements : tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name: String, itemCount: int}
+                    activeRefinements: [],
+                    kvExceptions: tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name : String, itemCount: int}
+                    kExceptions: tools.SimpleHash() // keyId -> {name: String, itemCount: int}
+                };
+                kvClustering.drawKRefinements();
+                kvClustering.drawPRefinements();
+                kvClustering.drawKvRefinements();
+                kvClustering.drawKExceptions();
+                kvClustering.drawKvExceptions();
+            },
+
             drawKRefinements: function(){
                 const kClusteringList = $("#kClustering-list");
                 kClusteringList.empty();
@@ -157,15 +180,25 @@ define(["require", "state", "jquery", "search", "tools"],
                 kvClustering.fetchKvRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
             },
             drawKExceptions: function(){
-                    const kExceptionList = $('#kException-list');
-                    kExceptionList.empty();
+                const kExceptionList = $('#kException-list');
+                kExceptionList.empty();
+                if(state.clustering.kExceptions.size() > 0){
+                    $('#kExceptionText').show();
+                } else {
+                    $('#kExceptionText').hide();
+                }
                 state.clustering.kExceptions.each(function (key, value) {
                     kExceptionList.append(`<li><a class="active-exception" id="${key}" href="#">${value.name}</a></li>`);
                 })
             },
             drawKvExceptions: function(){
-                    const kvExceptionList = $('#kvException-list');
-                    kvExceptionList.empty();
+                const kvExceptionList = $('#kvException-list');
+                kvExceptionList.empty();
+                if(state.clustering.kvExceptions.size() > 0){
+                    $('#kvExceptionText').show();
+                } else {
+                    $('#kvExceptionText').hide();
+                }
                 state.clustering.kvExceptions.each(function (key, value) {
                     key = JSON.parse(key);
                     kvExceptionList.append(`<li><a class="active-exception" id="${key.keyId}:${key.valueId}" href="#">${value.name}</a></li>`);
