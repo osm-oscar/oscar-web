@@ -38,8 +38,9 @@ define(["require", "state", "jquery", "search", "tools"],
                 state.clustering.kRefinements.each(function(key, value){
                     console.log(key);
                     kClusteringList.append(
-                        `<li style="margin-top: 5px"><a class="refinement" id=@${value.name} href="#">${value.name}(${value.itemCount})</a>
-                                                <a class="kRefinement-exception" id=${key} href="#">x</a></li>`) ;
+                        `<li class="list-group-item d-flex justify-content-between align-items-center"><a class="refinement" id=@${value.name} href="#">${value.name}(${value.itemCount})</a>
+                                                <a class="kRefinement-exception" id=${key} href="#">x</a><span class = "badge badge-primary badge-pill">${value.itemCount}</span>
+                                                </li>`) ;
                 });
             },
             drawPRefinements: function(){
@@ -47,7 +48,7 @@ define(["require", "state", "jquery", "search", "tools"],
                 pClusteringList.empty();
                 state.clustering.pRefinements.each(function(key, value){
                     pClusteringList.append(
-                        `<li style="margin-top: 5px"><a class="refinement" id="&quot;${value.name}&quot;" href="#">${value.name}(${value.itemCount})</a></li>`) ;
+                        `<li  class="list-group-item d-flex justify-content-between align-items-center"><a class="refinement" id="&quot;${value.name}&quot;" href="#">${value.name}</a><span class = "badge badge-primary badge-pill">${value.itemCount}</span></li>`) ;
                 });
             },
             drawKvRefinements: function(){
@@ -56,8 +57,11 @@ define(["require", "state", "jquery", "search", "tools"],
                 state.clustering.kvRefinements.each(function(key, value){
                     key = JSON.parse(key);
                     kvClusteringList.append(
-                        `<li style="margin-top: 5px"><a class="refinement" id=@${value.name} href="#">${value.name}(${value.itemCount})</a>
-                                                <a class="kvRefinement-exception" id="${key.keyId}:${key.valueId}" href="#">x</a></li>`) ;
+                        `<li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a class="refinement" id=@${value.name} href="#">${value.name}</a>
+                                                <a class="kvRefinement-exception" id="${key.keyId}:${key.valueId}" href="#">x</a>
+                                                <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
+                         </li>`) ;
                 });
             },
 
@@ -66,7 +70,9 @@ define(["require", "state", "jquery", "search", "tools"],
                 refinementLoading.removeClass('hidden');
                 refinementLoading.empty();
                 for(let i = 0; i< count; i++){
-                    refinementLoading.append(`<div class="refinement-loading--refinement" style="width: ${minWidth+Math.floor(Math.random() * maxWidth)}px"></div>`);
+                    refinementLoading.append(`<li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="refinement-loading--refinement" style="width: ${minWidth+Math.floor(Math.random() * maxWidth)}px"></div>
+                                        </li>`);
                 }
             },
 
@@ -180,7 +186,7 @@ define(["require", "state", "jquery", "search", "tools"],
               state.clustering.activeRefinements.forEach(function (refinementName){
                   const escapedName = refinementName;
                   refinementName = unescape(refinementName);
-                  refinements.append(`<span class="badge badge-primary active-refinement" id=${escapedName}>${refinementName}</span>`);
+                  refinements.append(`<span class="badge badge-primary "><span class="active-refinement" style="cursor: pointer" id=${escapedName} >x</span> ${refinementName}</span>`);
               });
 
             },

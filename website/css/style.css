@@ -291,10 +291,11 @@ label {
 }
 .refinement-loading--refinement{
     height: 12px;
-    margin-top: 13px;
-    margin-bottom: 13px;
+    margin-top: 2px;
+    margin-bottom: 6px;
     animation: pulse 1s infinite ease-in-out;
 }
+
 
 @keyframes pulse {
     0% {
