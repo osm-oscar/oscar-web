@@ -1,7 +1,13 @@
 define(["require", "state", "jquery", "search", "tools"],
     function (require, state, $, search, tools) {
         var kvClustering = {
-            closeClustering: function(){
+            closeClustering: function(queryWithoutRefinements){
+                console.log("queryWithoutRefinements",queryWithoutRefinements);
+                console.log("lastQueryWithoutRefinements",state.clustering.lastQueryWithoutRefinements);
+                if(queryWithoutRefinements!==state.clustering.lastQueryWithoutRefinements){
+                    state.clustering.activeRefinements = [];
+                    state.clustering.lastQueryWithoutRefinements = queryWithoutRefinements;
+                }
                 $('#kv-content').removeClass('show active');
                 $('#p-content').removeClass('show active');
                 $('#k-content').removeClass('show active');
@@ -19,7 +25,11 @@ define(["require", "state", "jquery", "search", "tools"],
                     kDebugInfo: {},
                     pDebugInfo: {},
                     kvDebugInfo: {},
-                    debug: state.clustering.debug
+                    debug: state.clustering.debug,
+                    lastKvQuery: state.clustering.lastKvQuery,
+                    lastKQuery: state.clustering.lastKQuery,
+                    lastPQuery: state.clustering.lastPQuery,
+                    lastQueryWithoutRefinements: state.clustering.lastQueryWithoutRefinements,
                 };
                 kvClustering.drawKRefinements();
                 kvClustering.drawPRefinements();
@@ -38,8 +48,8 @@ define(["require", "state", "jquery", "search", "tools"],
                 state.clustering.kRefinements.each(function(key, value){
                     console.log(key);
                     kClusteringList.append(
-                        `<li class="list-group-item d-flex justify-content-between align-items-center"><a class="refinement" id=@${value.name} href="#">${value.name}(${value.itemCount})</a>
-                                                <a class="kRefinement-exception" id=${key} href="#">x</a><span class = "badge badge-primary badge-pill">${value.itemCount}</span>
+                        `<li class="list-group-item d-flex justify-content-between align-items-center"><a class="refinement" id=@${value.name} href="#">${value.name}</a>
+                                                <a class="kRefinement-exception" id=${key} href="#">(remove)</a><span class = "badge badge-primary badge-pill">${value.itemCount}</span>
                                                 </li>`) ;
                 });
             },
@@ -59,14 +69,14 @@ define(["require", "state", "jquery", "search", "tools"],
                     kvClusteringList.append(
                         `<li class="list-group-item d-flex justify-content-between align-items-center">
                                 <a class="refinement" id=@${value.name} href="#">${value.name}</a>
-                                                <a class="kvRefinement-exception" id="${key.keyId}:${key.valueId}" href="#">x</a>
+                                                <a class="kvRefinement-exception" id="${key.keyId}:${key.valueId}" href="#">(remove)</a>
                                                 <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
                          </li>`) ;
                 });
             },
 
-            drawLoadingPlaceholders: function(count, minWidth, maxWidth){
-                const  refinementLoading = $('.refinement-loading');
+            drawLoadingPlaceholders: function(count, minWidth, maxWidth, mode){
+                const  refinementLoading = $('.'+mode+'Refinement-loading');
                 refinementLoading.removeClass('hidden');
                 refinementLoading.empty();
                 for(let i = 0; i< count; i++){
@@ -77,21 +87,28 @@ define(["require", "state", "jquery", "search", "tools"],
             },
 
             fetchKRefinements: function(query, force){
-                state.clustering.kRefinements = tools.SimpleHash();
-                state.clustering.kDebugInfo = {};
-                kvClustering.drawKDebugInfo();
-                kvClustering.drawKRefinements();
-                kvClustering.drawLoadingPlaceholders(11, 75, 125);
                 let exceptionString = "&exceptions=[";
                 state.clustering.kExceptions.each(function (key, value) {
                     exceptionString += key + ",";
                 });
                 exceptionString += "]";
                 state.clustering.kQueryId++;
-                let queryRequest = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level&queryId=" + state.clustering.kQueryId
+                let queryRequestWithoutId = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level"
                     + "&type=k&maxRefinements=10" + exceptionString+ '&debug=' + state.clustering.debug;
-                $.get(queryRequest, function (data) {
 
+                let queryRequestWithId = queryRequestWithoutId + "&queryId=" + state.clustering.kQueryId;
+
+                if(queryRequestWithoutId===state.clustering.lastKQuery)
+                    return;
+
+                state.clustering.kRefinements = tools.SimpleHash();
+                state.clustering.kDebugInfo = {};
+                kvClustering.drawKDebugInfo();
+                kvClustering.drawKRefinements();
+                kvClustering.drawLoadingPlaceholders(11, 75, 125, 'k');
+                state.clustering.lastKQuery = queryRequestWithoutId;
+
+                $.get(queryRequestWithId, function (data) {
                     if(state.clustering.kQueryId!==data.queryId && !force)
                         return;
 
@@ -102,21 +119,25 @@ define(["require", "state", "jquery", "search", "tools"],
                         state.clustering.kDebugInfo = data.debugInfo;
                         kvClustering.drawKDebugInfo();
                     }
-                    $('.refinement-loading').empty();
+                    $('.kRefinement-loading').empty();
                     kvClustering.drawKRefinements();
                 });
             },
 
             fetchPRefinements: function(query, force){
+                let queryRequestWithoutId = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level"
+                    + "&type=p&maxRefinements=10"+ '&debug=' + state.clustering.debug;
+                if(state.clustering.lastPQuery === queryRequestWithoutId)
+                    return;
+                state.clustering.pQueryId++;
+                let queryRequestWithId = queryRequestWithoutId +"&queryId=" + state.clustering.pQueryId;
                 state.clustering.pRefinements = tools.SimpleHash();
                 kvClustering.drawPRefinements();
                 state.clustering.pDebugInfo = {};
                 kvClustering.drawPDebugInfo();
-                kvClustering.drawLoadingPlaceholders(11, 100, 150);
-                state.clustering.pQueryId++;
-                let queryRequest = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level&queryId=" + state.clustering.pQueryId
-                    + "&type=p&maxRefinements=10"+ '&debug=' + state.clustering.debug;
-                $.get(queryRequest, function (data) {
+                kvClustering.drawLoadingPlaceholders(11, 100, 150, 'p');
+                state.clustering.lastPQuery = queryRequestWithoutId;
+                $.get(queryRequestWithId, function (data) {
                     state.clustering.pRefinements = tools.SimpleHash();
                     if(state.clustering.pQueryId!==data.queryId && !force)
                         return;
@@ -128,28 +149,34 @@ define(["require", "state", "jquery", "search", "tools"],
                         state.clustering.pDebugInfo = data.debugInfo;
                         kvClustering.drawPDebugInfo();
                     }
-                    $('.refinement-loading').empty();
+                    $('.pRefinement-loading').empty();
                     kvClustering.drawPRefinements();
                 });
             },
 
             fetchKvRefinements: function(query, force){
-                state.clustering.kvDebugInfo = {};
-                state.clustering.kvRefinements = tools.SimpleHash();
-                state.clustering.kvDebugInfo = {};
-                kvClustering.drawKvDebugInfo();
-                kvClustering.drawKvRefinements();
-                kvClustering.drawLoadingPlaceholders(11, 100, 150);
                 let exceptionString = "&exceptions=[";
                 state.clustering.kvExceptions.each(function (key, value) {
                     key = JSON.parse(key);
                     exceptionString += "["  + key.keyId + "," + key.valueId + "],";
                 });
                 exceptionString += "]";
-                state.clustering.kvQueryId++;
-                let queryRequest = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level&queryId=" + state.clustering.kvQueryId
+
+                let queryRequestWithoutId = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level"
                     + "&type=kv&maxRefinements=10" + exceptionString + '&debug=' + state.clustering.debug;
-                $.get(queryRequest, function (data) {
+                if(queryRequestWithoutId===state.clustering.lastKvQuery)
+                    return;
+                state.clustering.kvQueryId++;
+                let queryRequestWithId = queryRequestWithoutId +  "&queryId=" + state.clustering.kvQueryId;
+                state.clustering.kvDebugInfo = {};
+                state.clustering.kvRefinements = tools.SimpleHash();
+                state.clustering.kvDebugInfo = {};
+                kvClustering.drawKvDebugInfo();
+                kvClustering.drawKvRefinements();
+                kvClustering.drawLoadingPlaceholders(11, 100, 150, 'kv');
+                state.clustering.lastKvQuery = queryRequestWithoutId;
+
+                $.get(queryRequestWithId, function (data) {
                     state.clustering.kvRefinements = tools.SimpleHash();
                     if(state.clustering.kvQueryId!==data.queryId && !force)
                         return;
@@ -162,7 +189,7 @@ define(["require", "state", "jquery", "search", "tools"],
                         state.clustering.kvDebugInfo = data.debugInfo;
                         kvClustering.drawKvDebugInfo();
                     }
-                    $('.refinement-loading').empty();
+                    $('.kvRefinement-loading').empty();
                     kvClustering.drawKvRefinements();
                 });
             },
@@ -188,7 +215,6 @@ define(["require", "state", "jquery", "search", "tools"],
                   refinementName = unescape(refinementName);
                   refinements.append(`<span class="badge badge-primary "><span class="active-refinement" style="cursor: pointer" id=${escapedName} >x</span> ${refinementName}</span>`);
               });
-
             },
             // addRefinement: function(refinement){
             //

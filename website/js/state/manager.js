@@ -59,7 +59,11 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
             kDebugInfo: {},
             pDebugInfo: {},
             kvDebugInfo: {},
-            debug: true
+            debug: true,
+            lastKvQuery: "",
+            lastKQuery: "",
+            lastPQuery: "",
+            lastQueryWithoutRefinements: "",
         },
 
 		//e = {type : type, id : internalId, name : name}
