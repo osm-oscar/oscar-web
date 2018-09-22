@@ -319,8 +319,8 @@ namespace oscar_web {
                                std::vector<std::pair<mapKey, uint32_t>> &parentItemVec,
                                std::stringstream &debug) {
 
-        sserialize::TimeMeasurer ctm;
-        ctm.begin();
+        sserialize::TimeMeasurer stm;
+        stm.begin();
 
         auto parentCount = static_cast<uint32_t>(parentItemMap.size());
 
@@ -336,12 +336,6 @@ namespace oscar_web {
         }
         debug << ",\"pairCount\":" << pairCount;
 
-
-        ctm.end();
-        debug << ",\"timeToCopy\":" << ctm.elapsedMilliSeconds();
-
-        sserialize::TimeMeasurer stm;
-        stm.begin();
         std::sort(parentItemVec.begin(), parentItemVec.end(),
                   [](std::pair<mapKey, std::uint32_t> const &a,
                      std::pair<mapKey, std::uint32_t> const &b) {
