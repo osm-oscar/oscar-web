@@ -45,13 +45,16 @@ define(["require", "state", "jquery", "search", "tools"],
             drawKRefinements: function(){
                 const kClusteringList = $("#kClustering-list");
                 kClusteringList.empty();
+                let added = false;
                 state.clustering.kRefinements.each(function(key, value){
-                    console.log(key);
+                    added = true;
                     kClusteringList.append(
                         `<li class="list-group-item d-flex justify-content-between align-items-center"><a class="refinement" id=@${value.name} href="#">${value.name}</a>
                                                 <a class="kRefinement-exception" id=${key} href="#">(remove)</a><span class = "badge badge-primary badge-pill">${value.itemCount}</span>
                                                 </li>`) ;
                 });
+                if(!added)
+                    kClusteringList.append(`No refinements for this query.`);
             },
             drawPRefinements: function(){
                 const pClusteringList = $("#pClustering-list");
@@ -60,6 +63,8 @@ define(["require", "state", "jquery", "search", "tools"],
                     pClusteringList.append(
                         `<li  class="list-group-item d-flex justify-content-between align-items-center"><a class="refinement" id="&quot;${value.name}&quot;" href="#">${value.name}</a><span class = "badge badge-primary badge-pill">${value.itemCount}</span></li>`) ;
                 });
+                if(state.clustering.pRefinements.size() === 0)
+                    pClusteringList.append(`No refinements for this query.`);
             },
             drawKvRefinements: function(){
                 const kvClusteringList = $("#kvClustering-list");
@@ -73,9 +78,13 @@ define(["require", "state", "jquery", "search", "tools"],
                                                 <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
                          </li>`) ;
                 });
+                if(state.clustering.kvRefinements.size() === 0)
+                    kvClusteringList.append(`No refinements for this query.`);
             },
 
             drawLoadingPlaceholders: function(count, minWidth, maxWidth, mode){
+                const refinementList = $('#'+mode+'Clustering-list');
+                refinementList.empty();
                 const  refinementLoading = $('.'+mode+'Refinement-loading');
                 refinementLoading.removeClass('hidden');
                 refinementLoading.empty();
