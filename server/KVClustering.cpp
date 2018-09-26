@@ -185,11 +185,11 @@ namespace oscar_web {
         const auto &store = m_dataPtr->completer->store();
         for (sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
             for (const uint32_t& x : it.idx()) {
-                const auto& item = store.at(x);
+                const auto& item = store.kvBaseItem(x);
                 //iterate over all item keys
                 for (uint32_t i = 0; i < item.size(); ++i) {
                     //add key and item to key to keyItemMap
-                    insertKey(keyItemMap, item, i, exceptions);
+                    insertKey(keyItemMap, item, i, exceptions, x);
                 }
             }
         }
@@ -351,17 +351,17 @@ namespace oscar_web {
     }
 
     void KVClustering::insertKey(std::unordered_map<std::uint32_t, std::vector<uint32_t>> &keyItemMap,
-                                 const liboscar::Static::OsmKeyValueObjectStoreItem &item, const uint32_t &i,
-                                 const std::vector<uint32_t>& exceptions) {
+                                 const liboscar::Static::OsmKeyValueObjectStore::KVItemBase &item, const uint32_t &i,
+                                 const std::vector<uint32_t>& exceptions, const std::uint32_t itemId) {
         if(std::find(exceptions.begin(), exceptions.end(), item.keyId(i)) == exceptions.end())
-        keyItemMap[item.keyId(i)].emplace_back(item.id());
+        keyItemMap[item.keyId(i)].emplace_back(itemId);
     }
 
     void KVClustering::insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t>> &keyValueItemMap,
-                                const liboscar::Static::OsmKeyValueObjectStoreItem &item, const uint32_t &i,
-                                const std::vector<std::pair<std::uint32_t , std::uint32_t >>& exceptions) {
+                                const liboscar::Static::OsmKeyValueObjectStore::KVItemBase &item, const uint32_t &i,
+                                const std::vector<std::pair<std::uint32_t , std::uint32_t >>& exceptions, const std::uint32_t itemId) {
         const std::pair<std::uint32_t , std::uint32_t >& keyValuePair = std::make_pair(item.keyId(i), item.valueId(i));
         if(std::find(exceptions.begin(), exceptions.end(), keyValuePair) == exceptions.end())
-            keyValueItemMap[keyValuePair].emplace_back(item.id());
+            keyValueItemMap[keyValuePair].emplace_back(itemId);
     }
 }//end namespace oscar_we

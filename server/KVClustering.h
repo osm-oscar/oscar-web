@@ -55,10 +55,10 @@ namespace oscar_web {
         void sortMap(std::unordered_map<mapKey, std::vector<uint32_t>>& parentItemMap,
                 std::vector<std::pair<mapKey, std::uint32_t>>& parentItemVec, std::stringstream& debug);
 
-        void insertKey(std::unordered_map<std::uint32_t, std::vector<uint32_t>> &keyItemMap, const liboscar::Static::OsmKeyValueObjectStoreItem& item, const uint32_t& i,
-                       const std::vector<uint32_t>& exceptions);
+        void insertKey(std::unordered_map<std::uint32_t, std::vector<uint32_t>> &keyItemMap, const liboscar::Static::OsmKeyValueObjectStore::KVItemBase& item, const uint32_t& i,
+                       const std::vector<uint32_t>& exceptions, const std::uint32_t itemId);
 
-        void insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t>>& keyValueItemMap, const liboscar::Static::OsmKeyValueObjectStoreItem& item, const uint32_t& i, const std::vector<std::pair<uint32_t , uint32_t >>& exceptions);
+        void insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t>>& keyValueItemMap, const liboscar::Static::OsmKeyValueObjectStore::KVItemBase& item, const uint32_t& i, const std::vector<std::pair<uint32_t , uint32_t >>& exceptions, const std::uint32_t itemId);
 
 
     };
