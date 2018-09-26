@@ -116,16 +116,18 @@ namespace oscar_web {
             sserialize::TimeMeasurer gtm;
             gtm.begin();
             std::unordered_map<std::uint32_t, std::vector<uint32_t>> parentItemMap;
+            std::vector<std::pair<std::uint32_t , std::uint32_t >> parentItemPairVec;
 
             //get all parents and their items
 
+            int i = 0;
 
             for (sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
                 const auto &cellParents = sg.cellParents(it.cellId());
                 if (!cellParents.empty()) {
                     for (const uint32_t &cellParent : cellParents) {
                         for (const uint32_t &x : it.idx()) {
-                            parentItemMap[cellParent].emplace_back(store.at(x).id());
+                            parentItemMap[cellParent].emplace_back(x);
                         }
                     }
                 }
@@ -362,4 +364,4 @@ namespace oscar_web {
         if(std::find(exceptions.begin(), exceptions.end(), keyValuePair) == exceptions.end())
             keyValueItemMap[keyValuePair].emplace_back(item.id());
     }
-}//end namespace oscar_web
+}//end namespace oscar_we
