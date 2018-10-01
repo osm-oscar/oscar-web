@@ -168,8 +168,12 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 }
             });
 
-            $(document).on('click', '#refinementTabContent a.refinement' ,(function () {
-               kvClustering.addRefinement(this.id);
+            $(document).on('click', '#refinementTabContent a.including-refinement' ,(function () {
+               kvClustering.addIncludingRefinement(this.id);
+               search.instantCompletion();
+            }));
+            $(document).on('click', '#refinementTabContent a.excluding-refinement' ,(function () {
+               kvClustering.addExcludingRefinement(this.id);
                search.instantCompletion();
             }));
             $(document).on('click', '#refinementTabContent a.kRefinement-exception' ,(function () {

@@ -53,7 +53,8 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
             kRefinements : tools.SimpleHash(), // keyId -> {name : String, itemCount: int}
             pRefinements : tools.SimpleHash(), // parentId -> {name : String, itemCount: int}
             kvRefinements : tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name: String, itemCount: int}
-            activeRefinements: [],
+            activeIncludingRefinements: [],
+            activeExcludingRefinements: [],
             kvExceptions: tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name : String, itemCount: int}
             kExceptions: tools.SimpleHash(), // keyId -> {name: String, itemCount: int}
             kDebugInfo: {},
