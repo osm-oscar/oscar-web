@@ -89,11 +89,9 @@ namespace oscar_web {
 
                 sortMap(keyValueItemMap, keyValueItemVec, debugStr);
 
-                out << "{\"clustering\":[";
-
                 writeParentsWithNoIntersection(out, keyValueItemMap, keyValueItemVec,  mode, store, numberOfRefinements, debugStr);
 
-                out << "]";
+
             } else {
                 std::vector<uint32_t> exceptions = parseJsonArray<uint32_t>(exceptionsString, parsingCorrect);
 
@@ -105,11 +103,8 @@ namespace oscar_web {
 
                 sortMap(keyItemMap, keyItemVec, debugStr);
 
-                out << "{\"clustering\":[";
-
                 writeParentsWithNoIntersection(out, keyItemMap, keyItemVec, mode, store, numberOfRefinements, debugStr);
 
-                out << "]";
             }
 
         } else {
@@ -145,13 +140,8 @@ namespace oscar_web {
 
             sortMap(parentItemMap, parentItemVec, debugStr);
 
-            //begin printing
-
-            out << "{\"clustering\":[";
-
             writeParentsWithNoIntersection(out, parentItemMap, parentItemVec, mode, store, numberOfRefinements, debugStr);
 
-            out << "]";
         }
 
         if (debug) {
@@ -228,6 +218,8 @@ namespace oscar_web {
                                                       const liboscar::Static::OsmKeyValueObjectStore &store,
                                                       const uint32_t &numberOfRefinements,
                                                       std::stringstream &debugStr) {
+
+
         //derive startParents BA-Kopf Page 18
         sserialize::TimeMeasurer fptm;
         fptm.begin();
@@ -243,13 +235,9 @@ namespace oscar_web {
                 maxNumberOfIntersections = mode == 3 ? 0 : ((*itI).second + (*itJ).second) / 200;
                 if (!hasIntersection(setI, setJ, maxNumberOfIntersections)) {
                     // no intersection or required amount
-                    // add both parents to results and print them
+                    // add both parents to results
                     result.emplace_back((*itJ).first,(*itJ).second);
                     result.emplace_back((*itI).first,(*itI).second);
-
-                    printResult((*itJ).first, (*itJ).second, out, mode, store);
-                    out << ",";
-                    printResult((*itI).first, (*itI).second, out, mode, store);
 
                     //end the algorithm
                     startParentsFound = true;
@@ -267,7 +255,7 @@ namespace oscar_web {
         sserialize::TimeMeasurer nptm;
         nptm.begin();
         if (startParentsFound) {
-            for (auto itK = itI + 1; itK < parentItemVec.end() && result.size() <= numberOfRefinements; ++itK) {
+            for (auto itK = itI + 1; itK < parentItemVec.end() && result.size() < numberOfRefinements+1; ++itK) {
                 bool discarded = false;
                 for (auto& parentPair : result) {
                     maxNumberOfIntersections =
@@ -278,16 +266,38 @@ namespace oscar_web {
                     }
                 }
                 if (!discarded) {
-                    //parent does not intersect with previous found parents; add to results and print
+                    //parent does not intersect with previous found parents; add to results
                     result.emplace_back(*itK);
-                    out << ",";
-                    printResult((*itK).first, (*itK).second, out, mode, store);
                 }
             }
         }
+
         nptm.end();
 
         debugStr << ",\"timeToFindOtherParents\":" << nptm.elapsedMilliSeconds();
+
+        //print results
+
+        out << "{\"clustering\":[";
+        auto separator = "";
+
+        bool hasMore = false;
+        uint32_t count = 0;
+
+        for(auto& resultPair: result){
+            if(count < numberOfRefinements){
+                out << separator;
+                printResult(resultPair.first, resultPair.second, out, mode, store);
+                separator = ",";
+            } else {
+                hasMore = true;
+            }
+            ++count;
+        }
+
+        out << "]";
+
+        out << ",\"hasMore\":" << std::boolalpha << hasMore;
 
     }
 
