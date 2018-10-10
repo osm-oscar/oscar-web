@@ -57,9 +57,9 @@ define(["require", "state", "jquery", "search", "tools"],
                         `<li class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="inner-refinement">
                                 ${value.name}
-                                <i class="fa fa-lg fa-plus-circle including-refinement refinement-button" id=@${value.name} href="#"></i>
-                                <i class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id=@${value.name} href="#"></i>
-                                <i class="fa fa-lg fa-times-circle kRefinement-exception refinement-button" id=${key} href="#"></i>
+                                <i title="include" class="fa fa-lg fa-plus-circle including-refinement refinement-button" id=@${value.name} href="#"></i>
+                                <i title="exclude" class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id=@${value.name} href="#"></i>
+                                <i title="ignore" class="fa fa-lg fa-times-circle kRefinement-exception refinement-button" id=${key} href="#"></i>
                             </span>
                             <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
                          </li>`) ;
@@ -76,8 +76,8 @@ define(["require", "state", "jquery", "search", "tools"],
                         `<li  class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="inner-refinement">
                             ${value.name}
-                            <i class="fa fa-lg fa-plus-circle including-refinement refinement-button" id="&quot;${value.name}&quot;" href="#"></i>
-                            <i class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id="&quot;${value.name}&quot;" href="#"></i>
+                            <i title="include" class="fa fa-lg fa-plus-circle including-refinement refinement-button" id="&quot;${value.name}&quot;" href="#"></i>
+                            <i title="exclude" class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id="&quot;${value.name}&quot;" href="#"></i>
                             </span>
                             <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
                          </li>`) ;
@@ -96,9 +96,9 @@ define(["require", "state", "jquery", "search", "tools"],
                         `<li class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="inner-refinement">
                                 ${value.name}
-                                <i class="fa fa-lg fa-plus-circle including-refinement refinement-button" id=@${value.name} href="#"></i>
-                                <i class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id=@${value.name} href="#"></i>
-                                <i class="fa fa-lg fa-times-circle kvRefinement-exception refinement-button" id="${key.keyId}:${key.valueId}" href="#"></i>
+                                <i title="include" class="fa fa-lg fa-plus-circle including-refinement refinement-button" id=@${value.name} href="#"></i>
+                                <i title="exclude" class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id=@${value.name} href="#"></i>
+                                <i title="ignore" class="fa fa-lg fa-times-circle kvRefinement-exception refinement-button" id="${key.keyId}:${key.valueId}" href="#"></i>
                             </span>
                             <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
                          </li>`) ;
@@ -336,7 +336,9 @@ define(["require", "state", "jquery", "search", "tools"],
                     $('#kExceptionText').hide();
                 }
                 state.clustering.kExceptions.each(function (key, value) {
-                    kExceptionList.append(`<li><a class="active-exception" id="${key}" href="#">${value.name}</a></li>`);
+                    kExceptionList.append(`<li>${value.name}
+                                                <i title="remove" class="fa fa-lg fa-times-circle active-exception refinement-button" id=${key} href="#"></i>
+                                            </li>`);
                 })
             },
             drawKvExceptions: function(){
@@ -349,7 +351,9 @@ define(["require", "state", "jquery", "search", "tools"],
                 }
                 state.clustering.kvExceptions.each(function (key, value) {
                     key = JSON.parse(key);
-                    kvExceptionList.append(`<li><a class="active-exception" id="${key.keyId}:${key.valueId}" href="#">${value.name}</a></li>`);
+                    kvExceptionList.append(`<li>${value.name}
+                                                <i title="remove" class="fa fa-lg fa-times-circle active-exception refinement-button" id="${key.keyId}:${key.valueId}" href="#"></i>
+                                            </li>`);
                 })
             },
             removeKException: function(refinementId){

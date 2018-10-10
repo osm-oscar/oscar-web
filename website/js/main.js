@@ -190,14 +190,13 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 search.instantCompletion();
             }));
 
-            $(document).on('click', '#kException-list a.active-exception' ,(function () {
-                console.log(this.id);
+            $(document).on('click', '#kException-list i.active-exception' ,(function () {
                 kvClustering.removeKException(this.id);
                 kvClustering.drawKExceptions();
             }));
-            $(document).on('click', '#kvException-list a.active-exception' ,(function () {
+            $(document).on('click', '#kvException-list i.active-exception' ,(function () {
                 kvClustering.removeKvException(this.id);
-                kvClustering.drawKExceptions();
+                kvClustering.drawKvExceptions();
             }));
             $(document).on('click', '#kvShowMore' ,(function () {
                 state.clustering.kvRefinementCount += 5;
