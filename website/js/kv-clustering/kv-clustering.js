@@ -1,6 +1,7 @@
 define(["require", "state", "jquery", "search", "tools"],
     function (require, state, $, search, tools) {
         var kvClustering = {
+            numberOfAdditionalRefinements : 5,
             closeClustering: function(queryWithoutRefinements){
                 if(queryWithoutRefinements!==state.clustering.lastQueryWithoutRefinements){
                     state.clustering.activeRefinements = [];
@@ -29,6 +30,12 @@ define(["require", "state", "jquery", "search", "tools"],
                     lastKQuery: state.clustering.lastKQuery,
                     lastPQuery: state.clustering.lastPQuery,
                     lastQueryWithoutRefinements: state.clustering.lastQueryWithoutRefinements,
+                    kvRefinementCount: 10,
+                    kRefinementCount: 10,
+                    pRefinementCount: 10,
+                    pHasMore: false,
+                    kHasMore: false,
+                    kvHasMore: false,
                 };
                 kvClustering.drawKRefinements();
                 kvClustering.drawPRefinements();
@@ -47,10 +54,17 @@ define(["require", "state", "jquery", "search", "tools"],
                 state.clustering.kRefinements.each(function(key, value){
                     added = true;
                     kClusteringList.append(
-                        `<li class="list-group-item d-flex justify-content-between align-items-center">@${value.name}<a class="including-refinement" id=@${value.name} href="#">+</a><a class="excluding-refinement" id=@${value.name} href="#">-</a>
-                                                <a class="kRefinement-exception" id=${key} href="#">(ignore)</a><span class = "badge badge-primary badge-pill">${value.itemCount}</span>
-                                                </li>`) ;
+                        `<li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="inner-refinement">
+                                ${value.name}
+                                <i class="fa fa-lg fa-plus-circle including-refinement refinement-button" id=@${value.name} href="#"></i>
+                                <i class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id=@${value.name} href="#"></i>
+                                <i class="fa fa-lg fa-times-circle kRefinement-exception refinement-button" id=${key} href="#"></i>
+                            </span>
+                            <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
+                         </li>`) ;
                 });
+                kvClustering.showMore(state.clustering.kHasMore, 'k');
                 if(!added)
                     kClusteringList.append(`No refinements for this query.`);
             },
@@ -59,10 +73,19 @@ define(["require", "state", "jquery", "search", "tools"],
                 pClusteringList.empty();
                 state.clustering.pRefinements.each(function(key, value){
                     pClusteringList.append(
-                        `<li  class="list-group-item d-flex justify-content-between align-items-center">${value.name}<a class="including-refinement" id="&quot;${value.name}&quot;" href="#">+</a><a class="excluding-refinement" id="&quot;${value.name}&quot;" href="#">-</a><span class = "badge badge-primary badge-pill">${value.itemCount}</span></li>`) ;
+                        `<li  class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="inner-refinement">
+                            ${value.name}
+                            <i class="fa fa-lg fa-plus-circle including-refinement refinement-button" id="&quot;${value.name}&quot;" href="#"></i>
+                            <i class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id="&quot;${value.name}&quot;" href="#"></i>
+                            </span>
+                            <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
+                         </li>`) ;
                 });
+                kvClustering.showMore(state.clustering.pHasMore, 'p');
                 if(state.clustering.pRefinements.size() === 0)
                     pClusteringList.append(`No refinements for this query.`);
+
             },
             drawKvRefinements: function(){
                 const kvClusteringList = $("#kvClustering-list");
@@ -70,12 +93,17 @@ define(["require", "state", "jquery", "search", "tools"],
                 state.clustering.kvRefinements.each(function(key, value){
                     key = JSON.parse(key);
                     kvClusteringList.append(
-                        `<li class="list-group-item d-flex justify-content-between align-items-center">${value.name}
-                                <a class="including-refinement" id=@${value.name} href="#">+</a><a class="excluding-refinement" id=@${value.name} href="#">-</a>
-                                                <a class="kvRefinement-exception" id="${key.keyId}:${key.valueId}" href="#">(ignore)</a>
-                                                <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
+                        `<li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="inner-refinement">
+                                ${value.name}
+                                <i class="fa fa-lg fa-plus-circle including-refinement refinement-button" id=@${value.name} href="#"></i>
+                                <i class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id=@${value.name} href="#"></i>
+                                <i class="fa fa-lg fa-times-circle kvRefinement-exception refinement-button" id="${key.keyId}:${key.valueId}" href="#"></i>
+                            </span>
+                            <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
                          </li>`) ;
                 });
+                kvClustering.showMore(state.clustering.kvHasMore, 'kv');
                 if(state.clustering.kvRefinements.size() === 0)
                     kvClusteringList.append(`No refinements for this query.`);
             },
@@ -85,7 +113,7 @@ define(["require", "state", "jquery", "search", "tools"],
                 const  refinementLoading = $('.'+mode+'Refinement-loading');
                 refinementLoading.removeClass('hidden');
                 refinementLoading.empty();
-                for(let i = 0; i< count; i++){
+                for(let i = 0; i < count; i++){
                     refinementLoading.append(`<li class="list-group-item d-flex justify-content-between align-items-center">
                                         <div class="refinement-loading--refinement" style="width: ${minWidth+Math.floor(Math.random() * maxWidth)}px"></div>
                                         </li>`);
@@ -99,7 +127,7 @@ define(["require", "state", "jquery", "search", "tools"],
                 exceptionString += "]";
                 state.clustering.kQueryId++;
                 let queryRequestWithoutId = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level"
-                    + "&type=k&maxRefinements=10" + exceptionString+ '&debug=' + state.clustering.debug;
+                    + "&type=k&maxRefinements=" + state.clustering.kRefinementCount + exceptionString+ '&debug=' + state.clustering.debug;
 
                 let queryRequestWithId = queryRequestWithoutId + "&queryId=" + state.clustering.kQueryId;
 
@@ -110,7 +138,7 @@ define(["require", "state", "jquery", "search", "tools"],
                 state.clustering.kDebugInfo = {};
                 kvClustering.drawKDebugInfo();
                 kvClustering.drawKRefinements();
-                kvClustering.drawLoadingPlaceholders(11, 75, 125, 'k');
+                kvClustering.drawLoadingPlaceholders(state.clustering.kRefinementCount,75, 125, 'k');
                 state.clustering.lastKQuery = queryRequestWithoutId;
 
 
@@ -120,7 +148,7 @@ define(["require", "state", "jquery", "search", "tools"],
                     data: {'q' : kvClustering.addRefinementToQuery(query),
                            'rf' : 'admin_level',
                         'type': 'k',
-                        'maxRefinements' : 10,
+                        'maxRefinements' : state.clustering.kRefinementCount,
                         'exceptions' : exceptionString,
                         'debug' : state.clustering.debug,
                         'queryId' : state.clustering.kQueryId
@@ -134,6 +162,7 @@ define(["require", "state", "jquery", "search", "tools"],
                         data.clustering.forEach(function(key){
                             state.clustering.kRefinements.insert( key.id, {name: key.name, itemCount: key.itemCount});
                         });
+                        state.clustering.kHasMore = data.hasMore;
                         if(state.clustering.debug){
                             state.clustering.kDebugInfo = data.debugInfo;
                             kvClustering.drawKDebugInfo();
@@ -148,7 +177,7 @@ define(["require", "state", "jquery", "search", "tools"],
             },
             fetchPRefinements: function(query, force){
                 let queryRequestWithoutId = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level"
-                    + "&type=p&maxRefinements=10"+ '&debug=' + state.clustering.debug;
+                    + "&type=p&maxRefinements=" + state.clustering.pRefinementCount + '&debug=' + state.clustering.debug;
                 if(state.clustering.lastPQuery === queryRequestWithoutId)
                     return;
                 state.clustering.pQueryId++;
@@ -157,7 +186,7 @@ define(["require", "state", "jquery", "search", "tools"],
                 kvClustering.drawPRefinements();
                 state.clustering.pDebugInfo = {};
                 kvClustering.drawPDebugInfo();
-                kvClustering.drawLoadingPlaceholders(11, 100, 150, 'p');
+                kvClustering.drawLoadingPlaceholders(state.clustering.pRefinementCount,100, 150, 'p');
                 state.clustering.lastPQuery = queryRequestWithoutId;
                 $.get(queryRequestWithId, function (data) {
 
@@ -168,7 +197,7 @@ define(["require", "state", "jquery", "search", "tools"],
                     data: {'q' : kvClustering.addRefinementToQuery(query),
                         'rf' : 'admin_level',
                         'type': 'p',
-                        'maxRefinements' : 10,
+                        'maxRefinements' : state.clustering.pRefinementCount,
                         'debug' : state.clustering.debug,
                         'queryId' : state.clustering.pQueryId
                     },
@@ -178,6 +207,8 @@ define(["require", "state", "jquery", "search", "tools"],
                         state.clustering.pRefinements = tools.SimpleHash();
                         if(state.clustering.pQueryId!==data.queryId && !force)
                             return;
+
+                        state.clustering.pHasMore = data.hasMore;
 
                         data.clustering.forEach(function(parent){
                             state.clustering.pRefinements.insert( parent.id, {name: parent.name, itemCount: parent.itemCount});
@@ -203,7 +234,7 @@ define(["require", "state", "jquery", "search", "tools"],
                 exceptionString += "]";
 
                 let queryRequestWithoutId = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level"
-                    + "&type=kv&maxRefinements=10" + exceptionString + '&debug=' + state.clustering.debug;
+                    + "&type=kv&maxRefinements=" + state.clustering.kvRefinementCount + exceptionString + '&debug=' + state.clustering.debug;
                 if(queryRequestWithoutId===state.clustering.lastKvQuery)
                     return;
                 state.clustering.kvQueryId++;
@@ -213,7 +244,7 @@ define(["require", "state", "jquery", "search", "tools"],
                 state.clustering.kvDebugInfo = {};
                 kvClustering.drawKvDebugInfo();
                 kvClustering.drawKvRefinements();
-                kvClustering.drawLoadingPlaceholders(11, 100, 150, 'kv');
+                kvClustering.drawLoadingPlaceholders(state.clustering.kvRefinementCount, 100, 150, 'kv');
                 state.clustering.lastKvQuery = queryRequestWithoutId;
                 $.ajax({
                     type: "GET",
@@ -221,7 +252,7 @@ define(["require", "state", "jquery", "search", "tools"],
                     data: {'q' : kvClustering.addRefinementToQuery(query),
                         'rf' : 'admin_level',
                         'type': 'kv',
-                        'maxRefinements' : 10,
+                        'maxRefinements' : state.clustering.kvRefinementCount,
                         'exceptions' : exceptionString,
                         'debug' : state.clustering.debug,
                         'queryId' : state.clustering.kvQueryId
@@ -232,6 +263,8 @@ define(["require", "state", "jquery", "search", "tools"],
                         state.clustering.kvRefinements = tools.SimpleHash();
                         if(state.clustering.kvQueryId!==data.queryId && !force)
                             return;
+
+                        state.clustering.kvHasMore = data.hasMore;
 
                         data.clustering.forEach(function(keyValueData){
                             state.clustering.kvRefinements.insert( JSON.stringify({keyId: keyValueData.keyId, valueId: keyValueData.valueId}), {name: keyValueData.name, itemCount: keyValueData.itemCount});
@@ -361,6 +394,13 @@ define(["require", "state", "jquery", "search", "tools"],
                 const kvDebugInfo = $('#kvDebugInfo');
                 kvDebugInfo.empty();
                 kvDebugInfo.append(kvClustering.getDebugInfoString(state.clustering.kvDebugInfo));
+            },
+            showMore: function(visible, mode){
+                if(visible){
+                    $('#' + mode + 'ShowMore').show();
+                } else {
+                    $('#' + mode + 'ShowMore').hide();
+                }
             },
             getDebugInfoString(debugInfo){
               debugHtml = `<h4>Debug Info</h4>

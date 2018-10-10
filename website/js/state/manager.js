@@ -65,6 +65,12 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
             lastKQuery: "",
             lastPQuery: "",
             lastQueryWithoutRefinements: "",
+            kvRefinementCount: 10,
+            kRefinementCount: 10,
+            pRefinementCount: 10,
+            kvHasMore: false,
+            kHasMore: false,
+            pHasMore: false
         },
 
 		//e = {type : type, id : internalId, name : name}

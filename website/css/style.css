@@ -308,6 +308,31 @@ label {
         background-color: rgba(165, 165, 165, 0.1)
     }
 }
+.including-refinement {
+    size: 20px;
+    color: green;
+}
+.excluding-refinement {
+    color: #db4969;
+}
+.ignore-refinement-button {
+}
+.refinement-button{
+    cursor: pointer;
+    margin-top: -10px;
+}
+
+.inner-refinement{
+    width: 60%;
+}
+.refinement-name{
+    display: inline-block;
+    max-width: 70%;
+    height: 1.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 ::-moz-scrollbar {
 	width: 6px;

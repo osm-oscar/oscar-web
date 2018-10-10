@@ -168,19 +168,19 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 }
             });
 
-            $(document).on('click', '#refinementTabContent a.including-refinement' ,(function () {
+            $(document).on('click', '#refinementTabContent i.including-refinement' ,(function () {
                kvClustering.addIncludingRefinement(this.id);
                search.instantCompletion();
             }));
-            $(document).on('click', '#refinementTabContent a.excluding-refinement' ,(function () {
+            $(document).on('click', '#refinementTabContent i.excluding-refinement' ,(function () {
                kvClustering.addExcludingRefinement(this.id);
                search.instantCompletion();
             }));
-            $(document).on('click', '#refinementTabContent a.kRefinement-exception' ,(function () {
+            $(document).on('click', '#refinementTabContent i.kRefinement-exception' ,(function () {
                kvClustering.addKException(this.id);
                kvClustering.drawKExceptions();
             }));
-            $(document).on('click', '#refinementTabContent a.kvRefinement-exception' ,(function () {
+            $(document).on('click', '#refinementTabContent i.kvRefinement-exception' ,(function () {
                kvClustering.addKvException(this.id);
                kvClustering.drawKvExceptions();
             }));
@@ -199,6 +199,18 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 kvClustering.removeKvException(this.id);
                 kvClustering.drawKExceptions();
             }));
+            $(document).on('click', '#kvShowMore' ,(function () {
+                state.clustering.kvRefinementCount += 5;
+                kvClustering.fetchKvRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
+            }));
+            $(document).on('click', '#pShowMore' ,(function () {
+                state.clustering.pRefinementCount += 5;
+                kvClustering.fetchPRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
+            }));
+            $(document).on('click', '#kShowMore' ,(function () {
+                state.clustering.kRefinementCount += 5;
+                kvClustering.fetchKRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
+            }));
 
             $('a[data-toggle="tab"]').on('shown.bs.tab', function(e){
                if(e.target.id==="k-tab"){
@@ -210,11 +222,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                }
             });
 
-            $("#refinement_type").change(function () {
-               kvClustering.fillTable($('#search_text').val());
-            });
-
-			
 			$('#display_cluster_shapes_checkbox').click(function() {
 				var enabled = $(this).is(':checked');
 				map.cfg.clusterShapes.auto = false;
