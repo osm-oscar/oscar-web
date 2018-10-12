@@ -221,7 +221,12 @@ int main(int argc, char **argv) {
 	}
 	
 	if (data.cqrdCacheThreshold) {
-		data.completer->setCQRDilatorCache(data.cqrdCacheThreshold, 0);
+		sserialize::TimeMeasurer tm;
+		std::cout << "Calculating cqrdilator cache..." << std::flush;
+		tm.begin();
+		data.completer->setCQRDilatorCache(data.cqrdCacheThreshold*1000, 0);
+		tm.end();
+		std::cout << tm << std::endl;
 	}
 	
 	if (data.textSearchers.size()) {
