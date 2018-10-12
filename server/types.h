@@ -22,6 +22,7 @@ struct CompletionFileData {
 	cachedGeoHierarchy(true),
 	treedCQR(false),
 	treedCQRThreads(1),
+	cqrdCacheThreshold(0),
 	geocompleter(0)
 	{}
 	//Info from config file
@@ -38,6 +39,7 @@ struct CompletionFileData {
 	bool cachedGeoHierarchy;
 	bool treedCQR;
 	uint32_t treedCQRThreads;
+	uint32_t cqrdCacheThreshold;
 	std::unordered_map<uint8_t, uint8_t> textSearchers;
 	uint32_t geocompleter;
 	//runtime data
