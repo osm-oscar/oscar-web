@@ -40,7 +40,8 @@ namespace oscar_web {
         template<typename mapKey>
         void generateKeyItemMap(std::unordered_map<mapKey, std::vector<uint32_t>> &keyItemMap,
                                 const sserialize::CellQueryResult &cqr,
-                                std::stringstream &debug, const std::vector<mapKey>& exceptions);
+                                std::stringstream &debug, const std::vector<mapKey>& exceptions,
+                                const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges);
 
         bool
         hasIntersection(const std::vector<uint32_t> &set1, const std::vector<uint32_t> &set2, const std::float_t &minNumber);
@@ -55,11 +56,18 @@ namespace oscar_web {
         void sortMap(std::unordered_map<mapKey, std::vector<uint32_t>>& parentItemMap,
                 std::vector<std::pair<mapKey, std::uint32_t>>& parentItemVec, std::stringstream& debug);
 
-        void insertKey(std::unordered_map<std::uint32_t, std::vector<uint32_t>> &keyItemMap, const liboscar::Static::OsmKeyValueObjectStore::KVItemBase& item, const uint32_t& i,
-                       const std::vector<uint32_t>& exceptions, const std::uint32_t itemId);
+        void insertKey(std::unordered_map<std::uint32_t, std::vector<uint32_t>> &keyItemMap,
+                const liboscar::Static::OsmKeyValueObjectStore::KVItemBase& item, const uint32_t& i,
+                       const std::vector<uint32_t>& exceptions,
+                       const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges,
+                       std::uint32_t itemId);
 
-        void insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t>>& keyValueItemMap, const liboscar::Static::OsmKeyValueObjectStore::KVItemBase& item, const uint32_t& i, const std::vector<std::pair<uint32_t , uint32_t >>& exceptions, const std::uint32_t itemId);
+        void insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t>>& keyValueItemMap,
+                const liboscar::Static::OsmKeyValueObjectStore::KVItemBase& item, const uint32_t& i,
+                const std::vector<std::pair<uint32_t , uint32_t >>& exceptions,
+                const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges, std::uint32_t itemId);
 
+        bool isException(const std::uint32_t &key, const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges);
 
     };
 

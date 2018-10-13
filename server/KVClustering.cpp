@@ -38,6 +38,8 @@ namespace oscar_web {
         std::string queryId = request().get("queryId");
         std::string maxRefinements = request().get("maxRefinements");
         std::string exceptionsString = request().get("exceptions");
+        std::string keyExceptions = request().get("keyExceptions");
+
 
         bool parsingCorrect = false;
 
@@ -69,9 +71,23 @@ namespace oscar_web {
 
         debugStr << R"(,"debugInfo":{"itemCount":)" << itemCount;
 
+        std::vector<std::pair<sserialize::SizeType, sserialize::SizeType >> keyExceptionRanges;
+
         if (mode < 2) {
 
+            std::vector<std::string> prefixKeyExceptions = parseJsonArray<std::string>(keyExceptions, parsingCorrect);
+
+            debugStr << R"(,"parsingCorrect":")" << parsingCorrect << '"';
+
+            auto kt = store.keyStringTable();
+
+            for(const auto &prefixException : prefixKeyExceptions){
+                keyExceptionRanges.emplace_back(kt.range(prefixException));
+            }
+
             if (mode == 0) {
+
+
 
                 std::vector<std::pair<uint32_t , uint32_t >> exceptions;
 
@@ -83,7 +99,7 @@ namespace oscar_web {
 
                 std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t>> keyValueItemMap;
 
-                generateKeyItemMap(keyValueItemMap, cqr, debugStr, exceptions);
+                generateKeyItemMap(keyValueItemMap, cqr, debugStr, exceptions, keyExceptionRanges);
 
                 std::vector<std::pair<std::pair<std::uint32_t, std::uint32_t>, std::uint32_t >> keyValueItemVec;
 
@@ -97,7 +113,7 @@ namespace oscar_web {
 
                 std::unordered_map<std::uint32_t , std::vector<uint32_t>> keyItemMap;
 
-                generateKeyItemMap(keyItemMap, cqr, debugStr, exceptions);
+                generateKeyItemMap(keyItemMap, cqr, debugStr, exceptions, keyExceptionRanges);
 
                 std::vector<std::pair<std::uint32_t, uint32_t>> keyItemVec;
 
@@ -168,7 +184,8 @@ namespace oscar_web {
     template<typename mapKey>
     void KVClustering::generateKeyItemMap(
             std::unordered_map<mapKey, std::vector<uint32_t>> &keyItemMap,
-            const sserialize::CellQueryResult &cqr, std::stringstream &debug, const std::vector<mapKey>& exceptions) {
+            const sserialize::CellQueryResult &cqr, std::stringstream &debug, const std::vector<mapKey>& exceptions,
+            const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges) {
         //iterate over all query result items
         sserialize::TimeMeasurer gtm;
         gtm.begin();
@@ -179,7 +196,7 @@ namespace oscar_web {
                 //iterate over all item keys
                 for (uint32_t i = 0; i < item.size(); ++i) {
                     //add key and item to key to keyItemMap
-                    insertKey(keyItemMap, item, i, exceptions, x);
+                    insertKey(keyItemMap, item, i, exceptions, keyExceptionRanges, x);
                 }
             }
         }
@@ -362,16 +379,29 @@ namespace oscar_web {
 
     void KVClustering::insertKey(std::unordered_map<std::uint32_t, std::vector<uint32_t>> &keyItemMap,
                                  const liboscar::Static::OsmKeyValueObjectStore::KVItemBase &item, const uint32_t &i,
-                                 const std::vector<uint32_t>& exceptions, const std::uint32_t itemId) {
+                                 const std::vector<uint32_t>& exceptions,
+                                 const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges,
+                                 const std::uint32_t itemId) {
         if(std::find(exceptions.begin(), exceptions.end(), item.keyId(i)) == exceptions.end())
-        keyItemMap[item.keyId(i)].emplace_back(itemId);
+            keyItemMap[item.keyId(i)].emplace_back(itemId);
     }
 
     void KVClustering::insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t>> &keyValueItemMap,
                                 const liboscar::Static::OsmKeyValueObjectStore::KVItemBase &item, const uint32_t &i,
-                                const std::vector<std::pair<std::uint32_t , std::uint32_t >>& exceptions, const std::uint32_t itemId) {
+                                const std::vector<std::pair<std::uint32_t , std::uint32_t >>& exceptions,
+                                 const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges,
+                                 const std::uint32_t itemId) {
         const std::pair<std::uint32_t , std::uint32_t >& keyValuePair = std::make_pair(item.keyId(i), item.valueId(i));
-        if(std::find(exceptions.begin(), exceptions.end(), keyValuePair) == exceptions.end())
+        if(std::find(exceptions.begin(), exceptions.end(), keyValuePair) == exceptions.end() && !isException(keyValuePair.first, keyExceptionRanges))
             keyValueItemMap[keyValuePair].emplace_back(itemId);
     }
-}//end namespace oscar_we
+
+    bool KVClustering::isException(const std::uint32_t &key, const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges){
+        for(const auto & exceptionRange : keyExceptionRanges){
+            if(key >= exceptionRange.first && key <= exceptionRange.second){
+                return true;
+            }
+        }
+        return false;
+    }
+}//end namespace oscar_web
