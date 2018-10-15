@@ -2,7 +2,7 @@ define(["require", "state", "jquery", "search", "tools"],
     function (require, state, $, search, tools) {
         var kvClustering = {
             numberOfAdditionalRefinements : 5,
-            defaultExceptionProfile: '["wheelchair", "addr"]',
+            defaultExceptionProfile: '["wheelchair", "addr", "level"]',
             closeClustering: function(queryWithoutRefinements, clearExceptions, clearRefinements){
                 if(clearRefinements){
                     state.clustering.activeIncludingRefinements = [];
