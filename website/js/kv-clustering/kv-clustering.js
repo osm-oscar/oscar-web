@@ -2,9 +2,19 @@ define(["require", "state", "jquery", "search", "tools"],
     function (require, state, $, search, tools) {
         var kvClustering = {
             numberOfAdditionalRefinements : 5,
-            closeClustering: function(queryWithoutRefinements){
+            defaultExceptionProfile: '["wheelchair", "addr"]',
+            closeClustering: function(queryWithoutRefinements, clearExceptions, clearRefinements){
+                if(clearRefinements){
+                    state.clustering.activeIncludingRefinements = [];
+                    state.clustering.activeExcludingRefinements = []
+                }
+                if(clearExceptions){
+                    state.clustering.kvExceptions = tools.SimpleHash(); // "{keyId: int, valueId: int}" -> {name : String, itemCount: int};;
+                    state.clustering.kExceptions =  tools.SimpleHash(); // keyId -> {name: String, itemCount: int};
+                }
                 if(queryWithoutRefinements!==state.clustering.lastQueryWithoutRefinements){
-                    state.clustering.activeRefinements = [];
+                    state.clustering.activeIncludingRefinements = [];
+                    state.clustering.activeExcludingRefinements = [];
                     state.clustering.lastQueryWithoutRefinements = queryWithoutRefinements;
                 }
                 $('#kv-content').removeClass('show active');
@@ -12,6 +22,7 @@ define(["require", "state", "jquery", "search", "tools"],
                 $('#k-content').removeClass('show active');
                 $('.nav-item.refinement-type.active').removeClass('active');
                 state.clustering = {
+                    openedClustering : state.clustering.openedClustering,
                     kvQueryId : state.clustering.kvQueryId,
                     kQueryId : state.clustering.kQueryId,
                     pQueryId : state.clustering.pQueryId,
@@ -20,15 +31,15 @@ define(["require", "state", "jquery", "search", "tools"],
                     kvRefinements : tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name: String, itemCount: int}
                     activeIncludingRefinements: state.clustering.activeIncludingRefinements,
                     activeExcludingRefinements: state.clustering.activeExcludingRefinements,
-                    kvExceptions: tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name : String, itemCount: int}
-                    kExceptions: tools.SimpleHash(), // keyId -> {name: String, itemCount: int}
+                    kvExceptions: state.clustering.kvExceptions, // "{keyId: int, valueId: int}" -> {name : String, itemCount: int}
+                    kExceptions: state.clustering.kvExceptions, // keyId -> {name: String, itemCount: int}
                     kDebugInfo: {},
                     pDebugInfo: {},
                     kvDebugInfo: {},
                     debug: state.clustering.debug,
-                    lastKvQuery: state.clustering.lastKvQuery,
-                    lastKQuery: state.clustering.lastKQuery,
-                    lastPQuery: state.clustering.lastPQuery,
+                    lastKvQuery: "",
+                    lastKQuery: "",
+                    lastPQuery: "",
                     lastQueryWithoutRefinements: state.clustering.lastQueryWithoutRefinements,
                     kvRefinementCount: 10,
                     kRefinementCount: 10,
@@ -36,6 +47,7 @@ define(["require", "state", "jquery", "search", "tools"],
                     pHasMore: false,
                     kHasMore: false,
                     kvHasMore: false,
+                    exceptionProfile: state.clustering.exceptionProfile,
                 };
                 kvClustering.drawKRefinements();
                 kvClustering.drawPRefinements();
@@ -56,7 +68,7 @@ define(["require", "state", "jquery", "search", "tools"],
                     kClusteringList.append(
                         `<li class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="inner-refinement">
-                                ${value.name}
+                                ${kvClustering.formatRefinementString(value.name)}
                                 <i title="include" class="fa fa-lg fa-plus-circle including-refinement refinement-button" id=@${value.name} href="#"></i>
                                 <i title="exclude" class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id=@${value.name} href="#"></i>
                                 <i title="ignore" class="fa fa-lg fa-times-circle kRefinement-exception refinement-button" id=${key} href="#"></i>
@@ -75,7 +87,7 @@ define(["require", "state", "jquery", "search", "tools"],
                     pClusteringList.append(
                         `<li  class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="inner-refinement">
-                            ${value.name}
+                            ${kvClustering.formatRefinementString(value.name)}
                             <i title="include" class="fa fa-lg fa-plus-circle including-refinement refinement-button" id="&quot;${value.name}&quot;" href="#"></i>
                             <i title="exclude" class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id="&quot;${value.name}&quot;" href="#"></i>
                             </span>
@@ -95,7 +107,7 @@ define(["require", "state", "jquery", "search", "tools"],
                     kvClusteringList.append(
                         `<li class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="inner-refinement">
-                                ${value.name}
+                                ${kvClustering.formatRefinementString(value.name)}
                                 <i title="include" class="fa fa-lg fa-plus-circle including-refinement refinement-button" id=@${value.name} href="#"></i>
                                 <i title="exclude" class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id=@${value.name} href="#"></i>
                                 <i title="ignore" class="fa fa-lg fa-times-circle kvRefinement-exception refinement-button" id="${key.keyId}:${key.valueId}" href="#"></i>
@@ -118,6 +130,12 @@ define(["require", "state", "jquery", "search", "tools"],
                                         <div class="refinement-loading--refinement" style="width: ${minWidth+Math.floor(Math.random() * maxWidth)}px"></div>
                                         </li>`);
                 }
+            },
+            formatRefinementString: function(refinementString){
+              if(refinementString.length > 27){
+                  return `<span title="${refinementString}">${refinementString.substr(0,27)}...</span>`
+              }
+              return refinementString;
             },
             fetchKRefinements: function(query, force){
                 let exceptionString = "[";
@@ -151,7 +169,8 @@ define(["require", "state", "jquery", "search", "tools"],
                         'maxRefinements' : state.clustering.kRefinementCount,
                         'exceptions' : exceptionString,
                         'debug' : state.clustering.debug,
-                        'queryId' : state.clustering.kQueryId
+                        'queryId' : state.clustering.kQueryId,
+                        'keyExceptions': state.clustering.exceptionProfile
                     },
                     dataType: 'JSON',
                     mimeType: 'application/JSON',
@@ -176,31 +195,27 @@ define(["require", "state", "jquery", "search", "tools"],
                 });
             },
             fetchPRefinements: function(query, force){
-                let queryRequestWithoutId = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level"
-                    + "&type=p&maxRefinements=" + state.clustering.pRefinementCount + '&debug=' + state.clustering.debug;
-                if(state.clustering.lastPQuery === queryRequestWithoutId)
+                let queryDataWithoutId = {'q' : kvClustering.addRefinementToQuery(query),
+                    'rf' : 'admin_level',
+                    'type': 'p',
+                    'maxRefinements' : state.clustering.pRefinementCount,
+                    'debug' : state.clustering.debug,
+                };
+                if(JSON.stringify(state.clustering.lastPQuery) === JSON.stringify(queryDataWithoutId))
                     return;
                 state.clustering.pQueryId++;
-                let queryRequestWithId = queryRequestWithoutId +"&queryId=" + state.clustering.pQueryId;
+                let queryDataWithId = {queryId: state.clustering.pQueryId};
+                $.extend(queryDataWithId, queryDataWithoutId);
                 state.clustering.pRefinements = tools.SimpleHash();
                 kvClustering.drawPRefinements();
                 state.clustering.pDebugInfo = {};
                 kvClustering.drawPDebugInfo();
                 kvClustering.drawLoadingPlaceholders(state.clustering.pRefinementCount,100, 150, 'p');
-                state.clustering.lastPQuery = queryRequestWithoutId;
-                $.get(queryRequestWithId, function (data) {
-
-                });
+                state.clustering.lastPQuery = queryDataWithoutId;
                 $.ajax({
                     type: "GET",
                     url: "/oscar/kvclustering/get",
-                    data: {'q' : kvClustering.addRefinementToQuery(query),
-                        'rf' : 'admin_level',
-                        'type': 'p',
-                        'maxRefinements' : state.clustering.pRefinementCount,
-                        'debug' : state.clustering.debug,
-                        'queryId' : state.clustering.pQueryId
-                    },
+                    data: queryDataWithId,
                     dataType: 'JSON',
                     mimeType: 'application/JSON',
                     success: function (data) {
@@ -227,36 +242,39 @@ define(["require", "state", "jquery", "search", "tools"],
             },
             fetchKvRefinements: function(query, force){
                 let exceptionString = "[";
-                state.clustering.kvExceptions.each(function (key, value) {
+                state.clustering.kvExceptions.each(function (key) {
                     key = JSON.parse(key);
                     exceptionString += "["  + key.keyId + "," + key.valueId + "],";
                 });
                 exceptionString += "]";
 
-                let queryRequestWithoutId = "/oscar/kvclustering/get?q=" + kvClustering.addRefinementToQuery(query) + "&rf=admin_level"
-                    + "&type=kv&maxRefinements=" + state.clustering.kvRefinementCount + exceptionString + '&debug=' + state.clustering.debug;
-                if(queryRequestWithoutId===state.clustering.lastKvQuery)
+                const queryDataWithoutId = {
+                    'q' : kvClustering.addRefinementToQuery(query),
+                    'rf' : 'admin_level',
+                    'type': 'kv',
+                    'maxRefinements' : state.clustering.kvRefinementCount,
+                    'exceptions' : exceptionString,
+                    'debug' : state.clustering.debug,
+                    'keyExceptions': state.clustering.exceptionProfile
+                };
+
+                if(JSON.stringify(queryDataWithoutId)===JSON.stringify(state.clustering.lastKvQuery))
                     return;
                 state.clustering.kvQueryId++;
-                let queryRequestWithId = queryRequestWithoutId +  "&queryId=" + state.clustering.kvQueryId;
+                let queryDataWithId = {queryId: state.clustering.kvQueryId};
+                $.extend(queryDataWithId, queryDataWithoutId);
+
                 state.clustering.kvDebugInfo = {};
                 state.clustering.kvRefinements = tools.SimpleHash();
                 state.clustering.kvDebugInfo = {};
                 kvClustering.drawKvDebugInfo();
                 kvClustering.drawKvRefinements();
                 kvClustering.drawLoadingPlaceholders(state.clustering.kvRefinementCount, 100, 150, 'kv');
-                state.clustering.lastKvQuery = queryRequestWithoutId;
+                state.clustering.lastKvQuery = queryDataWithoutId;
                 $.ajax({
                     type: "GET",
                     url: "/oscar/kvclustering/get",
-                    data: {'q' : kvClustering.addRefinementToQuery(query),
-                        'rf' : 'admin_level',
-                        'type': 'kv',
-                        'maxRefinements' : state.clustering.kvRefinementCount,
-                        'exceptions' : exceptionString,
-                        'debug' : state.clustering.debug,
-                        'queryId' : state.clustering.kvQueryId
-                    },
+                    data: queryDataWithId,
                     dataType: 'JSON',
                     mimeType: 'application/JSON',
                     success: function (data) {
@@ -356,6 +374,19 @@ define(["require", "state", "jquery", "search", "tools"],
                                             </li>`);
                 })
             },
+            drawSettings: function(){
+                $('#exception-profile-settings').val(state.clustering.exceptionProfile);
+            },
+            drawDefaultSettings: function(){
+                $('#exception-profile-settings').val(kvClustering.defaultExceptionProfile);
+            },
+            saveSettings: function(exceptionProfile){
+                if(state.clustering.exceptionProfile !== exceptionProfile){
+                    state.clustering.exceptionProfile = exceptionProfile;
+                    kvClustering.closeClustering($("#search_text").val());
+                }
+
+            },
             removeKException: function(refinementId){
                 refinementId = parseInt(refinementId);
                 state.clustering.kExceptions.erase(refinementId);
@@ -369,6 +400,16 @@ define(["require", "state", "jquery", "search", "tools"],
                 state.clustering.kvExceptions.erase(JSON.stringify(refinementObject));
                 kvClustering.drawKvExceptions();
                 kvClustering.fetchKvRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
+            },
+            clearKvExceptions: function(){
+                state.clustering.kvExceptions = tools.SimpleHash(); // "{keyId: int, valueId: int}" -> {name : String, itemCount: int};
+                kvClustering.drawKvExceptions();
+                kvClustering.fetchKvRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
+            },
+            clearKExceptions: function(){
+                state.clustering.kExceptions = tools.SimpleHash();
+                kvClustering.drawKExceptions();
+                kvClustering.fetchKRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
             },
             removeRefinement: function(refinement){
                 for(let i = state.clustering.activeIncludingRefinements.length - 1; i >= 0; i--) {

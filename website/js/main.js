@@ -113,6 +113,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 				search_text.val("");
 				state.clearViews();
 				search_text.focus();
+				kvClustering.closeClustering("", true, true);
 			});
 			
             $('#graph').click(function () {
@@ -211,13 +212,39 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 kvClustering.fetchKRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
             }));
 
+
+            $('#refinement-settings-icon').click(function () {
+                kvClustering.drawSettings();
+            });
+
+            $('#save-refinement-settings-button').click(function () {
+                kvClustering.saveSettings($('#exception-profile-settings').val());
+            });
+
+            $('#default-settings-button').click(function () {
+               kvClustering.drawDefaultSettings();
+            });
+            $('#removeKvExceptions').click(function () {
+               kvClustering.clearKvExceptions();
+            });
+            $('#removeKExceptions').click(function () {
+               kvClustering.clearKExceptions();
+            });
+
+            $('#sidebar-clustering-button').click(function () {
+                $(state.clustering.openedClustering).tab('show');
+            });
+
             $('a[data-toggle="tab"]').on('shown.bs.tab', function(e){
                if(e.target.id==="k-tab"){
-                    kvClustering.fetchKRefinements($('#search_text').val(), false);
+                   kvClustering.fetchKRefinements($('#search_text').val(), false);
+                    state.clustering.openedClustering = '#k-tab';
                } else if(e.target.id==="kv-tab"){
-                    kvClustering.fetchKvRefinements($('#search_text').val(), false)
+                   kvClustering.fetchKvRefinements($('#search_text').val(), false)
+                   state.clustering.openedClustering = '#kv-tab';
                } else if(e.target.id==="p-tab"){
-                    kvClustering.fetchPRefinements($('#search_text').val(), false)
+                   kvClustering.fetchPRefinements($('#search_text').val(), false)
+                   state.clustering.openedClustering = '#p-tab';
                }
             });
 

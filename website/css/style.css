@@ -297,6 +297,7 @@ label {
 }
 
 
+
 @keyframes pulse {
     0% {
         background-color: rgba(165, 165, 165, 0.1)
@@ -332,6 +333,20 @@ label {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+#refinement-menu{
+    display: block;
+}
+
+.refinement-settings{
+    color: #337ab7;
+    cursor: pointer;
+    float: right;
+}
+
+.tab-content{
+    margin-top: 10px;
 }
 
 ::-moz-scrollbar {

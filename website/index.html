@@ -62,7 +62,7 @@
                         <li title="Help"><a href="#help" role="tab"><i class="fa fa-question"></i></a></li>
                         <li title="Options" class="sidebar-menu-warning"><a href="#options" role="tab"><i class="fa fa-wrench"></i></a></li>
                         <li title="Item relatives"><a href="#relatives" role="tab"><i class="fa fa-group"></i></a></li>
-                        <li title="KVClustering"><a href="#clustering" role="tab"><i class="fa fa-align-justify"></i></a></li>
+                        <li title="KVClustering"><a  id="sidebar-clustering-button" href="#clustering" role="tab"><i class="fa fa-align-justify"></i></a></li>
                         <li title="Legal"><a href="#legal" role="tab"><i class="fa fa-paragraph"></i></a></li>
                     </ul>
                 </div>
@@ -272,63 +272,65 @@
 							</div>
 						</div>
 						<div class="sidebar-pane" id="sidebar-pane-clustering">
-							<div id="refinements">
-							</div>
-							<ul class="nav nav-tabs" id="myTab" role="tablist">
-								<li class="nav-item refinement-type">
-									<a class="nav-link active" id="kv-tab" data-toggle="tab" href="#kv-content" role="tab" aria-controls="kv-content" aria-selected="true">Key-Value</a>
-								</li>
-								<li class="nav-item refinement-type">
-									<a class="nav-link" id="p-tab" data-toggle="tab" href="#p-content" role="tab" aria-controls="p-content" aria-selected="false">Parent</a>
-								</li>
-								<li class="nav-item refinement-type">
-									<a class="nav-link" id="k-tab" data-toggle="tab" href="#k-content" role="tab" aria-controls="k-content" aria-selected="false">Key</a>
-								</li>
-							</ul>
-							<div class="tab-content" id="refinementTabContent">
-								<div class="tab-pane fade" id="p-content" role="tabpanel" aria-labelledby="p-tab">
-									<h4>Refinelist</h4>
-									<div class="pRefinement-loading">
+                            <div id="refinements">
+                            </div>
 
-									</div>
-									<ul class="list-group"  id="pClustering-list">
-										<li>No refinements for this query.</li>
-									</ul>
-									<button id="pShowMore" class="btn" hidden>Load More</button>
-									<div id="pDebugInfo"></div>
-								</div>
-								<div class="tab-pane fade" id="k-content" role="tabpanel" aria-labelledby="k-tab">
-									<h4>Refinelist</h4>
-									<div class="kRefinement-loading">
+                            <h4>Refine By <i class="fa fa-cogs refinement-settings fa-lg" id="refinement-settings-icon" data-toggle="modal" data-target="#refinementSettingsModal"></i></h4>
 
-									</div>
-									<ul class="list-group"  id="kClustering-list">
-										<li>No refinements for this query.</li>
+                            <div id="refinement-menu">
+                                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                                    <li class="nav-item refinement-type">
+                                        <a class="nav-link active" id="kv-tab" data-toggle="tab" href="#kv-content" role="tab" aria-controls="kv-content" aria-selected="true">Key-Value</a>
+                                    </li>
+                                    <li class="nav-item refinement-type">
+                                        <a class="nav-link" id="p-tab" data-toggle="tab" href="#p-content" role="tab" aria-controls="p-content" aria-selected="false">Parent</a>
+                                    </li>
+                                    <li class="nav-item refinement-type">
+                                        <a class="nav-link" id="k-tab" data-toggle="tab" href="#k-content" role="tab" aria-controls="k-content" aria-selected="false">Key</a>
+                                    </li>
+                                </ul>
+                                <div class="tab-content" id="refinementTabContent">
+                                    <div class="tab-pane fade" id="p-content" role="tabpanel" aria-labelledby="p-tab">
+                                        <div class="pRefinement-loading">
 
-									</ul>
-									<h4 id="kExceptionText" hidden>Exceptions</h4>
-									<ul style="list-style-type: none; margin-left: -40px" id="kException-list">
+                                        </div>
+                                        <ul class="list-group"  id="pClustering-list">
+                                            <li>No refinements for this query.</li>
+                                        </ul>
+                                        <button id="pShowMore" class="btn" hidden>Load More</button>
+                                        <div id="pDebugInfo"></div>
+                                    </div>
+                                    <div class="tab-pane fade" id="k-content" role="tabpanel" aria-labelledby="k-tab">
+                                        <div class="kRefinement-loading">
 
-									</ul>
-									<button id="kShowMore" class="btn" hidden>Load More</button>
-									<div id="kDebugInfo"></div>
-								</div>
-								<div class="tab-pane fade show active" id="kv-content" role="tabpanel" aria-labelledby="kv-tab">
-									<h4>Refinelist</h4>
-									<div class="kvRefinement-loading">
+                                        </div>
+                                        <ul class="list-group"  id="kClustering-list">
+                                            <li>No refinements for this query.</li>
 
-									</div>
-									<ul class="list-group"  id="kvClustering-list">
-										<li>No refinements for this query.</li>
-									</ul>
-									<h4 id="kvExceptionText" hidden>Exceptions</h4>
-									<ul style="list-style-type: none; margin-left: -40px" id="kvException-list">
+                                        </ul>
+                                        <button id="kShowMore" class="btn" hidden>Load More</button>
+                                        <h4 id="kExceptionText" hidden>Exceptions  <i title="remove" class="fa fa-lg fa-times-circle active-exception refinement-button" id="removeKExceptions" href="#"></i></h4>
+                                        <ul style="list-style-type: none; margin-left: -40px" id="kException-list">
 
-									</ul>
-									<button id="kvShowMore" class="btn" hidden>Load More</button>
-									<div id="kvDebugInfo"></div>
-								</div>
-							</div>
+                                        </ul>
+                                        <div id="kDebugInfo"></div>
+                                    </div>
+                                    <div class="tab-pane fade show active" id="kv-content" role="tabpanel" aria-labelledby="kv-tab">
+                                        <div class="kvRefinement-loading">
+
+                                        </div>
+                                        <ul class="list-group"  id="kvClustering-list">
+                                            <li>No refinements for this query.</li>
+                                        </ul>
+                                        <button id="kvShowMore" class="btn" hidden>Load More</button>
+                                        <h4 id="kvExceptionText" hidden>Exceptions <i title="remove all" class="fa fa-lg fa-times-circle active-exception refinement-button" id="removeKvExceptions" href="#"></i></h4>
+                                        <ul style="list-style-type: none; margin-left: -40px" id="kvException-list">
+
+                                        </ul>
+                                        <div id="kvDebugInfo"></div>
+                                    </div>
+                                </div>
+                            </div>
                             <br>
 						</div>
 						<div class="sidebar-pane" id="sidebar-pane-legal"></div>
@@ -372,6 +374,29 @@
 				</div>
 			</div>
 		</div>
+        <!-- Refinement Settings Modal -->
+        <div class="modal fade" id="refinementSettingsModal" tabindex="-1" role="dialog" aria-labelledby="refinementSettingsModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="refinementSettingsModalLabel">Refinement Settings</h4>
+                        <button style="margin-top: -26px" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="input-group">
+                            <span class="input-group-addon" id="basic-addon1">Exception Profile</span>
+                            <input id="exception-profile-settings" type="text" class="form-control" placeholder="" aria-describedby="basic-addon1">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="default-settings-button" type="button" class="btn btn-secondary">Default</button>
+                        <button id="save-refinement-settings-button" data-dismiss="modal" type="button" class="btn btn-primary">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <script type="text/javascript" data-main="js/main.js"
         src="vendor/require.js/require.js"></script>
     </body>

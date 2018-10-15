@@ -47,6 +47,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
 		},
 
         clustering : {
+            openedClustering : '#kv-tab',
             kvQueryId : -1,
             kQueryId : -1,
             pQueryId : -1,
@@ -70,7 +71,8 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
             pRefinementCount: 10,
             kvHasMore: false,
             kHasMore: false,
-            pHasMore: false
+            pHasMore: false,
+            exceptionProfile: '["wheelchair", "addr"]',
         },
 
 		//e = {type : type, id : internalId, name : name}
