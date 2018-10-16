@@ -32,7 +32,8 @@ namespace oscar_web {
                                             const std::uint8_t &mode,
                                             const liboscar::Static::OsmKeyValueObjectStore &store,
                                             const uint32_t &numberOfRefinements,
-                                            std::stringstream &debugStr);
+                                            std::stringstream &debugStr,
+                                            sserialize::Static::spatial::detail::SubSet subSet);
 
         void writeLogStats(const std::string &fn, const std::string &query, const sserialize::TimeMeasurer &tm,
                            uint32_t cqrSize, uint32_t idxSize);
@@ -70,6 +71,9 @@ namespace oscar_web {
 
         bool isException(const std::uint32_t &key, const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges);
 
+        std::vector<uint32_t> getSet(const std::pair<std::uint32_t , std::uint32_t > &id,const std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t >> &map,const sserialize::Static::spatial::detail::SubSet& subSet, const uint8_t &mode);
+
+        std::vector<uint32_t> getSet(const uint32_t &id, const std::unordered_map<uint32_t, std::vector<uint32_t >> &map,const sserialize::Static::spatial::detail::SubSet &subSet, const uint8_t &mode);
     };
 
 
