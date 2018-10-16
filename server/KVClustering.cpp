@@ -129,6 +129,11 @@ namespace oscar_web {
             std::unordered_map<std::uint32_t, std::vector<uint32_t>> parentItemMap;
             std::vector<std::pair<std::uint32_t , std::uint32_t >> parentItemPairVec;
 
+            std::unordered_map<std::uint32_t , std::uint32_t > parentItemCountMap;
+
+            auto subset = sg.subSet(cqr, false, 1);
+
+
             //get all parents and their items
 
             int i = 0;
@@ -137,12 +142,12 @@ namespace oscar_web {
                 const auto &cellParents = sg.cellParents(it.cellId());
                 if (!cellParents.empty()) {
                     for (const uint32_t &cellParent : cellParents) {
-                        for (const uint32_t &x : it.idx()) {
-                            parentItemMap[cellParent].emplace_back(x);
-                        }
+                        parentItemCountMap[cellParent]+=it.idxSize();
                     }
                 }
             }
+
+
             gtm.end();
 
             debugStr << ",\"timeToGenerateMap\":" << gtm.elapsedMilliSeconds();
@@ -154,9 +159,104 @@ namespace oscar_web {
 
             std::vector<std::pair<std::uint32_t, std::uint32_t >> parentItemVec;
 
-            sortMap(parentItemMap, parentItemVec, debugStr);
+            for(auto parentItemCountPair : parentItemCountMap){
+                parentItemVec.emplace_back(parentItemCountPair);
+            }
 
-            writeParentsWithNoIntersection(out, parentItemMap, parentItemVec, mode, store, numberOfRefinements, debugStr);
+            //std::copy(parentItemCountMap.begin(), parentItemCountMap.end(), parentItemVec);
+
+            std::sort(parentItemVec.begin(), parentItemVec.end(), [](std::pair<std::uint32_t , std::uint32_t> const &a,
+                                                                     std::pair<std::uint32_t , std::uint32_t> const &b) {
+                return a.second != b.second ? a.second > b.second : a.first < b.first;
+            });
+
+
+            sserialize::TimeMeasurer fptm;
+            fptm.begin();
+            std::vector<std::pair<std::uint32_t , std::uint32_t >> result;
+            auto itI = parentItemVec.begin() + 1;
+            bool startParentsFound = false;
+            std::float_t maxNumberOfIntersections;
+            for (; itI < parentItemVec.end(); ++itI) {
+                for (auto itJ = parentItemVec.begin(); itJ < itI; ++itJ) {
+                    auto rptrI = subset.regionByStoreId(gh.ghIdToStoreId((*itI).first));
+                    auto rptrJ = subset.regionByStoreId(gh.ghIdToStoreId((*itJ).first));
+                    const auto &setI = rptrI->cellPositions();
+                    const auto &setJ = rptrJ->cellPositions();
+                    maxNumberOfIntersections = mode == 3 ? 0 : ((*itI).second + (*itJ).second) / 200;
+                    if (!hasIntersection(setI.begin(), setI.end(), setJ.begin(), setJ.end(), maxNumberOfIntersections)) {
+                        // no intersection or required amount
+                        // add both parents to results
+                        result.emplace_back((*itJ).first,(*itJ).second);
+                        result.emplace_back((*itI).first,(*itI).second);
+
+                        //end the algorithm
+                        startParentsFound = true;
+                        break;
+                    }
+
+                }
+                if (startParentsFound)
+                    break;
+            }
+            fptm.end();
+            debugStr << ",\"timeToFindFirstParents\":" << fptm.elapsedMilliSeconds();
+
+            //get other parents which don't have an intersection with the startParents(BA-Kopf page 19)
+            sserialize::TimeMeasurer nptm;
+            nptm.begin();
+            if (startParentsFound) {
+                for (auto itK = itI + 1; itK < parentItemVec.end() && result.size() < numberOfRefinements+1; ++itK) {
+                    bool discarded = false;
+                    for (auto& parentPair : result) {
+                        maxNumberOfIntersections =
+                                mode == 3 ? 0 : (parentPair.second + (*itK).second) / 200;
+                        auto rptrI = subset.regionByStoreId(gh.ghIdToStoreId((*itK).first));
+                        auto rptrJ = subset.regionByStoreId(gh.ghIdToStoreId(parentPair.first));
+                        const auto &setI = rptrI->cellPositions();
+                        const auto &setJ = rptrJ->cellPositions();
+                        if (hasIntersection(setI.begin(), setI.end(), setJ.begin(), setJ.end(), maxNumberOfIntersections)) {
+                            discarded = true;
+                            break;
+                        }
+                    }
+                    if (!discarded) {
+                        //parent does not intersect with previous found parents; add to results
+                        result.emplace_back(*itK);
+                    }
+                }
+            }
+
+            nptm.end();
+
+            debugStr << ",\"timeToFindOtherParents\":" << nptm.elapsedMilliSeconds();
+
+            //print results
+
+            out << "{\"clustering\":[";
+            auto separator = "";
+
+            bool hasMore = false;
+            uint32_t count = 0;
+
+            for(auto& resultPair: result){
+                if(count < numberOfRefinements){
+                    out << separator;
+                    printResult(resultPair.first, resultPair.second, out, mode, store);
+                    separator = ",";
+                } else {
+                    hasMore = true;
+                }
+                ++count;
+            }
+
+            out << "]";
+
+            out << ",\"hasMore\":" << std::boolalpha << hasMore;
+
+            //sortMap(parentItemMap, parentItemVec, debugStr);
+
+            //writeParentsWithNoIntersection(out, parentItemMap, parentItemVec, mode, store, numberOfRefinements, debugStr);
 
         }
 
@@ -207,17 +307,15 @@ namespace oscar_web {
     }
 
     //returns true if the number of intersections is greater than minNumber
-    bool KVClustering::hasIntersection(const std::vector<uint32_t> &set1, const std::vector<uint32_t> &set2,
-                                       const std::float_t &minNumber) {
+    template<typename It>
+    bool KVClustering::hasIntersection(It beginI, It endI, It beginJ, It endJ, const std::float_t &minNumber) {
         std::uint32_t intersectionCount = 0;
-        auto itSet1 = set1.begin();
-        auto itSet2 = set2.begin();
-        while (itSet1 != set1.end() && itSet2 != set2.end()) {
-            if (*itSet1 < *itSet2) ++itSet1;
-            else if (*itSet2 < *itSet1) ++itSet2;
+        while (beginI != endI && beginJ != endJ) {
+            if (*beginI < *beginJ) ++beginI;
+            else if (*beginJ < *beginI) ++beginJ;
             else {
-                ++itSet1;
-                ++itSet2;
+                ++beginI;
+                ++beginJ;
                 if (++intersectionCount > minNumber) {
                     return true;
                 };
@@ -250,7 +348,7 @@ namespace oscar_web {
                 const std::vector<uint32_t> &setI = parentItemMap.at((*itI).first);
                 const std::vector<uint32_t> &setJ = parentItemMap.at((*itJ).first);
                 maxNumberOfIntersections = mode == 3 ? 0 : ((*itI).second + (*itJ).second) / 200;
-                if (!hasIntersection(setI, setJ, maxNumberOfIntersections)) {
+                if (!hasIntersection(setI.begin(), setI.end(), setJ.begin(), setJ.end(), maxNumberOfIntersections)) {
                     // no intersection or required amount
                     // add both parents to results
                     result.emplace_back((*itJ).first,(*itJ).second);
@@ -277,7 +375,9 @@ namespace oscar_web {
                 for (auto& parentPair : result) {
                     maxNumberOfIntersections =
                             mode == 3 ? 0 : (parentPair.second + (*itK).second) / 200;
-                    if (hasIntersection(parentItemMap.at((*itK).first), parentItemMap.at(parentPair.first), maxNumberOfIntersections)) {
+                    auto &setI = parentItemMap.at((*itK).first);
+                    auto &setJ = parentItemMap.at(parentPair.first);
+                    if (hasIntersection(setI.begin(), setI.end(), setJ.begin(), setJ.end(), maxNumberOfIntersections)) {
                         discarded = true;
                         break;
                     }

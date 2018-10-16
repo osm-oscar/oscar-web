@@ -61,7 +61,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
             kDebugInfo: {},
             pDebugInfo: {},
             kvDebugInfo: {},
-            debug: true,
+            debug: false,
             lastKvQuery: "",
             lastKQuery: "",
             lastPQuery: "",

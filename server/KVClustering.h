@@ -43,8 +43,9 @@ namespace oscar_web {
                                 std::stringstream &debug, const std::vector<mapKey>& exceptions,
                                 const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges);
 
+        template<typename It>
         bool
-        hasIntersection(const std::vector<uint32_t> &set1, const std::vector<uint32_t> &set2, const std::float_t &minNumber);
+        hasIntersection(It beginI, It endI, It beginJ, It endJ, const std::float_t &minNumber);
 
         void printResult(const std::uint32_t &id, const long &itemCount, std::ostream &out,const std::uint8_t & mode,
                          const liboscar::Static::OsmKeyValueObjectStore &store);
