@@ -265,6 +265,8 @@ namespace oscar_web {
                 const std::vector<uint32_t> &setI = getSet(((*itI).first), parentItemMap, subSet, mode);
                 const std::vector<uint32_t> &setJ = getSet(((*itJ).first), parentItemMap, subSet, mode);
 
+                maxNumberOfIntersections =
+                        mode == 2 ? 0 : (setI.size() + setJ.size()) / 200;
                 if (!hasIntersection(setI.begin(), setI.end(), setJ.begin(), setJ.end(), maxNumberOfIntersections)) {
                     // no intersection or required amount
                     // add both parents to results
