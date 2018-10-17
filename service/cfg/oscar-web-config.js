@@ -33,7 +33,7 @@
             "geocompleter" : 0,
 	    	"treedCQR" : true,
 			"treedCQRThreads": 8,
-			"dilationCacheThreshold" : 20,
+			"dilationCacheThreshold" : 0,
 			"preload" : ["index", "kvstore", "textsearch"],
 			"celldistance" : "mass"
         },
