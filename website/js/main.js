@@ -230,6 +230,9 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             $('#removeKExceptions').click(function () {
                kvClustering.clearKExceptions();
             });
+            $('#removeRefinements').click(function() {
+                kvClustering.clearRefinements();
+            });
 
             $('#sidebar-clustering-button').click(function () {
                 $(state.clustering.openedClustering).tab('show');

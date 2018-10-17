@@ -321,17 +321,27 @@ define(["require", "state", "jquery", "search", "tools"],
             },
             drawActiveRefinements: function() {
                 const refinements = $('#refinements');
+                const refinementText = $('#refinementsText');
                 refinements.empty();
+                let added = false;
                 state.clustering.activeIncludingRefinements.forEach(function (refinementName){
+                    added = true;
                   const escapedName = refinementName;
                   refinementName = unescape(refinementName);
                   refinements.append(`<span class="badge" style="background-color: green""><span class="active-refinement" style="cursor: pointer" id=${escapedName} >x</span> ${refinementName}</span>`);
                 });
                 state.clustering.activeExcludingRefinements.forEach(function (refinementName){
+                    added = true;
                   const escapedName = refinementName;
                   refinementName = unescape(refinementName);
                   refinements.append(`<span class="badge" style="background-color: red"><span class="active-refinement" style="cursor: pointer" id=${escapedName} >x</span> ${refinementName}</span>`);
                 });
+                if(added){
+                    refinementText.show();
+                } else {
+                    refinementText.hide();
+                }
+
             },
             addKException: function(refinement){
                 state.clustering.kExceptions.insert(parseInt(refinement), state.clustering.kRefinements.at(parseInt(refinement)));
@@ -462,6 +472,10 @@ define(["require", "state", "jquery", "search", "tools"],
                            </ul>`;
               return state.clustering.debug ? debugHtml : "";
             },
+            clearRefinements: function () {
+                kvClustering.closeClustering($("#search_text").val(), false, true)
+                kvClustering.drawActiveRefinements();
+            }
         };
         return kvClustering;
     });
