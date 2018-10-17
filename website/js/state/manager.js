@@ -72,7 +72,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
             kvHasMore: false,
             kHasMore: false,
             pHasMore: false,
-            exceptionProfile: '["wheelchair", "addr", "level"]',
+            exceptionProfile: '["wheelchair", "addr", "level", "toilets:wheelchair"]',
         },
 
 		//e = {type : type, id : internalId, name : name}

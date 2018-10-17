@@ -2,7 +2,7 @@ define(["require", "state", "jquery", "search", "tools"],
     function (require, state, $, search, tools) {
         var kvClustering = {
             numberOfAdditionalRefinements : 5,
-            defaultExceptionProfile: '["wheelchair", "addr", "level"]',
+            defaultExceptionProfile: '["wheelchair", "addr", "level", "toilets:wheelchair"]',
             closeClustering: function(queryWithoutRefinements, clearExceptions, clearRefinements){
                 if(clearRefinements){
                     state.clustering.activeIncludingRefinements = [];
@@ -455,6 +455,7 @@ define(["require", "state", "jquery", "search", "tools"],
                                 <li>Number of Pairs: ${debugInfo.pairCount}</li>
                                 <li>Time to generate map: ${debugInfo.timeToGenerateMap} ms</li>
                                 <li>Time to sort: ${debugInfo.timeToSort} ms</li>
+                                <li>Time to find first parents: ${debugInfo.timeToFindFirstParents} ms</li>
                                 <li>Time to find first parents: ${debugInfo.timeToFindFirstParents} ms</li>
                                 <li>Time to find other parents: ${debugInfo.timeToFindOtherParents} ms</li>
                                 <li>Total time: ${debugInfo.totalTime} ms</li>
