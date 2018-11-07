@@ -30,7 +30,6 @@ namespace oscar_web {
                                             const std::unordered_map<mapKey, std::vector<std::uint32_t >> &parentItemMap,
                                             const std::vector<std::pair<mapKey, std::uint32_t >> &parentItemVec,
                                             const std::uint8_t &mode,
-                                            const liboscar::Static::OsmKeyValueObjectStore &store,
                                             const uint32_t &numberOfRefinements,
                                             std::stringstream &debugStr,
                                             sserialize::Static::spatial::detail::SubSet subSet);
@@ -41,39 +40,45 @@ namespace oscar_web {
         template<typename mapKey>
         void generateKeyItemMap(std::unordered_map<mapKey, std::vector<uint32_t>> &keyItemMap,
                                 const sserialize::CellQueryResult &cqr,
-                                std::stringstream &debug, const std::vector<mapKey>& exceptions,
-                                const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges);
+                                std::stringstream &debug, const std::set<mapKey> &exceptions,
+                                const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>> &keyExceptionRanges);
 
         template<typename It>
         bool
         hasIntersection(It beginI, It endI, It beginJ, It endJ, const std::float_t &minNumber);
 
-        void printResult(const std::uint32_t &id, const long &itemCount, std::ostream &out,const std::uint8_t & mode,
-                         const liboscar::Static::OsmKeyValueObjectStore &store);
+        void printResult(const std::uint32_t &id, const long &itemCount, std::ostream &out, const std::uint8_t &mode);
 
         void printResult(const std::pair<std::uint32_t, std::uint32_t> &id, const long &itemCount, std::ostream &out,
-                         const std::uint8_t &mode, const liboscar::Static::OsmKeyValueObjectStore &store);
+                         const std::uint8_t &mode);
 
         template<typename mapKey>
-        void sortMap(std::unordered_map<mapKey, std::vector<uint32_t>>& parentItemMap,
-                std::vector<std::pair<mapKey, std::uint32_t>>& parentItemVec, std::stringstream& debug);
+        void sortMap(std::unordered_map<mapKey, std::vector<uint32_t>> &parentItemMap,
+                     std::vector<std::pair<mapKey, std::uint32_t>> &parentItemVec, std::stringstream &debug);
 
         void insertKey(std::unordered_map<std::uint32_t, std::vector<uint32_t>> &keyItemMap,
-                const liboscar::Static::OsmKeyValueObjectStore::KVItemBase& item, const uint32_t& i,
-                       const std::vector<uint32_t>& exceptions,
-                       const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges,
+                       const liboscar::Static::OsmKeyValueObjectStore::KVItemBase &item, const uint32_t &i,
+                       const std::set<uint32_t> &exceptions,
+                       const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>> &keyExceptionRanges,
                        std::uint32_t itemId);
 
-        void insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t>>& keyValueItemMap,
-                const liboscar::Static::OsmKeyValueObjectStore::KVItemBase& item, const uint32_t& i,
-                const std::vector<std::pair<uint32_t , uint32_t >>& exceptions,
-                const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges, std::uint32_t itemId);
+        void
+        insertKey(std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t>> &keyValueItemMap,
+                  const liboscar::Static::OsmKeyValueObjectStore::KVItemBase &item, const uint32_t &i,
+                  const std::set<std::pair<uint32_t, uint32_t >> &exceptions,
+                  const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>> &keyExceptionRanges,
+                  std::uint32_t itemId);
 
-        bool isException(const std::uint32_t &key, const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>>& keyExceptionRanges);
+        bool isException(const std::uint32_t &key,
+                         const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>> &keyExceptionRanges);
 
-        std::vector<uint32_t> getSet(const std::pair<std::uint32_t , std::uint32_t > &id,const std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t >> &map,const sserialize::Static::spatial::detail::SubSet& subSet, const uint8_t &mode);
+        std::vector<uint32_t> getSet(const std::pair<std::uint32_t, std::uint32_t> &id,
+                                     const std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint32_t >> &map,
+                                     const sserialize::Static::spatial::detail::SubSet &subSet, const uint8_t &mode);
 
-        std::vector<uint32_t> getSet(const uint32_t &id, const std::unordered_map<uint32_t, std::vector<uint32_t >> &map,const sserialize::Static::spatial::detail::SubSet &subSet, const uint8_t &mode);
+        std::vector<uint32_t>
+        getSet(const uint32_t &id, const std::unordered_map<uint32_t, std::vector<uint32_t >> &map,
+               const sserialize::Static::spatial::detail::SubSet &subSet, const uint8_t &mode);
     };
 
 
