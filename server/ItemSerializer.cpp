@@ -104,17 +104,17 @@ ItemSerializer::toJson(std::ostream& out, const sserialize::Static::spatial::Geo
 	switch(gst) {
 	case sserialize::spatial::GS_POINT:
 		{
-			const sserialize::Static::spatial::GeoPoint * gp = gs.get<sserialize::Static::spatial::GeoPoint>();
+			auto gp = gs.get<sserialize::spatial::GS_POINT>();
 			out << "[" << gp->lat() << "," << gp->lon() << "]";
 		}
 		break;
 	case sserialize::spatial::GS_WAY:
 	case sserialize::spatial::GS_POLYGON:
 		{
-			const sserialize::Static::spatial::GeoWay * gw = gs.get<sserialize::Static::spatial::GeoWay>();
+			auto gw = gs.get<sserialize::spatial::GS_WAY>();
 			out << "[";
 			if (gw->size()) {
-				sserialize::Static::spatial::GeoWay::const_iterator it(gw->cbegin()), end(gw->cend());
+				auto it(gw->cbegin()), end(gw->cend());
 				sserialize::Static::spatial::GeoPoint gp(*it);
 				out << "[" << gp.lat() << "," << gp.lon() << "]";
 				for(++it; it != end; ++it) {
@@ -128,7 +128,7 @@ ItemSerializer::toJson(std::ostream& out, const sserialize::Static::spatial::Geo
 	case sserialize::spatial::GS_MULTI_POLYGON:
 		{
 			out << "{";
-			const sserialize::Static::spatial::GeoMultiPolygon * gmw = gs.get<sserialize::Static::spatial::GeoMultiPolygon>();
+			auto gmw = gs.get<sserialize::spatial::GS_MULTI_POLYGON>();
 			if (gmw->innerPolygons().size()) {
 				out << "\"inner\":";
 				toJson(out, gmw->innerPolygons());
@@ -272,13 +272,13 @@ ItemSerializer::toGeoJson(std::ostream& out, const sserialize::Static::spatial::
 	switch(gst) {
 	case sserialize::spatial::GS_POINT:
 	{
-		const sserialize::Static::spatial::GeoPoint * gp = gs.get<sserialize::Static::spatial::GeoPoint>();
+		auto gp = gs.get<sserialize::spatial::GS_POINT>();
 		out << "[" << gp->lon() << "," << gp->lat() << "]";
 		break;
 	}
 	case sserialize::spatial::GS_WAY:
 	{
-		const sserialize::Static::spatial::GeoWay * gw = gs.get<sserialize::Static::spatial::GeoWay>();
+		auto gw = gs.get<sserialize::spatial::GS_WAY>();
 		out << "[";
 		toGeoJson(out, gw->cbegin(), gw->cend());
 		out << "]";
@@ -286,7 +286,7 @@ ItemSerializer::toGeoJson(std::ostream& out, const sserialize::Static::spatial::
 	}
 	case sserialize::spatial::GS_POLYGON:
 	{
-		const sserialize::Static::spatial::GeoWay * gw = gs.get<sserialize::Static::spatial::GeoWay>();
+		auto gw = gs.get<sserialize::spatial::GS_POLYGON>();
 		out << "[[";
 		toGeoJson(out, gw->cbegin(), gw->cend());
 		out << "]]";
@@ -294,7 +294,7 @@ ItemSerializer::toGeoJson(std::ostream& out, const sserialize::Static::spatial::
 	}
 	case sserialize::spatial::GS_MULTI_POLYGON:
 	{
-		const sserialize::Static::spatial::GeoMultiPolygon * gmw = gs.get<sserialize::Static::spatial::GeoMultiPolygon>();
+		auto gmw = gs.get<sserialize::spatial::GS_MULTI_POLYGON>();
 		out << "[";
 		toGeoJson(out, gmw->outerPolygons().cbegin(), gmw->outerPolygons().cend());
 		if (gmw->innerPolygons().size()) {
