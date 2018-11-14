@@ -132,14 +132,6 @@ define([], function() {
         geoquery: {
             samplecount: 10
         },
-        functionality: {
-            shapes: {
-                highlightListItemOnClick: {
-                    items: true,
-                    relatives: false
-                }
-            }
-        },
         timeouts: {
             query: 0,
             loadingSpinner: 1000,
@@ -167,6 +159,9 @@ define([], function() {
 				showItemShapes: false,
 				showItemMarkers: true,
 				regionTabs: false
+			},
+			relativesList: {
+				showShapes: false
 			},
 			clustering : {
 				//minimum number of items in root node to have a clustered view

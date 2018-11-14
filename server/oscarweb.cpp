@@ -146,6 +146,7 @@ int main(int argc, char **argv) {
 		data.geocompleter = dbfile.get<uint32_t>("geocompleter", 0);
 		data.treedCQR = dbfile.get<bool>("treedCQR", false);
 		data.treedCQRThreads = std::min<uint32_t>(std::thread::hardware_concurrency(), dbfile.get<uint32_t>("treedCQRThreads", 1));
+		data.cqrdCacheThreshold = dbfile.get<uint32_t>("dilationCacheThreshold", 0);
 	}
 	catch (cppcms::json::bad_value_cast & e) {
 		std::cerr << "Incomplete dbfiles entry: " << e.what() << std::endl;
@@ -217,6 +218,15 @@ int main(int argc, char **argv) {
 	}
 	else {
 		data.completer->setCellDistance(liboscar::Static::OsmCompleter::CDT_CENTER_OF_MASS, 0);
+	}
+	
+	if (data.cqrdCacheThreshold) {
+		sserialize::TimeMeasurer tm;
+		std::cout << "Calculating cqrdilator cache..." << std::flush;
+		tm.begin();
+		data.completer->setCQRDilatorCache(data.cqrdCacheThreshold*1000, 0);
+		tm.end();
+		std::cout << tm << std::endl;
 	}
 	
 	if (data.textSearchers.size()) {
