@@ -309,7 +309,7 @@ namespace oscar_web {
         sserialize::JsonEscaper je;
 
         if (m_mode == 1) {
-            m_outStr << R"({"name": ")" << je.escape(m_store.keyStringTable().at(id)) << R"(", "itemCount":)" << m_itemCount
+            m_outStr << R"({"name": ")" << je.escape(m_store.keyStringTable().at(id)) << R"(", "itemCount":)" << itemCount
                 << ",\"id\":" << id << "}";
         } else if (m_mode == 2) {
             m_outStr << R"({"name": ")" << je.escape(m_store.at(gh.ghIdToStoreId(id)).value("name"))
@@ -321,7 +321,7 @@ namespace oscar_web {
     void KVClustering::printResult(const std::pair<std::uint32_t, std::uint32_t> &id, const long &itemCount) {
         sserialize::JsonEscaper je;
         m_outStr << R"({"name": ")" << je.escape(m_store.keyStringTable().at(id.first)) << ":"
-            << je.escape(m_store.valueStringTable().at(id.second)) << R"(", "itemCount":)" << m_itemCount
+            << je.escape(m_store.valueStringTable().at(id.second)) << R"(", "itemCount":)" << itemCount
             << ",\"keyId\":" << id.first << ",\"valueId\":" << id.second << "}";
     }
 
