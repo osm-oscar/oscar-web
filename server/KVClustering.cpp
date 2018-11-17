@@ -313,7 +313,7 @@ namespace oscar_web {
                 << ",\"id\":" << id << "}";
         } else if (m_mode == 2) {
             m_outStr << R"({"name": ")" << je.escape(m_store.at(gh.ghIdToStoreId(id)).value("name"))
-                << R"(", "itemCount":)" << m_itemCount
+                << R"(", "itemCount":)" << itemCount
                 << ",\"id\":" << id << "}";
         }
     }
