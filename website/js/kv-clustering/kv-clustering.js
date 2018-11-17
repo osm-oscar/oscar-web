@@ -69,8 +69,8 @@ define(["require", "state", "jquery", "search", "tools"],
                         `<li class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="inner-refinement">
                                 ${kvClustering.formatRefinementString(value.name)}
-                                <i title="include" class="fa fa-lg fa-plus-circle including-refinement refinement-button" id=@${value.name} href="#"></i>
-                                <i title="exclude" class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id=@${value.name} href="#"></i>
+                                <i title="include" class="fa fa-lg fa-plus-circle including-refinement refinement-button" id="@${escape(value.name)}" href="#"></i>
+                                <i title="exclude" class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id="@${escape(value.name)}" href="#"></i>
                                 <i title="ignore" class="fa fa-lg fa-times-circle kRefinement-exception refinement-button" id=${key} href="#"></i>
                             </span>
                             <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
@@ -108,8 +108,8 @@ define(["require", "state", "jquery", "search", "tools"],
                         `<li class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="inner-refinement">
                                 ${kvClustering.formatRefinementString(value.name)}
-                                <i title="include" class="fa fa-lg fa-plus-circle including-refinement refinement-button" id=@${value.name} href="#"></i>
-                                <i title="exclude" class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id=@${value.name} href="#"></i>
+                                <i title="include" class="fa fa-lg fa-plus-circle including-refinement refinement-button" id="&quot;@${escape(value.name)}&quot;" href="#"></i>
+                                <i title="exclude" class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id="&quot;@${escape(value.name)}&quot;" href="#"></i>
                                 <i title="ignore" class="fa fa-lg fa-times-circle kvRefinement-exception refinement-button" id="${key.keyId}:${key.valueId}" href="#"></i>
                             </span>
                             <span class = "badge badge-primary badge-pill">${value.itemCount}</span>
@@ -312,7 +312,9 @@ define(["require", "state", "jquery", "search", "tools"],
                 return includingRefinementString + query + excludingRefinementString;
             },
             addIncludingRefinement: function(refinementName){
-                state.clustering.activeIncludingRefinements.push(escape(refinementName));
+                console.log("refinemenName", refinementName);
+                state.clustering.activeIncludingRefinements.push(refinementName);
+                console.log(state.clustering.activeIncludingRefinements);
                 kvClustering.drawActiveRefinements();
             },
             addExcludingRefinement: function(refinementName){
