@@ -124,7 +124,7 @@ namespace oscar_web {
             std::unordered_map<std::uint32_t, std::vector<uint32_t>> parentItemMap;
             std::vector<std::pair<std::uint32_t, std::uint32_t >> parentItemPairVec;
             std::unordered_map<std::uint32_t, std::uint32_t> parentItemCountMap;
-            //get all parents and their items
+            //get all parents and their itemCounts
             for (sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
                 const auto &cellParents = sg.cellParents(it.cellId());
                 if (!cellParents.empty()) {
@@ -141,10 +141,16 @@ namespace oscar_web {
             for (const auto &parentItemCountPair : parentItemCountMap) {
                 parentItemVec.emplace_back(parentItemCountPair);
             }
+            sserialize::TimeMeasurer stm;
+            stm.begin();
             std::sort(parentItemVec.begin(), parentItemVec.end(), [](std::pair<std::uint32_t, std::uint32_t> const &a,
                     std::pair<std::uint32_t, std::uint32_t> const &b) {
                 return a.second != b.second ? a.second > b.second : a.first < b.first;
             });
+            stm.end();
+            m_debugStr << ",\"timeToSort\":" << stm.elapsedMilliSeconds();
+            auto parentCount = static_cast<uint32_t>(parentItemCountMap.size());
+            m_debugStr << ",\"parentCount\":" << parentCount;
 
             writeParentsWithNoIntersection(parentItemMap, parentItemVec, subSet);
         }
