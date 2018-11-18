@@ -231,6 +231,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             });
             $('#removeRefinements').click(function() {
                 kvClustering.clearRefinements();
+                search.instantCompletion();
             });
 
             $('#sidebar-clustering-button').click(function () {
