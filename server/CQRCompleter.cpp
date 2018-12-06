@@ -460,7 +460,7 @@ struct ChildrenInfoWriter {
 		std::unordered_map<uint32_t, NodePtr> parents; //storeId -> NodePtr
 		std::unordered_map<uint32_t, NodePtr> children; //storeId -> NodePtr
 		out.precision(10);
-		const auto & gh = subSet.cqr().geoHierarchy();
+		const auto & gh = subSet.geoHierarchy();
 		out << '{' << "\"graph\":";
 		char sep = '{';
 		for(uint32_t regionId : regions) { //regionId is storeId
