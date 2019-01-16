@@ -21,7 +21,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 			"west of" : ":west-of",
 			"between" : ":between"
 		},
-	   delimeters : Set([" ", "(", ")"])
+	   delimeters : new Set([" ", "(", ")"])
 	}
 	var search = {
 		data : data,
