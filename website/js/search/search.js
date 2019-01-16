@@ -20,7 +20,8 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 			"south of" : ":south-of",
 			"west of" : ":west-of",
 			"between" : ":between"
-		}
+		},
+	   delimeters : Set([" ", "(", ")"])
 	}
 	var search = {
 		data : data,
@@ -43,11 +44,14 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 				}
 				else if (qstr[i] === '&' && !withInExact) {
 					var name = "";
-					for(++i; i < qstr.length && qstr[i] !== ' '; ++i) {
+					for(++i; i < qstr.length && !search.data.delimeters.has(qstr[i]); ++i) {
 						name += qstr[i];
 					}
 					if (state.spatialObjects.names.count(name)) {
 						res += state.spatialObjects.store.at(state.spatialObjects.names.at(name)).query;
+					}
+					else {
+						console.log("Invalid spatial object in query string: " + name);
 					}
 				}
 				else {
