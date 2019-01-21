@@ -176,6 +176,13 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                kvClustering.addExcludingRefinement(this.id);
                search.instantCompletion();
             }));
+
+            $(document).on('click', '#facets button.facet-loadMore' ,(function () {
+                console.log("test");
+                kvClustering.addFacetShowMore(this.id);
+                kvClustering.drawFRefinements();
+            }));
+
             $(document).on('click', '#refinementTabContent i.kRefinement-exception' ,(function () {
                kvClustering.addKException(this.id);
                kvClustering.drawKExceptions();
@@ -209,6 +216,10 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             $(document).on('click', '#kShowMore' ,(function () {
                 state.clustering.kRefinementCount += 5;
                 kvClustering.fetchKRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
+            }));
+            $(document).on('click', '#fShowMore' ,(function () {
+                state.clustering.fRefinementCount += 10;
+                kvClustering.fetchFRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
             }));
 
 
@@ -248,6 +259,9 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                } else if(e.target.id==="p-tab"){
                    kvClustering.fetchPRefinements($('#search_text').val(), false)
                    state.clustering.openedClustering = '#p-tab';
+               } else if(e.target.id==="f-tab"){
+                   kvClustering.fetchFRefinements($('#search_text').val(), false)
+                   state.clustering.openedClustering = '#f-tab';
                }
             });
 

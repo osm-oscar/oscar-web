@@ -286,9 +286,12 @@
                                     <li class="nav-item refinement-type">
                                         <a class="nav-link" id="p-tab" data-toggle="tab" href="#p-content" role="tab" aria-controls="p-content" aria-selected="false">Parent</a>
                                     </li>
-                                    <li class="nav-item refinement-type">
-                                        <a class="nav-link" id="k-tab" data-toggle="tab" href="#k-content" role="tab" aria-controls="k-content" aria-selected="false">Key</a>
+									<li class="nav-item refinement-type">
+                                        <a class="nav-link" id="f-tab" data-toggle="tab" href="#f-content" role="tab" aria-controls="f-content" aria-selected="false">Facets</a>
                                     </li>
+									<!-- <li class="nav-item refinement-type">
+										<a class="nav-link" id="k-tab" data-toggle="tab" href="#k-content" role="tab" aria-controls="k-content" aria-selected="false">Key</a>
+                                    </li> -->
                                 </ul>
                                 <div class="tab-content" id="refinementTabContent">
                                     <div class="tab-pane fade" id="p-content" role="tabpanel" aria-labelledby="p-tab">
@@ -329,6 +332,20 @@
 
                                         </ul>
                                         <div id="kvDebugInfo"></div>
+                                    </div>
+									<div class="tab-pane fade show active" id="f-content" role="tabpanel" aria-labelledby="f-tab">
+                                        <div class="fRefinement-loading">
+
+                                        </div>
+										<div id="facets">
+
+										</div>
+                                        <button id="fShowMore" class="btn" hidden>Load More</button>
+                                        <h4 id="fExceptionText" hidden>Exceptions <i title="remove all" class="fa fa-lg fa-times-circle active-exception refinement-button" id="removefExceptions" href="#"></i></h4>
+                                        <ul style="list-style-type: none; margin-left: -40px" id="fException-list">
+
+                                        </ul>
+                                        <div id="fDebugInfo"></div>
                                     </div>
                                 </div>
                             </div>
