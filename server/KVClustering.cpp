@@ -52,8 +52,11 @@ void KVClustering::get() {
 	bool debug = request().get("debug") == "true";
 
 	m_mode = 0;
-	if (clusteringType == "p")
+	if (clusteringType == "f")
 		m_mode = 2;
+	if (clusteringType == "p") {
+		m_mode = 3;
+	}
 
 	sserialize::CellQueryResult cqr;
 	sserialize::spatial::GeoHierarchySubGraph sg;
@@ -73,7 +76,7 @@ void KVClustering::get() {
 
 	auto subSet = sg.subSet(cqr, false, 1);
 
-	if (m_mode < 2) {
+	if (m_mode < 3) {
 		// key value or key clustering
 
 		//transform exception ranges parameter
@@ -107,14 +110,31 @@ void KVClustering::get() {
 		m_debugStr << ",\"timeToGenerateMap\":" << gtm.elapsedMilliSeconds();
 
 		m_outStr << "{\"clustering\":[";
-		auto separator = "";
-		for ( auto& result : koMaClustering.topKeyValues(m_numberOfRefinements)){
-			m_outStr << separator;
-			printResult(std::make_pair(result.ki.keyId, result.vi.valueId), result.ki.keyStats);
-			separator = ",";
+		bool hasMore = false;
+		auto topKeyValues = koMaClustering.topKeyValues(m_numberOfRefinements+1);
+		hasMore = topKeyValues.size() > m_numberOfRefinements;
+		if(m_mode == 0){
+			auto separator = "";
+			uint32_t i = 0;
+			for ( auto& result : topKeyValues){
+				m_outStr << separator;
+				printResult(std::make_pair(result.ki.keyId, result.vi.valueId), result.ki.keyStats);
+				separator = ",";
+				++i;
+				if(i==m_numberOfRefinements)
+					break;
+			}
+		} else {
+			auto separator = "";
+			for(auto& result : koMaClustering.facets(m_numberOfRefinements, topKeyValues)) {
+				m_outStr << separator;
+				printFacet(result.first, result.second);
+				separator = ",";
+			}
 		}
-		m_outStr << "]";
 
+		m_outStr << "]";
+		m_outStr << ",\"hasMore\":" << std::boolalpha << hasMore;
 	} else {
 		sserialize::TimeMeasurer gtm;
 		gtm.begin();
@@ -237,7 +257,7 @@ void KVClustering::writeParentsWithNoIntersection(const std::unordered_map<mapKe
 			const std::vector<uint32_t> &setJ = getSet(((*itJ).first), parentItemMap, subSet);
 
 			maxNumberOfIntersections =
-					m_mode == 2 ? 0 : (setI.size() + setJ.size()) / 200;
+					m_mode == 3 ? 0 : (setI.size() + setJ.size()) / 200;
 			if (!hasIntersection(setI.begin(), setI.end(), setJ.begin(), setJ.end(), maxNumberOfIntersections)) {
 				// no intersection or required amount
 				// add both parents to results
@@ -264,7 +284,7 @@ void KVClustering::writeParentsWithNoIntersection(const std::unordered_map<mapKe
 			bool discarded = false;
 			for (auto &parentPair : result) {
 				maxNumberOfIntersections =
-						m_mode == 2 ? 0 : (parentPair.second + (*itK).second) / 200;
+						m_mode == 3 ? 0 : (parentPair.second + (*itK).second) / 200;
 				const std::vector<uint32_t> &setI = getSet((*itK).first, parentItemMap, subSet);
 				const std::vector<uint32_t> &setJ = getSet(parentPair.first, parentItemMap, subSet);
 
@@ -314,7 +334,7 @@ void KVClustering::printResult(const std::uint32_t &id, const long &itemCount) {
 	if (m_mode == 1) {
 		m_outStr << R"({"name": ")" << je.escape(m_store.keyStringTable().at(id)) << R"(", "itemCount":)" << itemCount
 				 << ",\"id\":" << id << "}";
-	} else if (m_mode == 2) {
+	} else if (m_mode == 3) {
 		m_outStr << R"({"name": ")" << je.escape(m_store.at(gh.ghIdToStoreId(id)).value("name"))
 				 << R"(", "itemCount":)" << itemCount
 				 << ",\"id\":" << id << "}";
@@ -401,7 +421,7 @@ std::vector<uint32_t> KVClustering::getSet(const std::pair<std::uint32_t, std::u
 std::vector<uint32_t>
 KVClustering::getSet(const uint32_t &id, const std::unordered_map<uint32_t, std::vector<uint32_t >> &map,
 					 const sserialize::Static::spatial::detail::SubSet &subSet) {
-	if (m_mode < 2) {
+	if (m_mode < 3) {
 		return map.at(id);
 	} else {
 		const auto &gh = m_store.geoHierarchy();
@@ -409,5 +429,17 @@ KVClustering::getSet(const uint32_t &id, const std::unordered_map<uint32_t, std:
 	}
 }
 
-
+template<typename iterable>
+void KVClustering::printFacet(uint32_t keyId, iterable values) {
+	sserialize::JsonEscaper je;
+	m_outStr << "{\"key\": " << '"' <<  je.escape(m_store.keyStringTable().at(keyId)) << '"';
+	m_outStr << ", \"values\" :[";
+	auto separator = "";
+	for(auto& value : values) {
+		m_outStr << separator << "{\"name\":" << '"' << je.escape(m_store.valueStringTable().at(value.first)) << R"(","count":)"
+				 << value.second << "}";
+		separator = ",";
+	}
+	m_outStr << "]}";
+}
 }//end namespace oscar_web

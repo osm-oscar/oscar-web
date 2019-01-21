@@ -162,6 +162,9 @@ private:
 	std::vector<uint32_t>
 	getSet(const uint32_t &id, const std::unordered_map<uint32_t, std::vector<uint32_t >> &map,
 		   const sserialize::Static::spatial::detail::SubSet &subSet);
+
+	template<typename iterable>
+	void printFacet(uint32_t keyId, iterable values);
 };
 
 
