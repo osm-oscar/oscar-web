@@ -126,7 +126,8 @@ void KVClustering::get() {
 			}
 		} else {
 			auto separator = "";
-			for(auto& result : koMaClustering.facets(m_numberOfRefinements, topKeyValues)) {
+			const auto& facets = koMaClustering.facets(m_numberOfRefinements);
+			for(auto& result : facets) {
 				m_outStr << separator;
 				printFacet(result.first, result.second);
 				separator = ",";
