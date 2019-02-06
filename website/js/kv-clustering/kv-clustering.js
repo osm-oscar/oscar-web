@@ -145,14 +145,14 @@ define(["require", "state", "jquery", "search", "tools"],
                 const facetsDiv = $("#facets");
                 key = JSON.parse(key);
                 facetsDiv.append(
-                    `<ul class="list-group"  id="${key}-facet">
+                    `<ul class="list-group"  id="${key.replace(":", "-")}-facet">
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="inner-refinement">
                                 <b>${kvClustering.formatRefinementString(key)}</b>
                             </span>
                          </li>
                      </ul>`) ;
-                const keyFacet = $(`#${key}-facet`);
+                const keyFacet = $(`#${key.replace(":", "-")}-facet`);
                 let i = 0;
                 let numberOfElementsToShow = 10;
                 if(state.clustering.facetHasMore.at(key+"-ShowMore")){
