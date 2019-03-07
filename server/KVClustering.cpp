@@ -46,7 +46,10 @@ void KVClustering::get() {
 	std::string exceptionsString = request().get("exceptions");
 	// array with prefixes
 	std::string keyExceptions = request().get("keyExceptions");
-
+	// array with facet sizes
+	std::string dynFacetSizeString = request().get("facetSizes");
+	// default facetSize
+	std::string defaultFacetSizeString = request().get("defaultFacetSize");
 	bool parsingCorrect = false;
 
 	bool debug = request().get("debug") == "true";
@@ -125,8 +128,15 @@ void KVClustering::get() {
 					break;
 			}
 		} else {
+			std::map<std::uint32_t, std::uint32_t> dynFacetSize;
+			auto defaultFacetSize = std::stoi(defaultFacetSizeString);	
+			std::vector<std::vector<uint32_t>> dynFacetSizeVector = parseJsonArray<std::vector<uint32_t>>(dynFacetSizeString, parsingCorrect);
+			
+			for(auto keySizePair : dynFacetSizeVector) {
+				dynFacetSize[keySizePair[0]] = keySizePair[1];
+			}
 			auto separator = "";
-			const auto& facets = koMaClustering.facets(m_numberOfRefinements);
+			const auto& facets = koMaClustering.facets(m_numberOfRefinements, dynFacetSize, defaultFacetSize);
 			for(auto& result : facets) {
 				m_outStr << separator;
 				printFacet(result.first, result.second);
@@ -162,7 +172,7 @@ void KVClustering::get() {
 		sserialize::TimeMeasurer stm;
 		stm.begin();
 		std::sort(parentItemVec.begin(), parentItemVec.end(), [](std::pair<std::uint32_t, std::uint32_t> const &a,
-																 std::pair<std::uint32_t, std::uint32_t> const &b) {
+				 std::pair<std::uint32_t, std::uint32_t> const &b) {
 			return a.second != b.second ? a.second > b.second : a.first < b.first;
 		});
 		stm.end();
@@ -434,6 +444,7 @@ template<typename iterable>
 void KVClustering::printFacet(uint32_t keyId, iterable values) {
 	sserialize::JsonEscaper je;
 	m_outStr << "{\"key\": " << '"' <<  je.escape(m_store.keyStringTable().at(keyId)) << '"';
+	m_outStr << ", \"keyId\": " << keyId;
 	m_outStr << ", \"values\" :[";
 	auto separator = "";
 	for(auto& value : values) {
