@@ -178,7 +178,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             }));
 
             $(document).on('click', '#facets button.facet-loadMore' ,(function () {
-                console.log("test");
                 kvClustering.addFacetShowMore(this.id);
                 kvClustering.drawFRefinements();
             }));

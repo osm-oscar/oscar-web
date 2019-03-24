@@ -80,8 +80,10 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
             kHasMore: false,
             pHasMore: false,
             fHasMore: false,
-            facetHasMore: tools.SimpleHash(), // key : String -> numberOfElementsToShow : int
-            exceptionProfile: '["wheelchair", "addr", "level", "toilets:wheelchair", "building", "source", "roof"]'
+            facetHasMore: tools.SimpleHash(), // keyId : int -> hasMoreElementsToBeFetched : bool
+            facetSizes: tools.SimpleHash(), // keyId: int -> elementsToBeFetched: int
+            exceptionProfile: '["wheelchair", "addr", "level", "toilets:wheelchair", "building", "source", "roof"]',
+            defaultFacetSize: 10
         },
 
 		//e = {type : type, id : internalId, name : name}

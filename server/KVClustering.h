@@ -29,6 +29,8 @@ private:
 	std::uint8_t m_mode;
 	std::uint32_t m_numberOfRefinements;
 	std::stringstream m_debugStr;
+	std::uint32_t defaultFacetSize;
+	std::map<std::uint32_t, std::uint32_t> dynFacetSize;
 	long m_itemCount;
 private:
 

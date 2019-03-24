@@ -128,18 +128,20 @@ void KVClustering::get() {
 					break;
 			}
 		} else {
-			std::map<std::uint32_t, std::uint32_t> dynFacetSize;
-			auto defaultFacetSize = std::stoi(defaultFacetSizeString);	
+			defaultFacetSize = std::stoi(defaultFacetSizeString);
 			std::vector<std::vector<uint32_t>> dynFacetSizeVector = parseJsonArray<std::vector<uint32_t>>(dynFacetSizeString, parsingCorrect);
-			
+
+			dynFacetSize = std::map<std::uint32_t, std::uint32_t>();
 			for(auto keySizePair : dynFacetSizeVector) {
-				dynFacetSize[keySizePair[0]] = keySizePair[1];
+				dynFacetSize[keySizePair[0]] = keySizePair[1]+1;
 			}
 			auto separator = "";
-			const auto& facets = koMaClustering.facets(m_numberOfRefinements, dynFacetSize, defaultFacetSize);
+			const auto& facets = koMaClustering.facets(m_numberOfRefinements, dynFacetSize, defaultFacetSize+1);
 			for(auto& result : facets) {
 				m_outStr << separator;
-				printFacet(result.first, result.second);
+				auto& itemId = result.first;
+				auto& valueList = result.second;
+				printFacet(itemId, valueList);
 				separator = ",";
 			}
 		}
@@ -201,31 +203,6 @@ void KVClustering::writeLogStats(const std::string &fn, const std::string &query
 	*(m_dataPtr->log) << "KVClustering::" << fn << ": t=" << tm.beginTime() << "s, rip=" << request().remote_addr()
 					  << ", q=[" << query << "], rs=" << cqrSize << " is=" << m_itemCount << ", ct="
 					  << tm.elapsedMilliSeconds() << "ms" << std::endl;
-}
-
-template<typename mapKey>
-void KVClustering::generateKeyItemMap(
-		std::unordered_map<mapKey, std::vector<uint32_t>> &keyItemMap,
-		const sserialize::CellQueryResult &cqr,
-		const std::set<mapKey> &exceptions,
-		const std::vector<std::pair<sserialize::SizeType, sserialize::SizeType>> &keyExceptionRanges) {
-	sserialize::TimeMeasurer gtm;
-	gtm.begin();
-	//iterate over all query result items
-	for (sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
-		for (const uint32_t &x : it.idx()) {
-			const auto &item = m_store.kvBaseItem(x);
-			//iterate over all item keys-value items
-			for (uint32_t i = 0; i < item.size(); ++i) {
-				//add key and item to key to keyItemMap
-				insertKey(keyItemMap, item, i, exceptions, keyExceptionRanges, x);
-			}
-		}
-	}
-	gtm.end();
-
-	m_debugStr << ",\"timeToGenerateMap\":" << gtm.elapsedMilliSeconds();
-
 }
 
 //returns true if the number of intersections is greater than minNumber
@@ -359,37 +336,6 @@ void KVClustering::printResult(const std::pair<std::uint32_t, std::uint32_t> &id
 			 << ",\"keyId\":" << id.first << ",\"valueId\":" << id.second << "}";
 }
 
-template<typename mapKey>
-void KVClustering::sortMap(std::unordered_map<mapKey, std::vector<uint32_t>> &parentItemMap, std::vector<std::pair<mapKey, std::uint32_t>> &parentItemVec) {
-
-	sserialize::TimeMeasurer stm;
-	stm.begin();
-
-	auto parentCount = static_cast<uint32_t>(parentItemMap.size());
-
-	m_debugStr << ",\"parentCount\":" << parentCount;
-
-	uint32_t pairCount = 0;
-
-
-	for (auto &parent : parentItemMap) {
-		std::sort(parent.second.begin(), parent.second.end());
-		parentItemVec.emplace_back(std::make_pair(parent.first, parent.second.size()));
-		pairCount += parent.second.size();
-	}
-	m_debugStr << ",\"pairCount\":" << pairCount;
-
-	std::sort(parentItemVec.begin(), parentItemVec.end(),
-			  [](std::pair<mapKey, std::uint32_t> const &a,
-				 std::pair<mapKey, std::uint32_t> const &b) {
-				  return a.second != b.second ? a.second > b.second : a.first < b.first;
-			  });
-
-
-	stm.end();
-	m_debugStr << ",\"timeToSort\":" << stm.elapsedMilliSeconds();
-
-}
 
 void KVClustering::insertKey(std::unordered_map<std::uint32_t, std::vector<uint32_t>> &keyItemMap,
 							 const liboscar::Static::OsmKeyValueObjectStore::KVItemBase &item,
@@ -447,11 +393,22 @@ void KVClustering::printFacet(uint32_t keyId, iterable values) {
 	m_outStr << ", \"keyId\": " << keyId;
 	m_outStr << ", \"values\" :[";
 	auto separator = "";
+	size_t i = 0;
+	bool hasMore = false;
+	size_t facetSize = (dynFacetSize.find(keyId) == dynFacetSize.end()) ? defaultFacetSize : dynFacetSize[keyId];
 	for(auto& value : values) {
 		m_outStr << separator << "{\"name\":" << '"' << je.escape(m_store.valueStringTable().at(value.first)) << R"(","count":)"
 				 << value.second << "}";
 		separator = ",";
+		++i;
+		if(i >= facetSize) {
+			hasMore = true;
+			break;
+		}
 	}
-	m_outStr << "]}";
+	m_outStr << ']';
+	m_outStr << ", \"hasMore\":" << std::boolalpha << hasMore;
+
+	m_outStr << '}';
 }
 }//end namespace oscar_web

@@ -1,5 +1,5 @@
-define(["require", "state", "jquery", "search", "tools"],
-    function (require, state, $, search, tools) {
+define(["require", "state", "jquery", "tools", "search"],
+    function (require, state, $, tools, search) {
         var kvClustering = {
             numberOfAdditionalRefinements : 5,
             defaultExceptionProfile: '["wheelchair", "addr", "level", "toilets:wheelchair", "building", "source"]',
@@ -57,8 +57,10 @@ define(["require", "state", "jquery", "search", "tools"],
                     kHasMore: false,
                     kvHasMore: false,
                     fHasMore: false,
-                    facetHasMore: tools.SimpleHash(), // key : String -> numberOfElementsToShow : int
+                    facetHasMore: tools.SimpleHash(), // keyId : int -> hasMoreElementsToBeFetched : bool
+                    facetSizes: tools.SimpleHash(), // keyId: int -> elementsToBeFetched: int
                     exceptionProfile: state.clustering.exceptionProfile,
+                    defaultFacetSize: state.clustering.defaultFacetSize
                 };
                 kvClustering.drawKRefinements();
                 kvClustering.drawPRefinements();
@@ -134,14 +136,14 @@ define(["require", "state", "jquery", "search", "tools"],
                 const facets = $("#facets");
                 facets.empty();
 
-                state.clustering.fRefinements.each(function(key, value){
-                    kvClustering.drawFacet(key, value);
+                state.clustering.fRefinements.each(function(keyInfo, value){
+                    kvClustering.drawFacet(keyInfo.key, keyInfo.keyId, value);
                 });
                 kvClustering.showMore(state.clustering.fHasMore, 'f');
                 if(state.clustering.fRefinements.size() === 0)
                     facets.append(`No refinements for this query.`);
             },
-            drawFacet: function(key, valueList) {
+            drawFacet: function(key, keyId, valueList) {
                 const facetsDiv = $("#facets");
                 key = JSON.parse(key);
                 facetsDiv.append(
@@ -153,17 +155,10 @@ define(["require", "state", "jquery", "search", "tools"],
                          </li>
                      </ul>`) ;
                 const keyFacet = $(`#${key.replace(":", "-")}-facet`);
-                let i = 0;
-                let numberOfElementsToShow = 10;
-                if(state.clustering.facetHasMore.at(key+"-ShowMore")){
-                    numberOfElementsToShow = state.clustering.facetHasMore.at(key+"-ShowMore");
-                }
 
-                if(numberOfElementsToShow < valueList.length){
-                    facetsDiv.append(`<button id="${key}-ShowMore" class="btn facet-loadMore" style="margin-top: -20px; margin-bottom: 10px" hidden>Load More</button>`)
+                if(state.clustering.facetHasMore.at(keyId)){
+                    facetsDiv.append(`<button id="${key}-${keyId}-ShowMore" class="btn facet-loadMore" style="margin-top: -20px; margin-bottom: 10px" hidden>Load More</button>`)
                 }
-                // numberOfElementsToShow+=5;
-                // clustering.state.facetHasMore.insert(key, numberOfElementsToShow);
 
                 for(let value of valueList){
                     let refinementString = key + ":" + value.name;
@@ -177,13 +172,7 @@ define(["require", "state", "jquery", "search", "tools"],
                             <span class = "badge badge-primary badge-pill">${value.count}</span>
                          </li>`
                     );
-                    i++;
-                    if(i === numberOfElementsToShow){
-                        break;
-                    }
                 }
-
-
             },
             drawLoadingPlaceholders: function(count, minWidth, maxWidth, mode){
                 const refinementList = $('#'+mode+'Clustering-list');
@@ -229,7 +218,7 @@ define(["require", "state", "jquery", "search", "tools"],
                 $.ajax({
                     type: "GET",
                     url: "/oscar/kvclustering/get",
-                    data: {'q' : kvClustering.addRefinementToQuery(query),
+                    data: {'q' : kvClustering.replaceSpatialObjects(kvClustering.addRefinementToQuery(query)),
                            'rf' : 'admin_level',
                         'type': 'k',
                         'maxRefinements' : state.clustering.kRefinementCount,
@@ -374,6 +363,12 @@ define(["require", "state", "jquery", "search", "tools"],
                 });
                 exceptionString += "]";
 
+                let facetSizesString = "[";
+                state.clustering.facetSizes.each(function (keyId, facetSize){
+                    facetSizesString += "[" + keyId + "," + facetSize + "],";
+                });
+                facetSizesString += "]";
+
                 const queryDataWithoutId = {
                     'q' : kvClustering.addRefinementToQuery(query),
                     'rf' : 'admin_level',
@@ -381,10 +376,13 @@ define(["require", "state", "jquery", "search", "tools"],
                     'maxRefinements' : state.clustering.fRefinementCount,
                     'exceptions' : exceptionString,
                     'debug' : state.clustering.debug,
-                    'keyExceptions': state.clustering.exceptionProfile
+                    'keyExceptions': state.clustering.exceptionProfile,
+                    'facetSizes': facetSizesString,
+                    'defaultFacetSize': state.clustering.defaultFacetSize
                 };
+                console.log('default facet size', state.clustering.defaultFacetSize);
 
-                if(JSON.stringify(queryDataWithoutId)===JSON.stringify(state.clustering.lastfQuery))
+                if(JSON.stringify(queryDataWithoutId)===JSON.stringify(state.clustering.lastFQuery))
                     return;
                 state.clustering.fQueryId++;
                 let queryDataWithId = {queryId: state.clustering.fQueryId};
@@ -411,8 +409,11 @@ define(["require", "state", "jquery", "search", "tools"],
                         state.clustering.fHasMore = data.hasMore;
 
                         data.clustering.forEach(function(keyValueData){
-                            state.clustering.fRefinements.insert( JSON.stringify(keyValueData.key), keyValueData.values);
+                            state.clustering.fRefinements.insert(
+                                {key: JSON.stringify(keyValueData.key), keyId: keyValueData.keyId}, keyValueData.values);
+                            state.clustering.facetHasMore.insert( keyValueData.keyId, keyValueData.hasMore);
                         });
+                        console.log('facetHasMore',state.clustering.facetHasMore);
                         if(state.clustering.debug){
                             console.log(data.debugInfo);
                             state.clustering.fDebugInfo = data.debugInfo;
@@ -434,7 +435,6 @@ define(["require", "state", "jquery", "search", "tools"],
                         includingRefinementString += refinementName.slice(1) + " ";
                     } else {
                         includingRefinementString += `"${refinementName.slice(1)}"` + " ";
-
                     }
                 });
                 let excludingRefinementString = "";
@@ -632,13 +632,19 @@ define(["require", "state", "jquery", "search", "tools"],
                 kvClustering.drawActiveRefinements();
             },
             addFacetShowMore(id){
-                if(state.clustering.facetHasMore.at(id)){
-                    state.clustering.facetHasMore.set(id, state.clustering.facetHasMore.at(id)+5);
+                // id has format: keyName-keyId-ShowMore
+                const idSplittet = id.split('-');
+                const key = idSplittet[0];
+                const keyId = idSplittet[1];
+                if(state.clustering.facetSizes.at(keyId)){
+                    state.clustering.facetSizes.set(keyId, state.clustering.facetSizes.at(keyId)+5);
                 }
                 else{
-                    state.clustering.facetHasMore.insert(id, 15);
+                    state.clustering.facetSizes.insert(keyId, 15);
                 }
-            }
+                kvClustering.fetchFRefinements($('#search_text').val(), true)
+                console.log('facetSizes', state.clustering.facetSizes);
+            },
         };
         return kvClustering;
     });
