@@ -345,6 +345,10 @@ label {
     float: right;
 }
 
+.facet-loadMore {
+    cursor: pointer;
+}
+
 .tab-content{
     margin-top: 10px;
 }

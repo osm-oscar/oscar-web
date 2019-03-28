@@ -1,4 +1,4 @@
-define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "kv-clustering"], function(state, tools, config, oscar, map, fuzzysort, kvClustering){
+define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "pubsub"], function(state, tools, config, oscar, map, fuzzysort, pubsub){
 	var encompletion = {
 		"base": [
 		{
@@ -62,7 +62,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "kv-clustering"],
 			return res;
 	   },
         doCompletion: function () {
-            if (kvClustering.addRefinementToQuery($("#search_text").val()) === state.queries.lastQuery) {
+            if (search.addRefinementToQuery($("#search_text").val()) === state.queries.lastQuery) {
                 return;
 			}
 			state.clearViews();
@@ -72,8 +72,8 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "kv-clustering"],
             $("#flickr").hide("slide", {direction: "right"}, config.styles.slide.speed);
 
             //query has changed, ddos the server!
-            var myQuery = kvClustering.addRefinementToQuery($("#search_text").val());
-			kvClustering.closeClustering($("#search_text").val());
+            var myQuery = search.addRefinementToQuery($("#search_text").val());
+			pubsub.publish("search", "request started");
 
             state.queries.lastQuery = myQuery + "";//make sure state hold a copy
 
@@ -98,7 +98,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "kv-clustering"],
 			}
 
 
-			var myRealQuery =  search.replaceSpatialObjects(myQuery);
+			var myRealQuery = search.replaceSpatialObjects(myQuery);
 
 
             if ($('#searchModi input').is(":checked")) {
@@ -358,7 +358,30 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "kv-clustering"],
 			}
 			jQuery.ajax(settings);
 		},
+		addRefinementToQuery: function(query) {
+			query = search.replaceSpatialObjects(query);
+			let includingRefinementString = "";
+			state.clustering.activeIncludingRefinements.forEach(function (refinementName) {
+				refinementName = refinementName.replace("%20", ' ');
+				if(refinementName[0]==='k'){
+					includingRefinementString += refinementName.slice(1) + " ";
+				} else {
+					includingRefinementString += `"${refinementName.slice(1)}"` + " ";
+				}
+			});
+			let excludingRefinementString = "";
+			state.clustering.activeExcludingRefinements.forEach(function (refinementName) {
+				refinementName = refinementName.replace("%20", ' ');
+				if(refinementName[0]==='k'){
 
+					excludingRefinementString += " - " + refinementName.slice(1) + " ";
+				} else {
+					excludingRefinementString += " - " + `"${refinementName.slice(1)}"` + " ";
+
+				}
+			});
+			return includingRefinementString + query + excludingRefinementString;
+		},
 
 
     };

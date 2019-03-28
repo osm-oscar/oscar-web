@@ -47,7 +47,8 @@ requirejs.config({
         "search": "js/search/search",
 		"dag": "js/dag/dag",
 		"dagexp" : "js/dag/dagexp",
-        "kv-clustering" : "js/kv-clustering/kv-clustering"
+        "kv-clustering" : "js/kv-clustering/kv-clustering",
+        "pubsub" : "js/pubsub/pubsub"
     },
     shim: {
         'bootstrap': {deps: ['jquery']},
@@ -60,7 +61,7 @@ requirejs.config({
     waitSeconds: 20
 });
 
-requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf",  "switch", "state", "map", "tree", "query", "tools", "search"],
+requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf",  "switch", "state", "map", "tree", "query", "tools", "search", "kv-clustering", "pubsub"],
     function () {
         var L = require("leaflet");
 		var jQuery = require("jquery");
@@ -71,13 +72,14 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 		var config = require("conf");
 		var switchButton = require("switch");
 		var state = require("state");
-		var map = require("map");
-		var tree = require("tree");
+        var map = require("map");
+        var tree = require("tree");
         var query = require("query");
-		var tools = require("tools");
+        var tools = require("tools");
         var search = require("search");
         var kvClustering = require("kv-clustering");
-		
+        var pubsub = require("pubsub");
+
 		//set the map handler
 		state.mapHandler = map;
 
@@ -177,7 +179,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                search.instantCompletion();
             }));
 
-            $(document).on('click', '#facets button.facet-loadMore' ,(function () {
+            $(document).on('click', '#facets i.facet-loadMore' ,(function () {
                 kvClustering.addFacetShowMore(this.id);
                 kvClustering.drawFRefinements();
             }));
@@ -206,19 +208,19 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
             }));
             $(document).on('click', '#kvShowMore' ,(function () {
                 state.clustering.kvRefinementCount += 5;
-                kvClustering.fetchKvRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
+                kvClustering.fetchKvRefinements(search.addRefinementToQuery($("#search_text").val(), true));
             }));
             $(document).on('click', '#pShowMore' ,(function () {
                 state.clustering.pRefinementCount += 5;
-                kvClustering.fetchPRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
+                kvClustering.fetchPRefinements(search.addRefinementToQuery($("#search_text").val(), true));
             }));
             $(document).on('click', '#kShowMore' ,(function () {
                 state.clustering.kRefinementCount += 5;
-                kvClustering.fetchKRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
+                kvClustering.fetchKRefinements(search.addRefinementToQuery($("#search_text").val(), true));
             }));
             $(document).on('click', '#fShowMore' ,(function () {
                 state.clustering.fRefinementCount += 10;
-                kvClustering.fetchFRefinements(kvClustering.addRefinementToQuery($("#search_text").val(), true));
+                kvClustering.fetchFRefinements(search.addRefinementToQuery($("#search_text").val(), true));
             }));
 
 
