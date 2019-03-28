@@ -69,7 +69,8 @@ void KVClustering::get() {
 	} else {
 		sg = m_dataPtr->completer->ghsg();
 	}
-	cqr = m_dataPtr->completer->cqrComplete(cqs, sg, m_dataPtr->treedCQR);
+	cqr = m_dataPtr->completer->cqrComplete(cqs, sg, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	auto items = cqr.flaten(m_dataPtr->treedCQRThreads);
 	m_itemCount = cqr.maxItems();
 	std::ostream &out = response().out();
 	m_numberOfRefinements = static_cast<uint32_t>(std::stoi(maxRefinements));
@@ -104,7 +105,7 @@ void KVClustering::get() {
 			keyValueExclusions.add(keyId, valueId);
 		}
 
-		liboscar::KoMaClustering koMaClustering(m_store, cqr, keyExclusions, keyValueExclusions);
+		liboscar::KoMaClustering koMaClustering(m_store, items, keyExclusions, keyValueExclusions, m_dataPtr->treedCQRThreads);
 
 		sserialize::TimeMeasurer gtm;
 		gtm.begin();
