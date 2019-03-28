@@ -62,6 +62,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "pubsub"], functi
 			return res;
 	   },
         doCompletion: function () {
+			map.cfg.clustering.maxZoomLevel = 20;
             if (search.addRefinementToQuery($("#search_text").val()) === state.queries.lastQuery) {
                 return;
 			}

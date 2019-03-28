@@ -223,6 +223,12 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 kvClustering.fetchFRefinements(search.addRefinementToQuery($("#search_text").val(), true));
             }));
 
+            $('#unpackAll-button').click(function () {
+                map.cfg.clustering.maxZoomLevel = 1;
+                map.cfg.resultList.itemsPerPage = 100;
+                // map.init();
+                map.mapViewChanged();
+            });
 
             $('#refinement-settings-icon').click(function () {
                 kvClustering.drawSettings();
