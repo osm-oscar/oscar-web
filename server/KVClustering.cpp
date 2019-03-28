@@ -137,14 +137,19 @@ void KVClustering::get() {
 				dynFacetSize[keySizePair[0]] = keySizePair[1]+1;
 			}
 			auto separator = "";
-			const auto& facets = koMaClustering.facets(m_numberOfRefinements, dynFacetSize, defaultFacetSize+1);
+			const auto& facets = koMaClustering.facets(m_numberOfRefinements+1, dynFacetSize, defaultFacetSize+1);
+			uint32_t k = 0;
 			for(auto& result : facets) {
+				if(m_numberOfRefinements <= k)
+					break;
 				m_outStr << separator;
 				auto& itemId = result.first;
 				auto& valueList = result.second;
 				printFacet(itemId, valueList);
 				separator = ",";
+				++k;
 			}
+			hasMore = facets.size() > m_numberOfRefinements;
 		}
 
 		m_outStr << "]";
