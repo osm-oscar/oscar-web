@@ -88,6 +88,7 @@ m_cqrSerializer(sserialize::ItemIndex::Types(dataPtr->completer->indexStore().in
 	dispatcher().assign("/clustered/cellitems", &CQRCompleter::cellItems, this);
 	dispatcher().assign("/clustered/michildren", &CQRCompleter::maximumIndependentChildren, this);
 	dispatcher().assign("/clustered/items", &CQRCompleter::items, this);
+	dispatcher().assign("/clustered/apxStats", &CQRCompleter::apxStats, this);
 	dispatcher().assign("/clustered/dag", &CQRCompleter::dag, this);
 	dispatcher().assign("/clustered/clusterhints", &CQRCompleter::clusterHints, this);
 	mapper().assign("clustered","/clustered");
