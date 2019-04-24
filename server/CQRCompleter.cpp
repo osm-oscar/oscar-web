@@ -256,6 +256,34 @@ void CQRCompleter::simpleCQR() {
 	writeLogStats("simpleCQR", cqs, ttm, cqrSize, 0);
 }
 
+void CQRCompleter::apxStats() {
+	sserialize::TimeMeasurer ttm;
+	ttm.begin();
+	
+	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
+
+	response().set_content_header("text/json");
+	
+	//params
+	std::string cqs = request().get("q");
+	std::string regionFilter = request().get("rf");
+	
+	sserialize::CellQueryResult cqr;
+	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	}
+	else {
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	}
+	
+	auto & out = response().out();
+	
+	out << "{\"cells\":" << cqr.cellCount() << ",\"items\":" << cqr.maxItems() << "}";
+	
+	ttm.end();
+	writeLogStats("apxStats", cqs, ttm, cqr.maxItems(), 0);
+}
+
 void CQRCompleter::items() {
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
