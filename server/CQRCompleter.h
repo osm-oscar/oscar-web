@@ -59,6 +59,13 @@ public:
 	  * array<uint32_t> : [item id]
 	  */
 	void items();
+
+	/** returns items and their location for the query q:
+	  * q=<searchstring>
+	  * Return:
+	  * array<uint32_t> : [item id, maxLon*10^7, maxLat*10^7]
+	  */
+	void itemsWithLocation();
 	
 	/** returns approximate query result stats
 	 * q=<searchstring>
