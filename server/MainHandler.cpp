@@ -11,6 +11,7 @@
 #include "ItemDB.h"
 #include "CQRCompleter.h"
 #include "CQRItems.h"
+#include "KVClustering.h"
 
 namespace oscar_web {
 
@@ -21,6 +22,7 @@ MainHandler::MainHandler(cppcms::service& srv, const oscar_web::CompletionFileDa
 	IndexDB * indexDB = new IndexDB(srv, m_data->completer->indexStore(), m_data->completer->store().geoHierarchy());
 	CQRCompleter * cqrCompleter = new CQRCompleter(srv, data);
 	CQRItems * cqrItems = new CQRItems(srv, data);
+	KVClustering * kvClustering = new KVClustering(srv, data);
 	
 	itemDB->setMaxPerRequest(m_data->maxItemDBReq);
 	indexDB->setMaxPerRequest(m_data->maxIndexDBReq);
@@ -29,6 +31,7 @@ MainHandler::MainHandler(cppcms::service& srv, const oscar_web::CompletionFileDa
 	attach(indexDB, "indexdb", "/indexdb{1}", "/indexdb(/(.*))?", 1);
 	attach(cqrCompleter, "cqr", "/cqr{1}", "/cqr(/(.*))?", 1);
 	attach(cqrItems, "items", "/items{1}", "/items(/(.*))?", 1);
+	attach(kvClustering, "kvclustering", "/kvclustering{1}", "/kvclustering(/(.*))?", 1);
 
 	dispatcher().assign("",&MainHandler::describe,this);
 	mapper().assign(""); // default URL

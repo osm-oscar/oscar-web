@@ -1,3 +1,8 @@
+# Demo
+
+The master branch version is runnig at [www.oscar-web.de](http://www.oscar-web.de).
+A version supporting faceted search based on the faceted-clustering branch is available at [kvclustering.oscar-web.de](http://kvclustering.oscar-web.de).
+
 # oscar-web
 
 oscar-web is a web-interface for simple interaction with the OpenStreetMap search engine [oscar](https://github.com/dbahrdt/oscar). The goal is to provide an easy to use interface and allowing
@@ -7,24 +12,69 @@ To search for specific institutions like restaurants, parks or hotels the corres
 isn't capable of mapping something like "pizza" to "cuisine=pizza". To prevent that a user needs to know such tags, frequently used ones are integrated in a search menu so that they can be easily added to the query. If a corresponding tag is not in the menu
 an additional search field, that queries the [taginfo](http://taginfo.openstreetmap.org/) database, can be used.
 
-## Functionalities
+# Running your own version
 
-- search in the viewport or in the global OSM dataset
-- search within user defined polygons or paths
-- geographical clustering of search results
-- visualization of the OSM hierarchy
-- help system that supports the user defining advanced queries
-- flickr integration to enhance search results
+## Prerequisites
 
-## Used libraries
+- CGAL
+- ragel
+- CppCMS
+- (cgdb)
 
-- A lot! Take a look into website/vendor folder
+## Clone
 
-## Builds
+`git clone --recursive https://github.com/dbahrdt/oscar-web`
 
-### Ultra builds
-CMAKE_GCC_VERSION_FOR_LTO=6 cmake ../ -DCMAKE_BUILD_TYPE=ultra
+## Building
 
-Replace 6 with an appropriate version
+### Debug build
+```
+cd oscar-web
+mkdir build && cd build
+cmake ../
+make
+```
 
+### Release build
+```
+cd oscar-web
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release  ../
+```
 
+### Ultra build
+```
+cd oscar-web
+mkdir build && cd build
+CMAKE_GCC_VERSION_FOR_LTO=8 cmake ../ -DCMAKE_BUILD_TYPE=ultra
+```
+
+Replace 8 with an appropriate version V such that `gcc-ar-V` and `gcc-nm-V` are available.
+
+## Configuration
+
+### Configure your webserver
+Sample configuration files are located in the services folder
+
+### Configuring the back end
+
+Read the configuration hints:
+```
+cd services
+cat readme
+```
+
+Create a symlink to the binary you just compiled in the builds folder:
+```
+ln -s ../build/ builds/production
+```
+
+Edit the configuration. See ${PROJECT_ROOT}/server/oscar-web-config.js for possible options:
+```
+vim cfg/oscar-web-config.js
+```
+
+Run the server component. By default this is run using cgdb to catch crashes in order to debug them. Though we haven't seen any for a longer period of time.
+```
+./run-production.sh
+```

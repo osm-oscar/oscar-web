@@ -1,4 +1,4 @@
-define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, tools, config, oscar, map, fuzzysort){
+define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "pubsub"], function(state, tools, config, oscar, map, fuzzysort, pubsub){
 	var encompletion = {
 		"base": [
 		{
@@ -20,7 +20,8 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 			"south of" : ":south-of",
 			"west of" : ":west-of",
 			"between" : ":between"
-		}
+		},
+	   delimeters : new Set([" ", "(", ")"])
 	}
 	var search = {
 		data : data,
@@ -43,11 +44,14 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 				}
 				else if (qstr[i] === '&' && !withInExact) {
 					var name = "";
-					for(++i; i < qstr.length && qstr[i] !== ' '; ++i) {
+					for(++i; i < qstr.length && !search.data.delimeters.has(qstr[i]); ++i) {
 						name += qstr[i];
 					}
 					if (state.spatialObjects.names.count(name)) {
 						res += state.spatialObjects.store.at(state.spatialObjects.names.at(name)).query;
+					}
+					else {
+						console.log("Invalid spatial object in query string: " + name);
 					}
 				}
 				else {
@@ -58,7 +62,8 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 			return res;
 	   },
         doCompletion: function () {
-            if ($("#search_text").val() === state.queries.lastQuery) {
+			map.cfg.clustering.maxZoomLevel = 20;
+            if (search.addRefinementToQuery($("#search_text").val()) === state.queries.lastQuery) {
                 return;
 			}
 			state.clearViews();
@@ -68,8 +73,9 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
             $("#flickr").hide("slide", {direction: "right"}, config.styles.slide.speed);
 
             //query has changed, ddos the server!
-            var myQuery = $("#search_text").val();
-            
+            var myQuery = search.addRefinementToQuery($("#search_text").val());
+			pubsub.publish("search", "request started");
+
             state.queries.lastQuery = myQuery + "";//make sure state hold a copy
 
             var ohf = (parseInt($('#ohf_spinner').val()) / 100.0);
@@ -92,8 +98,10 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 				};
 			}
 
-			var myRealQuery =  search.replaceSpatialObjects(myQuery);
-			
+
+			var myRealQuery = search.replaceSpatialObjects(myQuery);
+
+
             if ($('#searchModi input').is(":checked")) {
                 //TODO: wrong placement of markers if clustering is active. Cause: region midpoint is outside of search rectangle
 				
@@ -131,6 +139,7 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 					//BOOM!
                     alert("Failed to retrieve completion results. textstatus=" + textStatus + "; errorThrown=" + errorThrown);
                 });
+
         },
 	   
         instantCompletion: function () {
@@ -349,7 +358,33 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort"], function(state, 
 				// tools.defErrorCB(textStatus, errorThrown);
 			}
 			jQuery.ajax(settings);
-		}
+		},
+		addRefinementToQuery: function(query) {
+			query = search.replaceSpatialObjects(query);
+			let includingRefinementString = "";
+			state.clustering.activeIncludingRefinements.forEach(function (refinementName) {
+				refinementName = refinementName.replace("%20", ' ');
+				if(refinementName[0]==='k'){
+					includingRefinementString += refinementName.slice(1) + " ";
+				} else {
+					includingRefinementString += `"${refinementName.slice(1)}"` + " ";
+				}
+			});
+			let excludingRefinementString = "";
+			state.clustering.activeExcludingRefinements.forEach(function (refinementName) {
+				refinementName = refinementName.replace("%20", ' ');
+				if(refinementName[0]==='k'){
+
+					excludingRefinementString += " - " + refinementName.slice(1) + " ";
+				} else {
+					excludingRefinementString += " - " + `"${refinementName.slice(1)}"` + " ";
+
+				}
+			});
+			return includingRefinementString + query + excludingRefinementString;
+		},
+
+
     };
 
 	var languageName = window.navigator.userLanguage || window.navigator.language;

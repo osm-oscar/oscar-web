@@ -92,6 +92,10 @@ body {
     float: left;
 }
 
+#clusterModi {
+    margin-top: 5px;
+}
+
 #tree {
     display: none;
     background-color: rgba(255,255,255,0.7);
@@ -280,6 +284,73 @@ label {
 	word-wrap: break-word;
 	word-break: break-all;
 	overflow-wrap: break-word;
+}
+
+.refinement-type{
+    width: 33%;
+}
+.refinement-loading--refinement{
+    height: 12px;
+    margin-top: 2px;
+    margin-bottom: 6px;
+    animation: pulse 1s infinite ease-in-out;
+}
+
+
+
+@keyframes pulse {
+    0% {
+        background-color: rgba(165, 165, 165, 0.1)
+    }
+    50% {
+        background-color: rgba(165, 165, 165, 0.3)
+    }
+    100% {
+        background-color: rgba(165, 165, 165, 0.1)
+    }
+}
+.including-refinement {
+    size: 20px;
+    color: green;
+}
+.excluding-refinement {
+    color: #db4969;
+}
+.ignore-refinement-button {
+}
+.refinement-button{
+    cursor: pointer;
+    margin-top: -10px;
+}
+
+.inner-refinement{
+    width: 60%;
+}
+.refinement-name{
+    display: inline-block;
+    max-width: 70%;
+    height: 1.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#refinement-menu{
+    display: block;
+}
+
+.refinement-settings{
+    color: #337ab7;
+    cursor: pointer;
+    float: right;
+}
+
+.facet-loadMore {
+    cursor: pointer;
+}
+
+.tab-content{
+    margin-top: 10px;
 }
 
 ::-moz-scrollbar {
