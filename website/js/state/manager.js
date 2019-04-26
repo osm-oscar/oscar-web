@@ -45,6 +45,47 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
 			activeItem: undefined,
 			inspectItem: undefined
 		},
+
+        clustering : {
+            openedClustering : '#p-tab',
+            kvQueryId : -1,
+            kQueryId : -1,
+            pQueryId : -1,
+            fQueryId : -1,
+            kRefinements : tools.SimpleHash(), // keyId : int  -> {name : String, itemCount: int}
+            pRefinements : tools.SimpleHash(), // parentId : int -> {name : String, itemCount: int}
+            kvRefinements : tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name: String, itemCount: int}
+            fRefinements : tools.SimpleHash(), // keyId : int -> [{valueId: int} -> {name: String, itemCount: int}]
+            keyNameMap : tools.SimpleHash(), // keyId : int -> keyName : String
+            activeIncludingRefinements: [],
+            activeExcludingRefinements: [],
+            kvExceptions: tools.SimpleHash(), // "{keyId: int, valueId: int}" -> {name : String, itemCount: int}
+            kExceptions: tools.SimpleHash(), // keyId -> {name: String, itemCount: int}
+            fExceptions: tools.SimpleHash(), // keyId -> {name: String, itemCount: int}
+            kDebugInfo: {},
+            pDebugInfo: {},
+            kvDebugInfo: {},
+            fDebugInfo: {},
+            debug: true,
+            lastKvQuery: "",
+            lastKQuery: "",
+            lastPQuery: "",
+            lastFQuery: "",
+            lastQueryWithoutRefinements: "",
+            kvRefinementCount: 10,
+            kRefinementCount: 10,
+            pRefinementCount: 10,
+            fRefinementCount: 10,
+            kvHasMore: false,
+            kHasMore: false,
+            pHasMore: false,
+            fHasMore: false,
+            facetHasMore: tools.SimpleHash(), // keyId : int -> hasMoreElementsToBeFetched : bool
+            facetSizes: tools.SimpleHash(), // keyId: int -> elementsToBeFetched: int
+            exceptionProfile: '["wheelchair", "addr", "level", "toilets:wheelchair", "building", "source", "roof"]',
+            defaultFacetSize: 10
+        },
+
 		//e = {type : type, id : internalId, name : name}
 		spatialQueryTableRowTemplateDataFromSpatialObject: function(e) {
 			var t = "invalid";
@@ -143,6 +184,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
 			dlelem.attr('href', "");
 			$("#empty_result_info").addClass("hidden");
 			$("#result_list_container").addClass("hidden");
+			$("#kvclustering-list").addClass("hidden");
         },
         
         addSingleQueryStatementToQuery: function (qstr) {

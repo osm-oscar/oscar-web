@@ -60,6 +60,12 @@ public:
 	  */
 	void items();
 	
+	/** returns approximate query result stats
+	 * q=<searchstring>
+	 * rf=<region filter>
+	 */
+	void apxStats();
+	
 
 	/** return the region children for the query q:
 	  * q=<searchstring>

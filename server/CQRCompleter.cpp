@@ -88,6 +88,7 @@ m_cqrSerializer(sserialize::ItemIndex::Types(dataPtr->completer->indexStore().in
 	dispatcher().assign("/clustered/cellitems", &CQRCompleter::cellItems, this);
 	dispatcher().assign("/clustered/michildren", &CQRCompleter::maximumIndependentChildren, this);
 	dispatcher().assign("/clustered/items", &CQRCompleter::items, this);
+	dispatcher().assign("/clustered/apxstats", &CQRCompleter::apxStats, this);
 	dispatcher().assign("/clustered/dag", &CQRCompleter::dag, this);
 	dispatcher().assign("/clustered/clusterhints", &CQRCompleter::clusterHints, this);
 	mapper().assign("clustered","/clustered");
@@ -254,6 +255,34 @@ void CQRCompleter::simpleCQR() {
 
 	ttm.end();
 	writeLogStats("simpleCQR", cqs, ttm, cqrSize, 0);
+}
+
+void CQRCompleter::apxStats() {
+	sserialize::TimeMeasurer ttm;
+	ttm.begin();
+	
+	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
+
+	response().set_content_header("text/json");
+	
+	//params
+	std::string cqs = request().get("q");
+	std::string regionFilter = request().get("rf");
+	
+	sserialize::CellQueryResult cqr;
+	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	}
+	else {
+		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	}
+	
+	auto & out = response().out();
+	
+	out << "{\"cells\":" << cqr.cellCount() << ",\"items\":" << cqr.maxItems() << "}";
+	
+	ttm.end();
+	writeLogStats("apxStats", cqs, ttm, cqr.maxItems(), 0);
 }
 
 void CQRCompleter::items() {
@@ -460,7 +489,7 @@ struct ChildrenInfoWriter {
 		std::unordered_map<uint32_t, NodePtr> parents; //storeId -> NodePtr
 		std::unordered_map<uint32_t, NodePtr> children; //storeId -> NodePtr
 		out.precision(10);
-		const auto & gh = subSet.cqr().geoHierarchy();
+		const auto & gh = subSet.geoHierarchy();
 		out << '{' << "\"graph\":";
 		char sep = '{';
 		for(uint32_t regionId : regions) { //regionId is storeId

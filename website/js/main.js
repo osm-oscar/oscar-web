@@ -2,8 +2,8 @@ requirejs.config({
     baseUrl: "",
     config: {
         'oscar': {
-// 			url: "http://localoscar/oscar",
-			url: "https://oscardev.fmi.uni-stuttgart.de/oscar",
+			url: "http://localoscar/oscar",
+// 			url: "https://oscardev.fmi.uni-stuttgart.de/oscar",
 			//thw following variables have to match the ones in your server config (or should be smaller)
 			maxFetchItems: 2000,
 			maxFetchShapes: 2000,
@@ -46,7 +46,9 @@ requirejs.config({
         "query": "js/query/query",
         "search": "js/search/search",
 		"dag": "js/dag/dag",
-		"dagexp" : "js/dag/dagexp"
+		"dagexp" : "js/dag/dagexp",
+        "kv-clustering" : "js/kv-clustering/kv-clustering",
+        "pubsub" : "js/pubsub/pubsub"
     },
     shim: {
         'bootstrap': {deps: ['jquery']},
@@ -59,7 +61,7 @@ requirejs.config({
     waitSeconds: 20
 });
 
-requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf",  "switch", "state", "map", "tree", "query", "tools", "search"],
+requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoader", "conf",  "switch", "state", "map", "tree", "query", "tools", "search", "kv-clustering", "pubsub"],
     function () {
         var L = require("leaflet");
 		var jQuery = require("jquery");
@@ -70,12 +72,14 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 		var config = require("conf");
 		var switchButton = require("switch");
 		var state = require("state");
-		var map = require("map");
-		var tree = require("tree");
+        var map = require("map");
+        var tree = require("tree");
         var query = require("query");
-		var tools = require("tools");
+        var tools = require("tools");
         var search = require("search");
-		
+        var kvClustering = require("kv-clustering");
+        var pubsub = require("pubsub");
+
 		//set the map handler
 		state.mapHandler = map;
 
@@ -110,6 +114,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 				search_text.val("");
 				state.clearViews();
 				search_text.focus();
+				kvClustering.closeClustering("", true, true);
 			});
 			
             $('#graph').click(function () {
@@ -164,7 +169,109 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                     flickr.show();
                 }
             });
-			
+
+            $(document).on('click', '#refinementTabContent i.including-refinement' ,(function () {
+               kvClustering.addIncludingRefinement(this.id);
+               search.instantCompletion();
+            }));
+            $(document).on('click', '#refinementTabContent i.excluding-refinement' ,(function () {
+               kvClustering.addExcludingRefinement(this.id);
+               search.instantCompletion();
+            }));
+
+            $(document).on('click', '#facets i.facet-loadMore' ,(function () {
+                kvClustering.addFacetShowMore(this.id);
+                kvClustering.drawFRefinements();
+            }));
+
+            $(document).on('click', '#refinementTabContent i.kRefinement-exception' ,(function () {
+               kvClustering.addKException(this.id);
+               kvClustering.drawKExceptions();
+            }));
+            $(document).on('click', '#refinementTabContent i.kvRefinement-exception' ,(function () {
+               kvClustering.addKvException(this.id);
+               kvClustering.drawKvExceptions();
+            }));
+
+            $(document).on('click', '#refinements span.active-refinement' ,(function () {
+                kvClustering.removeRefinement(this.id);
+                search.instantCompletion();
+            }));
+
+            $(document).on('click', '#kException-list i.active-exception' ,(function () {
+                kvClustering.removeKException(this.id);
+                kvClustering.drawKExceptions();
+            }));
+            $(document).on('click', '#kvException-list i.active-exception' ,(function () {
+                kvClustering.removeKvException(this.id);
+                kvClustering.drawKvExceptions();
+            }));
+            $(document).on('click', '#kvShowMore' ,(function () {
+                state.clustering.kvRefinementCount += 5;
+                kvClustering.fetchKvRefinements(search.addRefinementToQuery($("#search_text").val(), true));
+            }));
+            $(document).on('click', '#pShowMore' ,(function () {
+                state.clustering.pRefinementCount += 5;
+                kvClustering.fetchPRefinements(search.addRefinementToQuery($("#search_text").val(), true));
+            }));
+            $(document).on('click', '#kShowMore' ,(function () {
+                state.clustering.kRefinementCount += 5;
+                kvClustering.fetchKRefinements(search.addRefinementToQuery($("#search_text").val(), true));
+            }));
+            $(document).on('click', '#fShowMore' ,(function () {
+                state.clustering.fRefinementCount += 10;
+                kvClustering.fetchFRefinements(search.addRefinementToQuery($("#search_text").val(), true));
+            }));
+
+            $('#unpackAll-button').click(function () {
+                map.cfg.clustering.maxZoomLevel = 1;
+                map.cfg.resultList.itemsPerPage = 100;
+                // map.init();
+                map.mapViewChanged();
+            });
+
+            $('#refinement-settings-icon').click(function () {
+                kvClustering.drawSettings();
+            });
+
+            $('#save-refinement-settings-button').click(function () {
+                kvClustering.saveSettings($('#exception-profile-settings').val());
+            });
+
+            $('#default-settings-button').click(function () {
+               kvClustering.drawDefaultSettings();
+            });
+            $('#removeKvExceptions').click(function () {
+               kvClustering.clearKvExceptions();
+            });
+            $('#removeKExceptions').click(function () {
+               kvClustering.clearKExceptions();
+            });
+            $('#removeRefinements').click(function() {
+                kvClustering.clearRefinements();
+                search.instantCompletion();
+            });
+
+            $('#sidebar-clustering-button').click(function () {
+                $(state.clustering.openedClustering).tab('show');
+            });
+
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function(e){
+               if(e.target.id==="k-tab"){
+                   kvClustering.fetchKRefinements($('#search_text').val(), false);
+                    state.clustering.openedClustering = '#k-tab';
+               } else if(e.target.id==="kv-tab"){
+                   kvClustering.fetchKvRefinements($('#search_text').val(), false)
+                   state.clustering.openedClustering = '#kv-tab';
+               } else if(e.target.id==="p-tab"){
+                   kvClustering.fetchPRefinements($('#search_text').val(), false)
+                   state.clustering.openedClustering = '#p-tab';
+               } else if(e.target.id==="f-tab"){
+                   kvClustering.fetchFRefinements($('#search_text').val(), false)
+                   state.clustering.openedClustering = '#f-tab';
+               }
+            });
+
 			$('#display_cluster_shapes_checkbox').click(function() {
 				var enabled = $(this).is(':checked');
 				map.cfg.clusterShapes.auto = false;
