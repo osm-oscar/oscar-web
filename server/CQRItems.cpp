@@ -1,4 +1,5 @@
 #include "CQRItems.h"
+#include "helpers.h"
 #include <cppcms/http_response.h>
 #include <cppcms/http_request.h>
 #include <cppcms/url_dispatcher.h>
@@ -14,6 +15,7 @@ cppcms::application(srv),
 m_dataPtr(dataPtr)
 {
 	dispatcher().assign("/all", &CQRItems::all, this);
+	dispatcher().assign("/info", &CQRItems::info, this);
 	mapper().assign("all","/all");
 }
 
@@ -163,6 +165,25 @@ void CQRItems::all() {
 	
 	ttm.end();
 	writeLogStats("all", cqs, ttm, cqr.cellCount(), itemCount);
+}
+
+void CQRItems::info() {
+	sserialize::TimeMeasurer ttm;
+	ttm.begin();
+	auto parsingCorrect = false;
+	auto ids = parseJsonArray<uint32_t>(request().get("i"), parsingCorrect);
+	std::ostream & out = response().out();
+	const auto & store = m_dataPtr->completer->store();
+	out << "[";
+	auto separator = "";
+	for(auto id : ids) {
+		out << separator;
+		m_serializer.serialize(out, store.at(id), ItemSerializer::SF_NONE);
+		separator = ",";
+	}
+	out << "]";
+	ttm.end();
+	writeLogStats("info", request().get("i"), ttm, ids.size(), ids.size());
 }
 
 void CQRItems::writeLogStats(const std::string& fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize) {
