@@ -1,7 +1,6 @@
 # Demo
 
 The master branch version is runnig at [www.oscar-web.de](http://www.oscar-web.de).
-A version supporting faceted search based on the faceted-clustering branch is available at [kvclustering.oscar-web.de](http://kvclustering.oscar-web.de).
 
 # oscar-web
 
