@@ -33,6 +33,13 @@ public:
 	  * [Json item description]
 	  */
 	void all();
+
+	/** returns itemInfo corresponding to an itemId-array
+	  * i=<[itemId]>
+	  * Return:
+	  * [Json item description]
+	  */
+	void info();
 private:
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr SubSetNodePtr;
 private:
