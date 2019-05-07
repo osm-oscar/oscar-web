@@ -369,13 +369,10 @@ void CQRCompleter::itemsWithLocation() {
 
 	for(auto i(idx.begin()), s(idx.end()); i != s; ++i) {
 		bw.putU32(*i);
-		auto shape = store.geoShape(*i);
-		sserialize::spatial::GeoRect bbox(shape.boundary());
-		bw.putU32(shape.boundary().maxLon()*std::pow(10,7));
-		bw.putU32(shape.boundary().maxLat()*std::pow(10,7));
+		auto p = store.geoShape(*i).first();
+		bw.putU32(p.intLat());
+		bw.putU32(p.intLon());
 	}
-
-
 	ttm.end();
 	writeLogStats("itemsWithLocationData", cqs, ttm, idx.size(), idx.size());
 }
