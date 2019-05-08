@@ -29,7 +29,8 @@ define([], function() {
             shapes: {
                 regions: {
                     normal: {color: 'yellow', stroke: true, fill: false, opacity: 0.8},
-                    highlight: {color: 'yellow', stroke: true, fill: false, opacity: 1.0}
+                    highlight: {color: 'yellow', stroke: true, fill: false, opacity: 1.0},
+                    choropleth: {color: 'yellow', stroke: true, fill: true, opacity: 0.5}
                 },
                 items: {
                     normal: {color: 'blue', stroke: true, fill: false, opacity: 0.8},
@@ -150,7 +151,16 @@ define([], function() {
 				auto: true,
 				display: true,
 				preload: true,
-				threshold: 25 //maximum # root children to display shapes
+				threshold: 25, //maximum # root children to display shapes
+				choropleth: {
+					threshold: 1000 //maximum number of root children to enable choropleth view
+					display: true,
+					preload: true,
+					color: function(v, m) { //v to current number of items, m the maximum number of items present
+						//start with blue and interpolate to red in HSL
+						return "hsl(" + (1-v/m)*250 + ",100%,50%, 50%)"
+					}
+				}
 			},
 			resultList: {
 				itemsPerPage: 20,

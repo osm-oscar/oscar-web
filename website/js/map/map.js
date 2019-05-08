@@ -1080,6 +1080,27 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return handler;
 	};
 	
+	var ChoroplethShapeHandler = function(target, style, map) {
+		var handler = new ItemLayerHandler(target, map);
+		handler.m_style = style;
+		handler.m_forwardedSignals = {"click": ["click"]};
+		//calls cb after adding if cb !== undefined
+		handler._fetchLayer = function(cb, itemId) {
+			var me = this;
+			oscar.getShape(itemId, function(shape) {
+				if (!state.dag.hasRegion(itemId)) {
+					return;
+				}
+				var lfs = oscar.leafletItemFromShape(shape);
+				let itemStyle = me.m_style; //base
+				itemStyle.color = config.map.clusterShapes.choropleth.color(state.dag.region(itemId).count, state.dag.region(0xFFFFFFFF).count);
+				lfs.setStyle(me.m_style);
+				cb(lfs);
+			}, tools.defErrorCB);
+		};
+		return handler;
+	};
+	
 	var MarkerHandler = function(target, map) {
 		var handler = new ItemLayerHandler(target, map);
 		///returns leaflet LatLng
@@ -1278,6 +1299,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		RelativesItemListHandler: RelativesItemListHandler,
 		ItemListTabHandler: ItemListTabHandler,
 		ItemShapeHandler: ItemShapeHandler,
+		ChoroplethShapeHandler: ChoroplethShapeHandler,
 		ItemMarkerHandler: ItemMarkerHandler,
 		RegionMarkerHandler: RegionMarkerHandler,
 
@@ -1327,7 +1349,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.inspectedItemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.items.inspected, state.map);
 			map.relativesShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.relatives.normal, state.map);
 			map.highlightItemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.activeItems, state.map);
-			map.clusterMarkerRegionShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.regions.highlight, state.map);
+			map.clusterMarkerRegionShapes = map.ChoroplethShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.regions.choropleth, state.map);
 			
 			map.itemMarkers = map.ItemMarkerHandler( L.layerGroup().addTo(state.map), state.map);
 			
