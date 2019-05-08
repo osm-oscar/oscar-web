@@ -157,8 +157,8 @@ define([], function() {
 					display: true,
 					relative: true,
 					color: function(v, m) { //v to current number of items, m the maximum number of items present
-// 						let percent = Math.log2(v) / Math.log2(m);
-						let percent = Math.log2(v/m)
+						let percent = Math.log2(v) / Math.log2(m);
+// 						let percent = Math.log2(v/m)
 // 						let h = (1-percent)*240; //blue to red
 // 						return "hsl(" + h + ",100%, 50%)"
 						return "rgb(" + (percent*255) + ", 0, " + ((1-percent)*255) + ")";
