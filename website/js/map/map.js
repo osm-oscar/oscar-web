@@ -1313,6 +1313,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		highlightItemShapes: undefined,
 		inspectedItemShapes: undefined,
 		clusterMarkerRegionShapes: undefined,
+		choroplethMapShapes: undefined,
 		
 		//markers
 		itemMarkers: undefined,
@@ -1349,7 +1350,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.inspectedItemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.items.inspected, state.map);
 			map.relativesShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.relatives.normal, state.map);
 			map.highlightItemShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.activeItems, state.map);
-			map.clusterMarkerRegionShapes = map.ChoroplethShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.regions.choropleth, state.map);
+			map.clusterMarkerRegionShapes = map.ItemShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.regions.highlight, state.map);
+			map.choroplethMapShapes = map.ChoroplethShapeHandler(L.layerGroup().addTo(state.map), config.styles.shapes.regions.choropleth, state.map);
 			
 			map.itemMarkers = map.ItemMarkerHandler( L.layerGroup().addTo(state.map), state.map);
 			
@@ -1436,6 +1438,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.highlightItemShapes.clear();
 			map.inspectedItemShapes.clear();
 			map.clusterMarkerRegionShapes.clear();
+			map.choroplethMapShapes.clear();
 			
 			map.itemMarkers.clear();
 			map.highlightItemMarkers.clear();
@@ -1456,10 +1459,17 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				if (state.cqr.rootRegionChildrenInfo().length > map.cfg.clusterShapes.threshold) {
 					map.cfg.clusterShapes.preload = false;
 					map.cfg.clusterShapes.display = false;
+					map.cfg.clusterShapes.choropleth.display = false;
 				}
 				else {
 					map.cfg.clusterShapes.preload = true;
 					map.cfg.clusterShapes.display = true;
+					if (map.cfg.clusterShapes.preload) {
+						map.cfg.clusterShapes.choropleth.display = true;
+					}
+					else {
+						map.cfg.clusterShapes.choropleth.display = false;
+					}
 				}
 			}
 			map.dagExpander.setPreloadShapes(map.cfg.clusterShapes.preload);
@@ -1790,6 +1800,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		onClusterMarkerLayerRemoved: function(e) {
 			map.closePopups();
 			map.clusterMarkerRegionShapes.clear();
+			map.choroplethMapShapes.clear();
 		},
 		onClusterMarkerClicked: function(e) {
 			map.closePopups();
@@ -2127,6 +2138,22 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			missingClusterMarkers.each(function(key) {
 				map.clusterMarkers.add(key, state.dag.region(key).count);
 			});
+			
+			if (map.cfg.clusterShapes.choropleth.display) {
+				var removedRegionShapes = tools.SimpleSet();
+				var missingRegionShapes = tools.SimpleSet();
+				tools.getMissing(wantClusterMarkers, map.choroplethMapShapes.layers(), removedRegionShapes, missingRegionShapes);
+			
+				removedRegionShapes.each(function(key) {
+					map.choroplethMapShapes.remove(key);
+				});
+				missingRegionShapes.each(function(key) {
+					map.choroplethMapShapes.add(key);
+				});
+			}
+			else {
+				map.choroplethMapShapes.clear();
+			}
 		},
 		//cells are tools.SimpleSet
 		_assignTabContentFromRegion: function(cells, regionId, focusAfterLoad) {
