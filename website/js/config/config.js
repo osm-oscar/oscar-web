@@ -29,7 +29,8 @@ define([], function() {
             shapes: {
                 regions: {
                     normal: {color: 'yellow', stroke: true, fill: false, opacity: 0.8},
-                    highlight: {color: '#a100ff', stroke: true, fill: true, opacity: 1.0, fillOpacity: 0.8},
+//                     highlight: {color: '#a100ff', stroke: true, fill: true, opacity: 1.0, fillOpacity: 0.8}, //use this for hsl interpolated choropleth map
+                    highlight: {color: 'yellow', stroke: true, fill: true, opacity: 1.0, fillOpacity: 0.8},
                     choropleth: {stroke: true, fill: true, opacity: 0.8, fillOpacity: 0.5}
                 },
                 items: {
@@ -155,8 +156,11 @@ define([], function() {
 				choropleth: {
 					display: true,
 					color: function(v, m) { //v to current number of items, m the maximum number of items present
-						//start with blue and interpolate to red in HSL
-						return "hsl(" + (1-((Math.log2(v)-1)/(Math.log2(m))))*250 + ",100%, 50%)"
+// 						let percent = Math.log2(v) / Math.log2(m);
+						let percent = Math.log2(v/m)
+// 						let h = (1-percent)*240; //blue to red
+// 						return "hsl(" + h + ",100%, 50%)"
+						return "rgb(" + (percent*255) + ", 0, " + ((1-percent)*255) + ")";
 					}
 				}
 			},
