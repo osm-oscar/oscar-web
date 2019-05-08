@@ -1083,6 +1083,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	var ChoroplethShapeHandler = function(target, style, map) {
 		var handler = new ItemLayerHandler(target, map);
 		handler.m_style = style;
+		handler.m_maxCount = 0xFFFFFFFF;
 		handler.m_forwardedSignals = {"click": ["click"]};
 		//calls cb after adding if cb !== undefined
 		handler._fetchLayer = function(cb, itemId) {
@@ -1093,11 +1094,22 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				var lfs = oscar.leafletItemFromShape(shape);
 				let itemStyle = me.m_style; //base
-				itemStyle.color = config.map.clusterShapes.choropleth.color(state.dag.region(itemId).count, state.dag.region(0xFFFFFFFF).count);
+				itemStyle.color = me._color(itemId);
 				lfs.setStyle(me.m_style);
 				cb(lfs);
 			}, tools.defErrorCB);
 		};
+		handler.setMaxCount = function(v) {
+			this.m_maxCount = v;
+		};
+		handler._recomputeColors = function() {
+			for(let x of this.layerIds()) {
+				this.layer(x).setStyle({"color": this._color(x)});
+			}
+		};
+		handler._color = function(itemId) {
+			return config.map.clusterShapes.choropleth.color(state.dag.region(itemId).count, this.m_maxCount)
+		}
 		return handler;
 	};
 	
@@ -2147,6 +2159,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				removedRegionShapes.each(function(key) {
 					map.choroplethMapShapes.remove(key);
 				});
+				
+				if (map.cfg.clusterShapes.choropleth.relative) {
+					var myMax = 0;
+					wantClusterMarkers.each(function(key) {
+						myMax = Math.max(myMax, state.dag.region(key).count);
+					});
+					map.choroplethMapShapes.setMaxCount(myMax);
+				}
 				missingRegionShapes.each(function(key) {
 					map.choroplethMapShapes.add(key);
 				});
@@ -2346,6 +2366,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				else {
 					state.map.fitWorld();
+				}
+				if (!map.cfg.clusterShapes.choropleth.relative) {
+					map.choroplethMapShapes.setMaxCount( state.dag.region(0xFFFFFFFF).count );
 				}
 				map.mapViewChanged(rid);
 				state.map.on("zoomend dragend", map.viewChanged);

@@ -155,6 +155,7 @@ define([], function() {
 				threshold: 25, //maximum # root children to display shapes
 				choropleth: {
 					display: true,
+					relative: true,
 					color: function(v, m) { //v to current number of items, m the maximum number of items present
 // 						let percent = Math.log2(v) / Math.log2(m);
 						let percent = Math.log2(v/m)
