@@ -143,7 +143,8 @@ define([], function() {
         },
 		clusters: {
 			bboxOverlap: 0.4, // threshold for overlap of a bbox with viewport
-			shapeOverlap: 0.1 // threshold for overlap of a bbox with viewport if the shape is within the viewport
+			shapeOverlap: 0.1, // threshold for overlap of a bbox with viewport if the shape is within the viewport
+			pad: 1 //increase viewport by this amount to compute the regions that should be drawn
 		},
 		//map options
 		map : {
