@@ -850,7 +850,7 @@ void CQRCompleter::cellInfo() {
 	}
 
 	ttm.end();
-	writeLogStats("childrenInfo", cqs, ttm, cellCount, 0);
+	writeLogStats("cellInfo", cqs, ttm, cellCount, 0);
 }
 
 void CQRCompleter::cellData() {
