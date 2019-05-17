@@ -143,10 +143,13 @@ define(["jquery"], function ($) {
          * @param bbox
          * @returns {number} defines the overlap (0 <= overlap <= 1)
          */
-        percentOfOverlap: function (map, bbox) {
+        percentOfOverlap: function (map, bbox, pad) {
             if (bbox) {
                 // basic version: http://math.stackexchange.com/questions/99565/simplest-way-to-calculate-the-intersect-area-of-two-rectangles
                 var viewport = map.getBounds();
+				if (pad) {
+					viewport = viewport.pad(pad);
+				}
                 var d0 = map.project(viewport.getSouthWest()),
                     w0 = Math.abs(map.project(viewport.getNorthEast()).x - d0.x), // width
                     h0 = Math.abs(map.project(viewport.getNorthEast()).y - d0.y), // height
