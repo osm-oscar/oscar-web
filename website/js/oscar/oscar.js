@@ -523,10 +523,10 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
 				},
 				//calls successCB with { cellId: [itemId] }
 				getCellItems: function(cellIds, successCB, errorCB, k, offset) {
-					this.p.simpleCqrGetCellItems(this.d.query, cellIds, successCB, errorCB, k, offset);
+					this.p.simpleCqrGetCellItems(this.d.query, cellIds, successCB, errorCB, k, offset, this.d.regionFilter);
 				},
 				getCellData: function(cellIds, successCB, errorCB) {
-					this.p.simpleCqrGetCellData(this.d.query, cellIds, successCB, errorCB);
+					this.p.simpleCqrGetCellData(this.d.query, cellIds, successCB, errorCB, this.d.regionFilter);
 				},
                 //returning an array in successCB with objects={id : int, apxitems : int}
                 //returns rootRegionChildrenInfo if regionId is undefined
@@ -1083,10 +1083,13 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
                 }
             });
         },
-		simpleCqrGetCellData: function(query, cellIds, successCB, errorCB) {
+		simpleCqrGetCellData: function(query, cellIds, successCB, errorCB, regionFilter) {
             var params = {};
             params['q'] = query;
 			params['which'] = JSON.stringify(tools.toSortedIntArray(cellIds));
+			if(regionFilter !== undefined) {
+                params['rf'] = regionFilter;
+            }
             var qpath = this.completerBaseUrl + "/cqr/clustered/celldata";
             jQuery.ajax({
                 type: "POST",
@@ -1108,7 +1111,7 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
                 }
             });
 		},
-		simpleCqrGetCellItems: function(query, cellIds, successCB, errorCB, k, offset) {
+		simpleCqrGetCellItems: function(query, cellIds, successCB, errorCB, k, offset, regionFilter) {
             if (k === undefined) {
 				k = oscarObject.maxFetchItems;
 			}
@@ -1120,6 +1123,9 @@ define(['jquery', 'sserialize', 'leaflet', 'module', 'tools', 'storage'], functi
 			params['k'] = k;
 			params['o'] = offset;
 			params['which'] = JSON.stringify(tools.toSortedIntArray(cellIds));
+			if(regionFilter !== undefined) {
+                params['rf'] = regionFilter;
+            }
             var qpath = this.completerBaseUrl + "/cqr/clustered/cellitems";
             jQuery.ajax({
                 type: "POST",
