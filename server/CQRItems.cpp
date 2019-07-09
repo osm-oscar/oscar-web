@@ -178,7 +178,7 @@ void CQRItems::info() {
 	auto separator = "";
 	for(auto id : ids) {
 		out << separator;
-		m_serializer.serialize(out, store.at(id), ItemSerializer::SF_NONE);
+		m_serializer.serialize(out, store.at(id), ItemSerializer::SF_WITH_SHAPE);
 		separator = ",";
 	}
 	out << "]";
