@@ -161,6 +161,8 @@ define(
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                             <span class="inner-refinement">
                                 <b>${kvClustering.formatRefinementString(key)}</b>
+                                <i title="include" class="fa fa-lg fa-plus-circle including-refinement refinement-button" id="k@${key.replace(' ', "%20")}" href="#"></i>
+                                <i title="exclude" class="fa fa-lg fa-minus-circle excluding-refinement refinement-button" id="k@${key.replace(' ', "%20")}" href="#"></i>
                             </span>
                          </li>
                      </ul>`) ;
@@ -510,22 +512,6 @@ define(
                                                 <i title="remove" class="fa fa-lg fa-times-circle active-exception refinement-button" id="${key.keyId}:${key.valueId}" href="#"></i>
                                             </li>`);
                 })
-            },
-            drawFExceptions: function(){
-                /* const kvExceptionList = $('#kvException-list');
-                kvExceptionList.empty();
-                if(state.clustering.kvExceptions.size() > 0){
-                    $('#kvExceptionText').show();
-                } else {
-                    $('#kvExceptionText').hide();
-                }
-                state.clustering.kvExceptions.each(function (key, value) {
-                    key = JSON.parse(key);
-                    kvExceptionList.append(`<li>${value.name}
-                                                <i title="remove" class="fa fa-lg fa-times-circle active-exception refinement-button" id="${key.keyId}:${key.valueId}" href="#"></i>
-                                            </li>`);
-                })
-                */
             },
             drawSettings: function(){
                 $('#exception-profile-settings').val(state.clustering.exceptionProfile);
