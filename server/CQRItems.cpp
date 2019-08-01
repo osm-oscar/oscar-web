@@ -178,7 +178,10 @@ void CQRItems::info() {
 	auto separator = "";
 	for(auto id : ids) {
 		out << separator;
-		m_serializer.serialize(out, store.at(id), ItemSerializer::SF_WITH_SHAPE);
+		const auto& firstPoint = store.geoShape(id).first();
+		std::stringstream firstPointSream;
+		firstPointSream << "\"firstPoint\": { \"lat\": " << firstPoint.lat() << ", \"lon\": " << firstPoint.lon() << "}";
+		m_serializer.serialize(out, store.at(id), (ItemSerializer::SerializationFormat)(0x6),firstPointSream.str());
 		separator = ",";
 	}
 	out << "]";
