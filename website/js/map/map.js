@@ -913,7 +913,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return handler;
 	};
 	
-	//base class form Leaflet layers which take care of layers of items
+	//base class for Leaflet layers which take care of layers of items
 	//It triggers event on itself
 	//Derived classes need to provide a function _fetchLayer(itemId, call-back)
 	var ItemLayerHandler = function(target, map) {
@@ -1087,33 +1087,101 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 	var ChoroplethShapeHandler = function(target, style, map) {
 		var handler = new ItemLayerHandler(target, map);
 		handler.m_style = style;
-		handler.m_maxCount = 0xFFFFFFFF;
+		handler.m_colorParams = {
+			maxCount: 0xFFFFFFFF,
+			totalCount: 0,
+			totalArea: 0,
+			stdByArea: true
+		},
 		handler.m_forwardedSignals = {"click": ["click"]};
 		//calls cb after adding if cb !== undefined
 		handler._fetchLayer = function(cb, itemId) {
 			var me = this;
-			oscar.getShape(itemId, function(shape) {
-				if (!state.dag.hasRegion(itemId)) {
-					return;
-				}
-				var lfs = oscar.leafletItemFromShape(shape);
+			var applyStyle = function(lfs) {
 				let itemStyle = me.m_style; //base
-				itemStyle.color = me._color(itemId);
+				itemStyle.color = me._color(itemId); //it's ok if area is null
 				lfs.setStyle(me.m_style);
-				cb(lfs);
-			}, tools.defErrorCB);
+			};
+			
+			if (state.dag.hasRegion(itemId) && state.dag.region(itemId).chMapShape !== undefined) {
+				let chMapShape = state.dag.region(itemId).chMapShape;
+				applyStyle(chMapShape);
+				cb(chMapShape);
+			}
+			else {
+				oscar.getShape(itemId, function(shape) {
+					if (!state.dag.hasRegion(itemId)) {
+						return;
+					}
+					let lfs = oscar.leafletItemFromShape(shape);
+					if (config.map.clusterShapes.choropleth.display && !state.dag.region(itemId).area) {
+						state.dag.region(itemId).area = handler.geodesicArea(lfs.getLatLngs());
+					}
+					applyStyle(lfs);
+					state.dag.region(itemId).chMapShape = lfs;
+					cb(lfs);
+				}, tools.defErrorCB);
+			}
 		};
 		handler.setMaxCount = function(v) {
-			this.m_maxCount = v;
+			this.m_colorParams.maxCount = v;
 		};
-		handler._recomputeColors = function() {
+		handler.setTotalCount = function(v) {
+			this.m_colorParams.totalCount = v;
+		};
+		handler.setTotalAreaFromViewPort = function() {
+			let b = state.map.getBounds();
+			let poly = [b.getSouthWest(), b.getNorthWest(), b.getNorthEast(), b.getSouthEast()];
+			this.m_colorParams.totalArea = handler.geodesicArea( poly );
+		};
+		handler.setTotalArea = function(v) {
+			this.m_colorParams.totalArea = v;
+		};
+		handler.setStandardizeByArea = function(v) {
+			this.m_colorParams.stdByArea = v;
+		};
+		handler.recomputeColors = function() {
 			for(let x of this.layerIds()) {
-				this.layer(x).setStyle({"color": this._color(x)});
+				if (this.layer(x) !== undefined) {
+					this.layer(x).setStyle({"color": this._color(x)});
+				}
 			}
 		};
 		handler._color = function(itemId) {
-			return config.map.clusterShapes.choropleth.color(state.dag.region(itemId).count, this.m_maxCount)
-		}
+			return config.map.clusterShapes.choropleth.color[config.map.clusterShapes.choropleth.type](state.dag.region(itemId).count, state.dag.region(itemId).area, handler.m_colorParams)
+		};
+		//Copied from Leaflet.Draw
+		handler.geodesicArea = function (latLngs) {
+			var calc = function(latLngs) {
+				let pointsCount = latLngs.length,
+					area = 0.0,
+					d2r = Math.PI / 180,
+					p1, p2;
+
+				if (pointsCount > 2) {
+					for (let i = 0; i < pointsCount; i++) {
+						p1 = latLngs[i];
+						p2 = latLngs[(i + 1) % pointsCount];
+						area += ((p2.lng - p1.lng) * d2r) *
+							(2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
+					}
+					area = area * 6378137.0 * 6378137.0 / 2.0;
+				}
+				return Math.abs(area);
+			};
+			
+			if (Array.isArray(latLngs) && latLngs.length && Array.isArray(latLngs[0])) {
+				let totalLength = 0;
+				for(let i=0; i < latLngs.length; ++i) {
+					totalLength += calc(latLngs[i]);
+				}
+				return totalLength;
+			}
+			else {
+				return calc(latLngs);
+			}
+
+		};
 		return handler;
 	};
 	
@@ -1431,7 +1499,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				else {
 					map.cfg.clusterShapes.preload = true;
 					map.cfg.clusterShapes.display = true;
-					if (map.cfg.clusterShapes.preload) {
+					if (map.cfg.clusterShapes.preload && map.cfg.clusterShapes.choropleth.type != "disabled") {
 						map.cfg.clusterShapes.choropleth.display = true;
 					}
 					else {
@@ -1779,8 +1847,8 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		onClusterMarkerLayerRemoved: function(e) {
 			map.closePopups();
-			map.clusterMarkerRegionShapes.clear();
-			map.choroplethMapShapes.clear();
+			map.clusterMarkerRegionShapes.remove(e.layer.itemId);
+			map.choroplethMapShapes.remove(e.layer.itemId);
 		},
 		onClusterMarkerClicked: function(e) {
 			map.closePopups();
@@ -2128,13 +2196,30 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 					map.choroplethMapShapes.remove(key);
 				});
 				
-				if (map.cfg.clusterShapes.choropleth.relative) {
-					var myMax = 0;
-					wantClusterMarkers.each(function(key) {
-						myMax = Math.max(myMax, state.dag.region(key).count);
-					});
-					map.choroplethMapShapes.setMaxCount(myMax);
-				}
+				
+				let myMaxCount = 0;
+				let myTotalCount = 0;
+				let myTotalArea = 0;
+				wantClusterMarkers.each(function(key) {
+					let rn = state.dag.region(key);
+					myMaxCount = Math.max(myMaxCount, rn.count);
+					myTotalCount += rn.count;
+					if (rn.area) {
+						myTotalArea += rn.area;
+					}
+					else {
+						let b = L.latLngBounds(rn.bbox);
+						let poly = [b.getSouthWest(), b.getNorthWest(), b.getNorthEast(), b.getSouthEast()];
+						myTotalArea += map.choroplethMapShapes.geodesicArea(poly);
+					}
+				});
+				map.choroplethMapShapes.setMaxCount(myMaxCount);
+				map.choroplethMapShapes.setTotalCount(myTotalCount);
+				map.choroplethMapShapes.setTotalArea(myTotalArea);
+// 				map.choroplethMapShapes.setTotalAreaFromViewPort();
+				
+				map.choroplethMapShapes.recomputeColors();
+				
 				missingRegionShapes.each(function(key) {
 					map.choroplethMapShapes.add(key);
 				});
@@ -2334,9 +2419,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				}
 				else {
 					state.map.fitWorld();
-				}
-				if (!map.cfg.clusterShapes.choropleth.relative) {
-					map.choroplethMapShapes.setMaxCount( state.dag.region(0xFFFFFFFF).count );
 				}
 				map.mapViewChanged(rid);
 				state.map.on("zoomend dragend", map.viewChanged);

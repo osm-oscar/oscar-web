@@ -156,13 +156,23 @@ define([], function() {
 				threshold: 25, //maximum # root children to display shapes
 				choropleth: {
 					display: true,
-					relative: true,
-					color: function(v, m) { //v to current number of items, m the maximum number of items present
-						let percent = Math.log2(v) / Math.log2(m);
-// 						let percent = Math.log2(v/m)
-// 						let h = (1-percent)*240; //blue to red
-// 						return "hsl(" + h + ",100%, 50%)"
-						return "rgb(" + (percent*255) + ", 0, " + ((1-percent)*255) + ")";
+					type: "density", // possible values are "count", "density", "disabled"
+					color: {
+						"density": function(count, area, baseParams) {
+							//density based
+							//we assume that the total totalCount is distributed evenly on maxArea
+							//areas with this density should have a value of 50%
+							let baseDensity = baseParams.totalCount/baseParams.totalArea;
+							let ourDensity = count/area;
+	// 						let percent = 0.5*Math.min(2, Math.log2(ourDensity) / Math.log2(baseDensity));
+							let percent = 0.5*Math.min(2, Math.sqrt(ourDensity/baseDensity));
+	// 						let percent = 0.5*Math.min(2, ourDensity / baseDensity);
+							return "rgb(" + (percent*255) + ", 0, " + ((1-percent)*255) + ")";
+						},
+						"count": function(count, area, baseParams) {
+								let percent = Math.log2(count) / Math.log2(baseParams.maxCount);
+								return "rgb(" + (percent*255) + ", 0, " + ((1-percent)*255) + ")";
+						}
 					}
 				}
 			},

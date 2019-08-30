@@ -317,6 +317,11 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 				$('#dag_expansion_overlap_range_value').html(100-parseInt($(this).val()));
 			});
 			
+			$('#choropleth_map_settings_dropdown').change(function() {
+				config.map.clusterShapes.choropleth.type = $(this).val();
+				map.cfg.clusterShapes.choropleth.display = (config.map.clusterShapes.choropleth.type !== "disabled");
+				map.mapViewChanged();
+			});
 // 			state.sidebar.on('tab-closed', function(e) {});
 // 			state.sidebar.on('tab-opened', function(e) {});
 
