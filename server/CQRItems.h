@@ -1,7 +1,7 @@
 #ifndef OSCAR_WEB_CQR_ITEMS_H
 #define OSCAR_WEB_CQR_ITEMS_H
-#include <cppcms/application.h>
 
+#include "BaseApp.h"
 #include "types.h"
 #include "ItemSerializer.h"
 
@@ -11,7 +11,7 @@ namespace oscar_web {
   *This is the main query completer.
   */
 
-class CQRItems: public cppcms::application {
+class CQRItems: public BaseApp {
 public:
 	CQRItems(cppcms::service& srv, const CompletionFileDataPtr & dataPtr);
 	virtual ~CQRItems();
@@ -43,11 +43,8 @@ public:
 private:
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr SubSetNodePtr;
 private:
-	CompletionFileDataPtr m_dataPtr;
 	liboscar::Static::OsmKeyValueObjectStore m_store;
 	ItemSerializer m_serializer;
-private:
-	void writeLogStats(const std::string & fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize);
 };
 
 

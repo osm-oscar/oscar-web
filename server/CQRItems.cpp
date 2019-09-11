@@ -11,8 +11,7 @@
 namespace oscar_web {
 
 CQRItems::CQRItems(cppcms::service& srv, const CompletionFileDataPtr& dataPtr):
-cppcms::application(srv),
-m_dataPtr(dataPtr)
+BaseApp(srv, dataPtr, "CQRItems")
 {
 	dispatcher().assign("/all", &CQRItems::all, this);
 	dispatcher().assign("/info", &CQRItems::info, this);
@@ -25,10 +24,12 @@ void CQRItems::all() {
 	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef liboscar::Static::OsmKeyValueObjectStore OsmKeyValueObjectStore;
 	
+	auto irId = genIntReqId("all");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const auto & store = m_dataPtr->completer->store();
+	const auto & store = d().completer->store();
 	const auto & gh = store.geoHierarchy();
 	
 	response().set_content_header("text/json");
@@ -52,14 +53,13 @@ void CQRItems::all() {
 	sserialize::CellQueryResult cqr;
 	sserialize::spatial::GeoHierarchySubGraph sg;
 	
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		sg = m_dataPtr->ghSubSetCreators.at(regionFilter);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		sg = d().ghSubSetCreators.at(regionFilter);
 	}
 	else {
-		sg = m_dataPtr->completer->ghsg();
+		sg = d().completer->ghsg();
 	}
-	cqr = m_dataPtr->completer->cqrComplete(cqs, sg, m_dataPtr->treedCQR);
-	uint32_t itemCount = 0;
+	cqr = d().completer->cqrComplete(cqs, sg, d().treedCQR);
 	
 	std::ostream & out = response().out();
 	auto streamcfg = m_serializer.streamPrepare(out);
@@ -67,7 +67,7 @@ void CQRItems::all() {
 	if (withParents) {
 		std::unordered_set<uint32_t> tmp;
 		bool haveParents = false;
-		int32_t max_write_items = m_dataPtr->maxResultDownloadSize;
+		int32_t max_write_items = d().maxResultDownloadSize;
 		{
 			for(sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
 				auto cellParents = sg.cellParents(it.cellId());
@@ -150,9 +150,9 @@ void CQRItems::all() {
 	}
 	else {
 		sserialize::ItemIndex itemIds = cqr.flaten();
-		if (itemIds.size() > m_dataPtr->maxResultDownloadSize) {
+		if (itemIds.size() > d().maxResultDownloadSize) {
 			sserialize::ItemIndex::const_iterator it(itemIds.cbegin());
-			for(uint32_t i(0), s(m_dataPtr->maxResultDownloadSize); i < s; ++i, ++it) {
+			for(uint32_t i(0), s(d().maxResultDownloadSize); i < s; ++i, ++it) {
 				m_serializer.serialize(out, store.at(*it), sf);
 			}
 		}
@@ -164,16 +164,17 @@ void CQRItems::all() {
 	m_serializer.streamUnprepare(out, streamcfg);
 	
 	ttm.end();
-	writeLogStats("all", cqs, ttm, cqr.cellCount(), itemCount);
+	log(irId, "all", ttm, cqr);
 }
 
 void CQRItems::info() {
+	auto irId = genIntReqId("info");
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 	auto parsingCorrect = false;
 	auto ids = parseJsonArray<uint32_t>(request().get("i"), parsingCorrect);
 	std::ostream & out = response().out();
-	const auto & store = m_dataPtr->completer->store();
+	const auto & store = d().completer->store();
 	out << "[";
 	auto separator = "";
 	for(auto id : ids) {
@@ -186,12 +187,7 @@ void CQRItems::info() {
 	}
 	out << "]";
 	ttm.end();
-	writeLogStats("info", request().get("i"), ttm, ids.size(), ids.size());
+	log(irId, "info", ttm);
 }
-
-void CQRItems::writeLogStats(const std::string& fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize) {
-	*(m_dataPtr->log) << "CQRItems::" << fn << ": t=" << tm.beginTime() << "s, rip=" << "0.0.0.0" << ", q=[" << query << "], rs=" << cqrSize <<  " is=" << idxSize << ", ct=" << tm.elapsedMilliSeconds() << "ms" << std::endl;
-}
-
 
 }//end namespace oscar_web
