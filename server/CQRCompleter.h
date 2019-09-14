@@ -1,8 +1,8 @@
 #ifndef OSCAR_WEB_CQR_COMPLETER_H
 #define OSCAR_WEB_CQR_COMPLETER_H
 #include <unordered_map>
-#include <cppcms/application.h>
 #include <sserialize/utility/debug.h>
+#include "BaseApp.h"
 #include "types.h"
 #include "GeoHierarchySubSetSerializer.h"
 #include "CellQueryResultsSerializer.h"
@@ -17,19 +17,7 @@ namespace oscar_web {
   *This is the main query completer.
   */
 
-class CQRCompleter: public cppcms::application {
-private:
-	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr SubSetNodePtr;
-private:
-	CompletionFileDataPtr m_dataPtr;
-	GeoHierarchySubSetSerializer m_subSetSerializer;
-	CellQueryResultsSerializer m_cqrSerializer;
-private:
-	void writeSubSet(std::ostream & out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
-	void writeDag(std::ostream & out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
-	void writeLogStats(const std::string & fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize);
-	///calulates cluster centers for the hierarchy, ids are ghIds!
-	std::unordered_map<uint32_t, std::pair<double, double> > getClusterCenters(sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
+class CQRCompleter: public BaseApp {
 public:
 	CQRCompleter(cppcms::service& srv, const CompletionFileDataPtr & dataPtr);
 	virtual ~CQRCompleter();
@@ -160,6 +148,16 @@ public:
 	  * returns { regionId : [lat, lon] }
 	  */
 	  void clusterHints();
+private:
+	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr SubSetNodePtr;
+private:
+	void writeSubSet(std::ostream & out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
+	void writeDag(std::ostream & out, const std::string & sst, const sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
+	///calulates cluster centers for the hierarchy, ids are ghIds!
+	std::unordered_map<uint32_t, std::pair<double, double> > getClusterCenters(sserialize::Static::spatial::GeoHierarchy::SubSet & subSet);
+private:
+	GeoHierarchySubSetSerializer m_subSetSerializer;
+	CellQueryResultsSerializer m_cqrSerializer;
 };
 
 }//end namespace

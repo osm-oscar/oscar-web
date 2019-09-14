@@ -1,7 +1,7 @@
 #ifndef OSCAR_WEB_KV_CLUSTERING_H
 #define OSCAR_WEB_KV_CLUSTERING_H
 
-#include <cppcms/application.h>
+#include "BaseApp.h"
 #include "types.h"
 
 namespace oscar_web {
@@ -12,7 +12,7 @@ namespace oscar_web {
   * and based on the intersections between the items
   */
 
-class KVClustering : public cppcms::application {
+class KVClustering : public BaseApp {
 public:
 	KVClustering(cppcms::service &srv, const CompletionFileDataPtr &dataPtr);
 

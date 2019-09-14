@@ -12,10 +12,6 @@
 
 namespace oscar_web {
 
-void CQRCompleter::writeLogStats(const std::string & fn, const std::string& query, const sserialize::TimeMeasurer& tm, uint32_t cqrSize, uint32_t idxSize) {
-	*(m_dataPtr->log) << "CQRCompleter::" << fn << ": t=" << tm.beginTime() << "s, rip=" << "0.0.0.0" << ", q=[" << query << "], rs=" << cqrSize <<  " is=" << idxSize << ", ct=" << tm.elapsedMilliSeconds() << "ms" << std::endl;
-}
-
 std::unordered_map< uint32_t, std::pair< double, double > >
 CQRCompleter::getClusterCenters(sserialize::Static::spatial::GeoHierarchy::SubSet& subSet)
 {
@@ -64,7 +60,7 @@ CQRCompleter::getClusterCenters(sserialize::Static::spatial::GeoHierarchy::SubSe
 			}
 		}
 	};
-	Calc calc(subSet.cqr(), m_dataPtr);
+	Calc calc(subSet.cqr(), dptr());
 	
 	calc.calc(subSet.root());
 	
@@ -73,8 +69,7 @@ CQRCompleter::getClusterCenters(sserialize::Static::spatial::GeoHierarchy::SubSe
 
 
 CQRCompleter::CQRCompleter(cppcms::service& srv, const CompletionFileDataPtr & dataPtr) :
-application(srv),
-m_dataPtr(dataPtr),
+BaseApp(srv, dataPtr, "CQRCompleter"),
 m_subSetSerializer(dataPtr->completer->store().geoHierarchy()),
 m_cqrSerializer(sserialize::ItemIndex::Types(dataPtr->completer->indexStore().indexTypes()))
 {
@@ -120,6 +115,8 @@ void CQRCompleter::writeDag(std::ostream& out, const std::string & sst, const ss
 }
 
 void CQRCompleter::fullCQR() {
+	auto irId = genIntReqId("fullCQR");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
@@ -129,11 +126,11 @@ void CQRCompleter::fullCQR() {
 	bool ssonly = sserialize::toBool(request().get("ssonly"));
 	
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		subSet = d().completer->clusteredComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		subSet = d().completer->clusteredComplete(cqs, d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 	
 	if (!ssonly || sst == "binary") {
@@ -156,24 +153,25 @@ void CQRCompleter::fullCQR() {
 	writeSubSet(out, sst, subSet);
 	
 	ttm.end();
-	writeLogStats("fullCQR", cqs, ttm, subSet.cqr().cellCount(), 0);
+	log(irId, "fullCQR", ttm, subSet.cqr());
 }
 
 void CQRCompleter::simpleCQR() {
+	auto irId = genIntReqId("simpleCQR");
+	
 	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef std::unordered_set<const GeoHierarchy::SubSet::Node*> RegionSet;
 	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
+	const auto & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 	
 	//params
 	std::string cqs = request().get("q");
 	std::string regionFilter = request().get("rf");
-	uint32_t cqrSize = 0;
 	double ohf = 0.0;
 	bool globalUnfoldRatio = true;
 
@@ -197,16 +195,15 @@ void CQRCompleter::simpleCQR() {
 	}
 	
 	GeoHierarchy::SubSet subSet;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		subSet = d().completer->clusteredComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		subSet = d().completer->clusteredComplete(cqs, d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 	
 	GeoHierarchy::SubSet::NodePtr rPtr(subSet.root());
 	subSetRootPtr = rPtr;
-	cqrSize = subSet.cqr().cellCount(); //for stats
 	if (ohf != 0.0) {
 		struct MyIterator {
 			std::vector<uint32_t> * ohPath;
@@ -255,14 +252,16 @@ void CQRCompleter::simpleCQR() {
 	}
 
 	ttm.end();
-	writeLogStats("simpleCQR", cqs, ttm, cqrSize, 0);
+	log(irId, "simpleCQR", ttm, subSet.cqr());
 }
 
 void CQRCompleter::apxStats() {
+	auto irId = genIntReqId("apxStats");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 	
-	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
+	const auto & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 	
@@ -271,11 +270,11 @@ void CQRCompleter::apxStats() {
 	std::string regionFilter = request().get("rf");
 	
 	sserialize::CellQueryResult cqr;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		cqr = d().completer->cqrComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		cqr = d().completer->cqrComplete(cqs, d().treedCQR, d().treedCQRThreads);
 	}
 	
 	auto & out = response().out();
@@ -283,14 +282,16 @@ void CQRCompleter::apxStats() {
 	out << "{\"cells\":" << cqr.cellCount() << ",\"items\":" << cqr.maxItems() << "}";
 	
 	ttm.end();
-	writeLogStats("apxStats", cqs, ttm, cqr.maxItems(), 0);
+	log(irId, "apxStats", ttm, cqr);
 }
 
 void CQRCompleter::items() {
+	auto irId = genIntReqId("items");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 	
-	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
+	const auto & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 	
@@ -305,7 +306,7 @@ void CQRCompleter::items() {
 	{
 		std::string tmpStr = request().get("k");
 		if (!tmpStr.empty()) {
-			numItems = std::min<uint32_t>(m_dataPtr->maxItemDBReq, atoi(tmpStr.c_str()));
+			numItems = std::min<uint32_t>(d().maxItemDBReq, atoi(tmpStr.c_str()));
 		}
 		tmpStr = request().get("o");
 		if (!tmpStr.empty()) {
@@ -314,11 +315,11 @@ void CQRCompleter::items() {
 	}
 	
 	sserialize::CellQueryResult cqr;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		cqr = d().completer->cqrComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		cqr = d().completer->cqrComplete(cqs, d().treedCQR, d().treedCQRThreads);
 	}
 	
 	sserialize::ItemIndex idx(cqr.topK(numItems+skipItems));
@@ -338,16 +339,17 @@ void CQRCompleter::items() {
 	}
 
 	ttm.end();
-	writeLogStats("items", cqs, ttm, cqrSize, idx.size());
+	log(irId, "items", ttm, cqr, idx);
 }
 
 
 void CQRCompleter::itemsWithLocation() {
+	auto irId = genIntReqId("itemsWithLocation");
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
-	const auto & store = m_dataPtr->completer->store();
+	const auto & gh = d().completer->store().geoHierarchy();
+	const auto & store = d().completer->store();
 
 	response().set_content_header("application/octet-stream");
 
@@ -356,14 +358,14 @@ void CQRCompleter::itemsWithLocation() {
 	std::string regionFilter = request().get("rf");
 
 	sserialize::CellQueryResult cqr;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		cqr = d().completer->cqrComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		cqr = d().completer->cqrComplete(cqs, d().treedCQR, d().treedCQRThreads);
 	}
 
-	sserialize::ItemIndex idx = cqr.flaten(m_dataPtr->treedCQRThreads);
+	sserialize::ItemIndex idx = cqr.flaten(d().treedCQRThreads);
 	//now write the data
 	BinaryWriter bw(response().out());
 
@@ -374,14 +376,16 @@ void CQRCompleter::itemsWithLocation() {
 		bw.putU32(p.intLon());
 	}
 	ttm.end();
-	writeLogStats("itemsWithLocationData", cqs, ttm, idx.size(), idx.size());
+	log(irId, "dag", ttm, cqr, idx);
 }
 
 void CQRCompleter::children() {
+	auto irId = genIntReqId("children");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
+	const sserialize::Static::spatial::GeoHierarchy & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 
@@ -389,8 +393,6 @@ void CQRCompleter::children() {
 	std::string cqs = request().get("q");
 	std::string regionFilter = request().get("rf");
 	uint32_t regionId = sserialize::Static::spatial::GeoHierarchy::npos;
-	uint32_t cqrSize = 0;
-
 	{
 		std::string tmpStr = request().get("r");
 		if (!tmpStr.empty()) {
@@ -403,15 +405,14 @@ void CQRCompleter::children() {
 	}
 
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		subSet = d().completer->clusteredComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		subSet = d().completer->clusteredComplete(cqs, d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 
 	sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
-	cqrSize = subSet.cqr().cellCount(); //for stats
 
 	//now write the data
 	BinaryWriter bw(response().out());
@@ -427,7 +428,7 @@ void CQRCompleter::children() {
 	}
 
 	ttm.end();
-	writeLogStats("children", cqs, ttm, cqrSize, 0);
+	log(irId, "children", ttm, subSet.cqr());
 }
 
 template<bool T_REGION_EXCLUSIVE_CELLS>
@@ -622,10 +623,12 @@ struct ChildrenInfoWriter {
 };
 
 void CQRCompleter::childrenInfo() {
+	auto irId = genIntReqId("childrenInfo");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
+	const sserialize::Static::spatial::GeoHierarchy & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 
@@ -660,13 +663,13 @@ void CQRCompleter::childrenInfo() {
 		cqs = sserialize::toString("$region:", regions.front(), " (", cqs, ")");
 	}
 
-	uint32_t fullSubSetLimit = (withChildrenCells ? 0xFFFFFFFF : m_dataPtr->fullSubSetLimit);
+	uint32_t fullSubSetLimit = (withChildrenCells ? 0xFFFFFFFF : d().fullSubSetLimit);
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		subSet = d().completer->clusteredComplete(cqs, d().ghSubSetCreators.at(regionFilter), fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		subSet = d().completer->clusteredComplete(cqs, fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 	if (regionExclusiveCells) {
 
@@ -677,11 +680,11 @@ void CQRCompleter::childrenInfo() {
 	sserialize::spatial::GeoHierarchySubGraph ghs;
 
 	if (regionExclusiveCells) {
-		if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-			ghs = m_dataPtr->ghSubSetCreators.at(regionFilter);
+		if (d().ghSubSetCreators.count(regionFilter)) {
+			ghs = d().ghSubSetCreators.at(regionFilter);
 		}
 		else {
-			ghs = sserialize::spatial::GeoHierarchySubGraph(gh, m_dataPtr->completer->indexStore(), sserialize::spatial::GeoHierarchySubGraph::T_PASS_THROUGH);
+			ghs = sserialize::spatial::GeoHierarchySubGraph(gh, d().completer->indexStore(), sserialize::spatial::GeoHierarchySubGraph::T_PASS_THROUGH);
 		}
 	}
 
@@ -754,15 +757,17 @@ void CQRCompleter::childrenInfo() {
 	}
 
 	ttm.end();
-	writeLogStats("childrenInfo", cqs, ttm, subSet.cqr().cellCount(), 0);
+	log(irId, "childrenInfo", ttm, subSet.cqr());
 }
 
 void CQRCompleter::cellInfo() {
+	auto irId = genIntReqId("cellInfo");
+	
 	sserialize::TimeMeasurer ttm;
 	uint32_t cellCount = 0;
 	ttm.begin();
 
-	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
+	const sserialize::Static::spatial::GeoHierarchy & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 
@@ -794,11 +799,11 @@ void CQRCompleter::cellInfo() {
 
 		uint32_t fullSubSetLimit = 0xFFFFFFFF;
 		sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
-		if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-			subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		if (d().ghSubSetCreators.count(regionFilter)) {
+			subSet = d().completer->clusteredComplete(cqs, d().ghSubSetCreators.at(regionFilter), fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 		}
 		else {
-			subSet = m_dataPtr->completer->clusteredComplete(cqs, fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+			subSet = d().completer->clusteredComplete(cqs, fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 		}
 		cellCount = subSet.cqr().cellCount();
 
@@ -806,11 +811,11 @@ void CQRCompleter::cellInfo() {
 
 		sserialize::spatial::GeoHierarchySubGraph ghs;
 		if (regionExclusiveCells) {
-			if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-				ghs = m_dataPtr->ghSubSetCreators.at(regionFilter);
+			if (d().ghSubSetCreators.count(regionFilter)) {
+				ghs = d().ghSubSetCreators.at(regionFilter);
 			}
 			else {
-				ghs = sserialize::spatial::GeoHierarchySubGraph(gh, m_dataPtr->completer->indexStore(), sserialize::spatial::GeoHierarchySubGraph::T_PASS_THROUGH);
+				ghs = sserialize::spatial::GeoHierarchySubGraph(gh, d().completer->indexStore(), sserialize::spatial::GeoHierarchySubGraph::T_PASS_THROUGH);
 			}
 			CellInfoWriter<true>::write(out, ghs, subSet, regions);
 		}
@@ -828,11 +833,11 @@ void CQRCompleter::cellInfo() {
 
 
 		sserialize::CellQueryResult cqr;
-		if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-			cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		if (d().ghSubSetCreators.count(regionFilter)) {
+			cqr = d().completer->cqrComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().treedCQR, d().treedCQRThreads);
 		}
 		else {
-			cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+			cqr = d().completer->cqrComplete(cqs, d().treedCQR, d().treedCQRThreads);
 		}
 		cellCount = cqr.cellCount();
 
@@ -850,14 +855,16 @@ void CQRCompleter::cellInfo() {
 	}
 
 	ttm.end();
-	writeLogStats("cellInfo", cqs, ttm, cellCount, 0);
+	log(irId, "cellInfo", ttm);
 }
 
 void CQRCompleter::cellData() {
+	auto irId = genIntReqId("cellData");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
+	const auto & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 
@@ -882,11 +889,11 @@ void CQRCompleter::cellData() {
 	}
 
 	sserialize::CellQueryResult cqr;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		cqr = d().completer->cqrComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		cqr = d().completer->cqrComplete(cqs, d().treedCQR, d().treedCQRThreads);
 	}
 	std::ostream & out = response().out();
 	char sep = '{';
@@ -912,21 +919,23 @@ void CQRCompleter::cellData() {
 	out << '}';
 
 	ttm.end();
-	writeLogStats("cellData", cqs, ttm, cqr.cellCount(), 0);
+	log(irId, "cellData", ttm, cqr);
 }
 
 void CQRCompleter::cells() {
+	auto irId = genIntReqId("cells");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
+	const auto & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 
 	//params
 	std::string cqs = request().get("q");
 
-	sserialize::CellQueryResult cqr( m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads) );
+	sserialize::CellQueryResult cqr( d().completer->cqrComplete(cqs, d().treedCQR, d().treedCQRThreads) );
 
 	std::ostream & out = response().out();
 	out << '[';
@@ -938,14 +947,16 @@ void CQRCompleter::cells() {
 	}
 	out << ']';
 	ttm.end();
-	writeLogStats("cells", cqs, ttm, cqr.cellCount(), 0);
+	log(irId, "cells", ttm, cqr);
 }
 
 void CQRCompleter::cellItems() {
+	auto irId = genIntReqId("cellItems");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const auto & gh = m_dataPtr->completer->store().geoHierarchy();
+	const auto & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 
@@ -967,7 +978,7 @@ void CQRCompleter::cellItems() {
 	{
 		std::string tmpStr = request().post("k");
 		if (!tmpStr.empty()) {
-			numItems = std::min<uint32_t>(m_dataPtr->maxItemDBReq, atoi(tmpStr.c_str()));
+			numItems = std::min<uint32_t>(d().maxItemDBReq, atoi(tmpStr.c_str()));
 		}
 		tmpStr = request().post("o");
 		if (!tmpStr.empty()) {
@@ -981,11 +992,11 @@ void CQRCompleter::cellItems() {
 	}
 
 	sserialize::CellQueryResult cqr;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		cqr = d().completer->cqrComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		cqr = m_dataPtr->completer->cqrComplete(cqs, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		cqr = d().completer->cqrComplete(cqs, d().treedCQR, d().treedCQRThreads);
 	}
 	std::ostream & out = response().out();
 	char sep = '{';
@@ -1023,15 +1034,16 @@ void CQRCompleter::cellItems() {
 	out << '}';
 
 	ttm.end();
-	writeLogStats("cellItems", cqs, ttm, cqr.cellCount(), 0);
+	log(irId, "cellItems", ttm, cqr);
 }
 
-
 void CQRCompleter::maximumIndependentChildren() {
+	auto irId = genIntReqId("maximumIndependentChildren");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
+	const sserialize::Static::spatial::GeoHierarchy & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 
@@ -1059,11 +1071,11 @@ void CQRCompleter::maximumIndependentChildren() {
 	}
 
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		subSet = d().completer->clusteredComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		subSet = d().completer->clusteredComplete(cqs, d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 
 	sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr rPtr(regionId != sserialize::Static::spatial::GeoHierarchy::npos ? subSet.regionByStoreId(regionId) : subSet.root());
@@ -1173,14 +1185,16 @@ void CQRCompleter::maximumIndependentChildren() {
 	}
 
 	ttm.end();
-	writeLogStats("maximumIndependentChildren", cqs, ttm, cqrSize, 0);
+	log(irId, "maximumIndependentChildren", ttm, subSet.cqr());
 }
 
 void CQRCompleter::dag() {
+	auto irId = genIntReqId("dag");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
+	const sserialize::Static::spatial::GeoHierarchy & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 
@@ -1190,11 +1204,11 @@ void CQRCompleter::dag() {
 	std::string regionFilter = request().get("rf");
 
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		subSet = d().completer->clusteredComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		subSet = d().completer->clusteredComplete(cqs, d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 
 	std::ostream & out = response().out();
@@ -1202,14 +1216,16 @@ void CQRCompleter::dag() {
 	writeDag(out, dagType, subSet);
 
 	ttm.end();
-	writeLogStats("dag", cqs, ttm, subSet.cqr().cellCount(), 0);
+	log(irId, "dag", ttm, subSet.cqr());
 }
 
 void CQRCompleter::clusterHints() {
+	auto irId = genIntReqId("clusterHints");
+	
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	const sserialize::Static::spatial::GeoHierarchy & gh = m_dataPtr->completer->store().geoHierarchy();
+	const sserialize::Static::spatial::GeoHierarchy & gh = d().completer->store().geoHierarchy();
 
 	response().set_content_header("text/json");
 
@@ -1227,11 +1243,11 @@ void CQRCompleter::clusterHints() {
 	}
 
 	sserialize::Static::spatial::GeoHierarchy::SubSet subSet;
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->ghSubSetCreators.at(regionFilter), m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		subSet = d().completer->clusteredComplete(cqs, d().ghSubSetCreators.at(regionFilter), d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 	else {
-		subSet = m_dataPtr->completer->clusteredComplete(cqs, m_dataPtr->fullSubSetLimit, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
+		subSet = d().completer->clusteredComplete(cqs, d().fullSubSetLimit, d().treedCQR, d().treedCQRThreads);
 	}
 
 	std::unordered_map<uint32_t, std::pair<double, double> > clusterCenters = getClusterCenters(subSet);
@@ -1267,7 +1283,7 @@ void CQRCompleter::clusterHints() {
 		out << '}';
 	}
 	ttm.end();
-	writeLogStats("clusterHints", cqs, ttm, subSet.cqr().cellCount(), 0);
+	log(irId, "clusterHints", ttm, subSet.cqr());
 }
 
 

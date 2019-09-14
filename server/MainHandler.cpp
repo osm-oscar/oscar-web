@@ -16,8 +16,6 @@
 namespace oscar_web {
 
 MainHandler::MainHandler(cppcms::service& srv, const oscar_web::CompletionFileDataPtr & data): application(srv), m_data(data) {
-	std::cout << "Created MainHandler" << std::endl;
-	
 	ItemDB * itemDB = new ItemDB(srv, m_data->completer->store());
 	IndexDB * indexDB = new IndexDB(srv, m_data->completer->indexStore(), m_data->completer->store().geoHierarchy());
 	CQRCompleter * cqrCompleter = new CQRCompleter(srv, data);

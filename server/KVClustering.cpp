@@ -11,8 +11,8 @@ namespace oscar_web {
 
 
 KVClustering::KVClustering(cppcms::service &srv, const CompletionFileDataPtr &dataPtr) :
-		cppcms::application(srv),
-		m_dataPtr(dataPtr) {
+BaseApp(srv, dataPtr, "KVClustering")
+{
 	dispatcher().assign("/get", &KVClustering::get, this);
 	mapper().assign("get", "/get");
 }
@@ -20,13 +20,15 @@ KVClustering::KVClustering(cppcms::service &srv, const CompletionFileDataPtr &da
 KVClustering::~KVClustering() = default;
 
 void KVClustering::get() {
+	auto irId = genIntReqId("get");
+	
 	typedef sserialize::Static::spatial::GeoHierarchy GeoHierarchy;
 	typedef liboscar::Static::OsmKeyValueObjectStore OsmKeyValueObjectStore;
 
 	sserialize::TimeMeasurer ttm;
 	ttm.begin();
 
-	m_store = m_dataPtr->completer->store();
+	m_store = d().completer->store();
 	const auto &gh = m_store.geoHierarchy();
 
 	response().set_content_header("text/json");
@@ -64,13 +66,13 @@ void KVClustering::get() {
 	sserialize::CellQueryResult cqr;
 	sserialize::spatial::GeoHierarchySubGraph sg;
 
-	if (m_dataPtr->ghSubSetCreators.count(regionFilter)) {
-		sg = m_dataPtr->ghSubSetCreators.at(regionFilter);
+	if (d().ghSubSetCreators.count(regionFilter)) {
+		sg = d().ghSubSetCreators.at(regionFilter);
 	} else {
-		sg = m_dataPtr->completer->ghsg();
+		sg = d().completer->ghsg();
 	}
-	cqr = m_dataPtr->completer->cqrComplete(cqs, sg, m_dataPtr->treedCQR, m_dataPtr->treedCQRThreads);
-	auto items = cqr.flaten(m_dataPtr->treedCQRThreads);
+	cqr = d().completer->cqrComplete(cqs, sg, d().treedCQR, d().treedCQRThreads);
+	auto items = cqr.flaten(d().treedCQRThreads);
 	m_itemCount = cqr.maxItems();
 	std::ostream &out = response().out();
 	m_numberOfRefinements = static_cast<uint32_t>(std::stoi(maxRefinements));
@@ -105,7 +107,7 @@ void KVClustering::get() {
 			keyValueExclusions.add(keyId, valueId);
 		}
 
-		liboscar::KoMaClustering koMaClustering(m_store, items, keyExclusions, keyValueExclusions, m_dataPtr->treedCQRThreads);
+		liboscar::KoMaClustering koMaClustering(m_store, items, keyExclusions, keyValueExclusions, d().treedCQRThreads);
 
 		sserialize::TimeMeasurer gtm;
 		gtm.begin();
@@ -201,12 +203,12 @@ void KVClustering::get() {
 
 	out << m_outStr.str();
 	ttm.end();
-	writeLogStats("get", cqs, ttm, cqr.cellCount());
+	log(irId, "get", ttm, cqr);
 }
 
 void KVClustering::writeLogStats(const std::string &fn, const std::string &query, const sserialize::TimeMeasurer &tm,
 								 uint32_t cqrSize) {
-	*(m_dataPtr->log) << "KVClustering::" << fn << ": t=" << tm.beginTime() << "s, rip=0.0.0.0"
+	*(d().log) << "KVClustering::" << fn << ": t=" << tm.beginTime() << "s, rip=0.0.0.0"
 					  << ", q=[" << query << "], rs=" << cqrSize << " is=" << m_itemCount << ", ct="
 					  << tm.elapsedMilliSeconds() << "ms" << std::endl;
 }
