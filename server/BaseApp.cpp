@@ -20,6 +20,7 @@ BaseApp::genIntReqId(std::string const & fn) {
 	char sep = '{';
 	for(auto const & x : request().post_or_get()) {
 		ss << sep << '"' << x.first << "\":\"" << x.second << '"';
+		sep = ',';
 	}
 	ss << '}';
 	log(id, fn, ss.str());
