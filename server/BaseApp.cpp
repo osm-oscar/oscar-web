@@ -16,11 +16,15 @@ BaseApp::genIntReqId(std::string const & fn) {
 	//maybe we should derive this from the request, though this should do for now
 	InternalRequestId id = ::random();
 	std::stringstream ss;
-	ss << "request=";
-	char sep = '{';
-	for(auto const & x : request().post_or_get()) {
-		ss << sep << '"' << x.first << "\":\"" << x.second << '"';
-		sep = ',';
+	ss << "request={";
+	auto const & d = request().post_or_get();
+	if (d.size()) {
+		auto it = d.begin();
+		ss << '"' << it->first << "\":\"" << it->second << '"';
+		++it;
+		for(auto end(d.end()); it != end; ++it) {
+			ss << ",\"" << it->first << "\":\"" << it->second << '"';
+		}
 	}
 	ss << '}';
 	log(id, fn, ss.str());
