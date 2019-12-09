@@ -39,28 +39,43 @@ BaseApp::log(std::string const & what) {
 void
 BaseApp::log(InternalRequestId intReqId, std::string const & fn, std::string const & what) {
 	std::stringstream ss;
-	ss << m_lp << "::" << fn << " t=" << std::chrono::system_clock::now().time_since_epoch().count() << "s, id=" << intReqId << ", what=" << what;
+	ss << m_lp << "::" << fn
+		<< " t=" << std::chrono::system_clock::now().time_since_epoch().count()
+		<< "s, id=" << intReqId
+		<< ", what=" << what;
 	log(ss.str());
 }
 
 void
 BaseApp::log(InternalRequestId intReqId, std::string const & fn, sserialize::TimeMeasurer const & tm) {
 	std::stringstream ss;
-	ss << m_lp << "::" << fn << " t=" << std::chrono::system_clock::now().time_since_epoch().count() << "s, id=" << intReqId;
+	ss << m_lp << "::" << fn
+		<< " t=" << std::chrono::system_clock::now().time_since_epoch().count()
+		<< "s, id=" << intReqId
+		<< ", rt=" << tm.elapsedMilliSeconds() << "ms";
 	log(ss.str());
 }
 
 void
 BaseApp::log(InternalRequestId intReqId, std::string const & fn, sserialize::TimeMeasurer const & tm, sserialize::CellQueryResult const & cqr) {
 	std::stringstream ss;
-	ss << m_lp << "::" << fn << " t=" << std::chrono::system_clock::now().time_since_epoch().count() << "s, id=" << intReqId << ", rs=" << cqr.cellCount();
+	ss << m_lp << "::" << fn
+		<< " t=" << std::chrono::system_clock::now().time_since_epoch().count()
+		<< "s, id=" << intReqId
+		<< ", rs=" << cqr.cellCount()
+		<< ", rt=" << tm.elapsedMilliSeconds() << "ms";
 	log(ss.str());
 }
 
 void
 BaseApp::log(InternalRequestId intReqId, std::string const & fn, sserialize::TimeMeasurer const & tm, sserialize::CellQueryResult const & cqr, sserialize::ItemIndex const & items) {
 	std::stringstream ss;
-	ss << m_lp << "::" << fn << " t=" << std::chrono::system_clock::now().time_since_epoch().count() << "s, id=" << intReqId << ", rs=" << cqr.cellCount() << ", is=" << items.size();
+	ss << m_lp << "::" << fn
+		<< " t=" << std::chrono::system_clock::now().time_since_epoch().count()
+		<< "s, id=" << intReqId
+		<< ", rs=" << cqr.cellCount()
+		<< ", rt=" << tm.elapsedMilliSeconds()
+		<< ", is=" << items.size();
 	log(ss.str());
 }
 	
