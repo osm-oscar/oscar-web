@@ -1060,6 +1060,10 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		this.destroy = function() {
 			this.clear();
 		};
+		this.setTarget = function(target) {
+			console.assert(!this.m_layers.size());
+			this.m_target = target;
+		};
 	};
 	
 	//The ShapeHandler handles the map shapes. It uses ref-counting to track the usage of shapes
@@ -1229,55 +1233,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		return handler;
 	};
 	
-	var clusterMarkerOptions = {
-		maxClusterRadius: 90, //A cluster will cover at most this many pixels from its center
-		iconCreateFunction: function (cluster) {
-			/* https://github.com/Leaflet/Leaflet.markercluster/issues/351
-				required to use the preclustering by the server */
-			var count = 0;
-			if (cluster.count) { // custom call
-				count = cluster.count;
-			}
-			else if (cluster.getAllChildMarkers) {
-				var children = cluster.getAllChildMarkers();
-				for (let child of children) {
-					if (child.count) {
-						count = Math.max(child.count, count);
-					}
-				}
-			}
-
-			// only true for real items
-			var childMarkers = cluster.getAllChildMarkers();
-			if (childMarkers.length == 1 && !childMarkers[0].bbox) {
-				return new L.Icon.Default();
-			}
-
-			var c = 'marker-cluster-';
-			var size;
-
-			if (count < 100) {
-				c += 'small';
-				size = 30 + count/100.0 * 20;
-			}
-			else if (count < 1000) {
-				c += 'medium';
-				size = 50 + count/1000.0 * 20;
-			}
-			else {
-				c += 'large';
-				size = Math.min(90, 70 + count/10000.0);
-			}
-			return new L.DivIcon({
-				html: '<div><span>' + count + '</span></div>',
-				className: 'marker-cluster ' + c,
-				iconSize: new L.Point(size, size)
-			})
-		},
-		showCoverageOnHover: false,
-		singleMarkerMode: true
-	};
-	
 	L.MarkerCluster.prototype["getChildClustersNames"] = function () {
 		var names = [];
 		var allChildClusters = this.getAllChildMarkers();
@@ -1376,14 +1331,14 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.inspectionItemMarkers.marker_options["zIndexOffset"] = 1000;
 
 			//init the cluster markers
-            map.clusterMarkerGroup = L.markerClusterGroup(clusterMarkerOptions);
+            map.clusterMarkerGroup = L.markerClusterGroup(config.map.clustering.clusterMarkerOptions);
 			state.map.addLayer(map.clusterMarkerGroup);
 			map.clusterMarkers = map.RegionMarkerHandler(map.clusterMarkerGroup);
 			
 			$("#inspect-remove-all").on("click", map.onInspectRemoveAllClicked);
 		},
-	   
-		_attachEventHandlers: function() {
+
+	   _attachEventHandlers: function() {
 			$(map.resultListTabs).on("itemLinkClicked", map.onItemLinkClicked);
 			$(map.resultListTabs).on("itemDetailsOpened", map.onItemDetailsOpened);
 			$(map.resultListTabs).on("itemDetailsClosed", map.onItemDetailsClosed);
@@ -1488,6 +1443,19 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map.dagExpander.setBulkItemFetchCount(map.cfg.resultList.bulkItemFetchCount);
 		},
 		
+		reloadClusterMarkerConfig: function() {
+			map._assignClusterMarkers(tools.SimpleSet());
+
+			state.map.removeLayer(map.clusterMarkerGroup);
+			map.clusterMarkerGroup = L.markerClusterGroup(config.map.clustering.clusterMarkerOptions);
+			state.map.addLayer(map.clusterMarkerGroup);
+			map.clusterMarkers.setTarget(map.clusterMarkerGroup);
+			
+			map._detachEventHandlers();
+			map._attachEventHandlers();
+			
+			map.mapViewChanged();
+	   },
 		
 		displayCqr: function (cqr) {
 			map.clear();

@@ -180,7 +180,55 @@ define([], function() {
 			clustering : {
 				//minimum number of items in root node to have a clustered view
 				threshold: 100,
-				maxZoomLevel: 17
+				maxZoomLevel: 17,
+				clusterMarkerOptions: {
+					maxClusterRadius: 90, //A cluster will cover at most this many pixels from its center
+					iconCreateFunction: function (cluster) {
+						/* https://github.com/Leaflet/Leaflet.markercluster/issues/351
+							required to use the preclustering by the server */
+						var count = 0;
+						if (cluster.count) { // custom call
+							count = cluster.count;
+						}
+						else if (cluster.getAllChildMarkers) {
+							var children = cluster.getAllChildMarkers();
+							for (let child of children) {
+								if (child.count) {
+									count = Math.max(child.count, count);
+								}
+							}
+						}
+
+						// only true for real items
+						var childMarkers = cluster.getAllChildMarkers();
+						if (childMarkers.length == 1 && !childMarkers[0].bbox) {
+							return new L.Icon.Default();
+						}
+
+						var c = 'marker-cluster-';
+						var size;
+
+						if (count < 100) {
+							c += 'small';
+							size = 30 + count/100.0 * 20;
+						}
+						else if (count < 1000) {
+							c += 'medium';
+							size = 50 + count/1000.0 * 20;
+						}
+						else {
+							c += 'large';
+							size = Math.min(90, 70 + count/10000.0);
+						}
+						return new L.DivIcon({
+							html: '<div><span>' + count + '</span></div>',
+							className: 'marker-cluster ' + c,
+							iconSize: new L.Point(size, size)
+						})
+					},
+					showCoverageOnHover: false,
+					singleMarkerMode: true
+				}
 			},
 			apikeys: {
 				//api keys are public anyway. This should at least help against stupid github crawlers

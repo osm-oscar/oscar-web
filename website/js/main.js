@@ -298,6 +298,12 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 				map.mapViewChanged();
 			});
 			
+			$('#cluster_radius_range').change(function() {
+				var th = parseInt($(this).val());
+				map.cfg.clustering.clusterMarkerOptions.maxClusterRadius = th;
+				map.reloadClusterMarkerConfig();
+			});
+			
 // 			state.sidebar.on('tab-closed', function(e) {});
 // 			state.sidebar.on('tab-opened', function(e) {});
 
