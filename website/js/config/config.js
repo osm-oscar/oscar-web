@@ -194,7 +194,7 @@ define([], function() {
 							var children = cluster.getAllChildMarkers();
 							for (let child of children) {
 								if (child.count) {
-									count = Math.max(child.count, count);
+									count += child.count;
 								}
 							}
 						}
