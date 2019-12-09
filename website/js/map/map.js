@@ -1977,7 +1977,7 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 		},
 		
 		mapViewChanged: function() {
-			if (state.dag.region(0xFFFFFFFF).count >= map.cfg.clustering.threshold) {
+			if (state.dag.region(0xFFFFFFFF) && state.dag.region(0xFFFFFFFF).count >= map.cfg.clustering.threshold) {
 				//this should remove those awfull long stacks
 				setTimeout(function() {
 					map._mapViewChanged();

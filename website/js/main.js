@@ -303,6 +303,19 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 				map.cfg.clustering.clusterMarkerOptions.maxClusterRadius = th;
 				map.reloadClusterMarkerConfig();
 			});
+			$('#cluster_radius_range').on("input", function() {
+				$('#cluster_radius_range_value').html($(this).val());
+			});
+			
+			$('#dag_expansion_overlap_range').change(function() {
+				var th = parseInt($(this).val());
+				config.clusters.bboxOverlap = th/100;
+				config.clusters.shapeOverlap = Math.max((th-30), 1)/100;
+				map.mapViewChanged();
+			});
+			$('#dag_expansion_overlap_range').on("input", function() {
+				$('#dag_expansion_overlap_range_value').html(100-parseInt($(this).val()));
+			});
 			
 // 			state.sidebar.on('tab-closed', function(e) {});
 // 			state.sidebar.on('tab-opened', function(e) {});
