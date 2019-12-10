@@ -31,7 +31,7 @@ define([], function() {
                     normal: {color: 'yellow', stroke: true, fill: false, opacity: 0.8},
 //                     highlight: {color: '#a100ff', stroke: true, fill: true, opacity: 1.0, fillOpacity: 0.8}, //use this for hsl interpolated choropleth map
                     highlight: {color: 'yellow', stroke: true, fill: true, opacity: 1.0, fillOpacity: 0.8},
-                    choropleth: {stroke: true, fill: true, opacity: 0.8, fillOpacity: 0.5}
+                    choropleth: {stroke: true, fill: true, opacity: 0.3, fillOpacity: 0.1}
                 },
                 items: {
                     normal: {color: 'blue', stroke: true, fill: false, opacity: 0.8},
