@@ -125,10 +125,11 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 					}
 				});
                 $("#wholeTree").button().click(function () {
-                    map.loadWholeTree();
-					if (state.dag.hasRegion(0xFFFFFFFF)) {
-						tree.visualizeDAG(state.dag.region(0xFFFFFFFF));
-					}
+					map.dagExpander.loadAll(function() {
+						if ($("#tree").css("display") !== "none") {
+							tree.visualizeDAG(state.dag.region(0xFFFFFFFF));
+						}
+					});
                 });
                 if (state.dag.hasRegion(0xFFFFFFFF)) {
                     tree.visualizeDAG(state.dag.region(0xFFFFFFFF));

@@ -16,23 +16,30 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             var svg = d3.select("svg");
 			var svgGroup = svg.append("g");
 
-            tree._initGraph(svg, svgGroup);
+            this._initGraph(svg, svgGroup);
 
             // build the graph from current DAG
-            this._recursiveAddToGraph(root, this.graph);
-            this._roundedNodes();
+            this._recursiveAddToGraph(root);
+			this._roundedNodes();
 
-            $("#tree").css("display", "block");
+			// Center the graph
+			var xCenterOffset = ($("#tree").width() - this.graph.graph().width) / 2;
+			svgGroup.attr("transform", "translate(" + xCenterOffset + ", 20)");
+			svg.attr("height", this.graph.graph().height + 40);
+			
+			this._addInteractions();
 
-            // draw graph
-            svgGroup.call(this.renderer, this.graph);
-
-            // Center the graph
-            var xCenterOffset = ($("#tree").width() - this.graph.graph().width) / 2;
-            svgGroup.attr("transform", "translate(" + xCenterOffset + ", 20)");
-            svg.attr("height", this.graph.graph().height + 40);
-
-            this._addInteractions();
+			$("#tree").css("display", "block");
+			
+			if (this.graph.nodeCount() > 1000) {
+				var cId = this._findMaxCountLeafNode(root);
+				this.onePath(state.dag.region(cId));
+				$("#onePath").prop('checked', true);
+			}
+			else {
+				// draw graph
+				svgGroup.call(this.renderer, this.graph);
+			}
         },
 
         _initGraph: function (svg, svgGroup) {
@@ -74,7 +81,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
 						if (!state.dag.hasRegion(id)) {
 							return;
 						}
-						if ($("#onePath").is(':checked')) {
+						if ($("#onePath").prop('checked')) {
 							tree.onePath(state.dag.region(id));
 						}
 						else if (state.visualizationActive) {
@@ -109,28 +116,25 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             $(".treeNodeOnePath").each(function (key, value) {
                 $(value).on("click", function () {
                     var id = parseInt( $(this).attr("nodeId") );
-					$("#onePath").attr('checked', "checked");
+					$("#onePath").prop('checked', true);
 					$("#onePath").button("refresh");
 					tree.onePath(state.dag.region(id));
                 });
             });
 		},
 
-        _recursiveAddToGraph: function (node, graph) {
-            if (node.name) {
-                this.graph.setNode(node.id, tree._nodeAttr(node));
-                for (let childId of node.children.builtinset()) {
-					var child = state.dag.region(childId);
-                    if (child.count) {
-                        this.graph.setNode(child.id);
-                        this.graph.setEdge(node.id, child.id, {
-                            lineInterpolate: 'basis',
-                            class: "origin-" + node.id
-                        });
-                        this._recursiveAddToGraph(child, graph);
-                    }
-                }
-            }
+        _recursiveAddToGraph: function (node) {
+			this.graph.setNode(node.id, tree._nodeAttr(node));
+			node.children.each(function(childId) {
+				var child = state.dag.region(childId);
+				if (child.count && child.name) {
+					tree._recursiveAddToGraph(child);
+					tree.graph.setEdge(node.id, child.id, {
+						lineInterpolate: 'basis',
+						class: "origin-" + node.id
+					});
+				}
+			});
         },
 
         /**
@@ -192,6 +196,10 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
          */
         _roundedNodes: function () {
             this.graph.nodes().forEach(function (v) {
+				if (tree.graph.node(v) === undefined) {
+					var dn = state.dag.region(v);
+					console.log(dn);
+				}
                 var node = tree.graph.node(v);
                 node.rx = node.ry = 5;
             });
@@ -304,6 +312,7 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
             tree.refresh(node.id);
             d3.select("svg").select("g").call(this.renderer, this.graph);
             tree._addInteractions();
+			$("#onePath").prop("checked", true);
         },
 
         hideChildren: function (node) {
@@ -312,8 +321,30 @@ define(["dagre-d3", "d3", "jquery", "oscar", "state", "tools", "dag"], function 
                 childNode = state.dag.region(childId);
                 tree.graph.removeNode(childNode.id);
             }
-        }
-
+        },
+        
+        _findMaxCountLeafNode: function(root) {
+			var maxCountNodeId = root.id;
+			var f = function(node) {
+				if (!node.children.size()) {
+					maxCountNodeId = node.id;
+				}
+				else {
+					let cId = 0;
+					let cm = 0;
+					node.children.each(function(childId) {
+						let child = state.dag.region(childId);
+						if (child.count > cm) {
+							cId = childId;
+							cm = child.count;
+						}
+					});
+					f(state.dag.region(cId));
+				}
+			}
+			f(root);
+			return maxCountNodeId;
+		}
     };
 
     return tree;

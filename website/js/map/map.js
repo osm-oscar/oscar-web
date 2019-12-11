@@ -1905,13 +1905,6 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			}
 		},
 
-		loadWholeTree: function () {
-			map.dagExpander.loadAll(function() {
-				map.mapViewChanged();
-				tree.visualizeDAG(state.dag.region(0xFFFFFFFF));
-			});
-		},
-		
 		zoomTo: function(regionId) {
 			if (state.dag.region(regionId)) {
 				state.map.fitBounds(state.dag.region(regionId).bbox);
