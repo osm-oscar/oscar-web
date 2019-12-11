@@ -443,12 +443,14 @@ define(["jquery", "tools", "state", "oscar", "dag", "storage"], function ($, too
 			},
 	   
 			loadAll: function(cb) {
+				var spinnerId = state.startLoadingSpinner();
 				var myCBCount = 0;
 				var myCB = function() {
 					myCBCount += 1;
 					if (myCBCount < 3) {
 						return;
 					}
+					state.endLoadingSpinner(spinnerId);
 					cb();
 				}
 				
