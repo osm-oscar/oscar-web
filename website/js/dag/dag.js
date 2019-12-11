@@ -30,21 +30,25 @@ define(["jquery", "tools"], function ($, tools) {
 			return node;
 		},
 		NamedNode: function(id, type) {
+			id = parseInt(id);
 			var node = d.Node(id, type);
 			node.name = undefined;
 			return node;
 		},
 		ItemNode: function(id) {
+			id = parseInt(id);
 			var node = d.NamedNode(id, d.NodeTypes.Item);
 			return node;
 		},
 		CellNode: function(id) {
+			id = parseInt(id);
 			var node = d.Node(id, d.NodeTypes.Cell);
 			node.items = tools.SimpleSet();
 			node.allItemsFetched = false;
 			return node;
 		},
 		RegionNode: function(id) {
+			id = parseInt(id);
 			var node = d.NamedNode(id, d.NodeTypes.Region);
 			node.children = tools.SimpleSet();
 			node.cells = tools.SimpleSet();
@@ -69,6 +73,7 @@ define(["jquery", "tools"], function ($, tools) {
 					return this.m_items.size();
 				},
 				hasNode: function(id, type) {
+					id = parseInt(id);
 					if (type === d.NodeTypes.Region) {
 						return this.hasRegion(id);
 					}
@@ -84,24 +89,31 @@ define(["jquery", "tools"], function ($, tools) {
 					return false;
 				},
 				hasRegion: function(id) {
+					id = parseInt(id);
 					return this.m_regions.count(id);
 				},
 				hasCell: function(id) {
+					id = parseInt(id);
 					return this.m_cells.count(id);
 				},
 				hasItem: function(id) {
+					id = parseInt(id);
 					return this.m_items.count(id);
 				},
 				region: function(id) {
+					id = parseInt(id);
 					return this.m_regions.at(id);
 				},
 				cell: function(id) {
+					id = parseInt(id);
 					return this.m_cells.at(id);
 				},
 				item: function(id) {
+					id = parseInt(id);
 					return this.m_items.at(id);
 				},
 				node: function(id, type) {
+					id = parseInt(id);
 					if (type === d.NodeTypes.Region) {
 						return this.region(id);
 					}
@@ -141,9 +153,11 @@ define(["jquery", "tools"], function ($, tools) {
 				},
 				//add a rootNode
 				addRoot: function(id) {
+					id = parseInt(id);
 					return this.addNode(id, d.NodeTypes.Region);
 				},
 				addNode: function(id, type) {
+					id = parseInt(id);
 					if (!this.hasNode(id, type)) {
 						if (type === d.NodeTypes.Region) {
 							this.m_regions.insert(id, d.RegionNode(id));
