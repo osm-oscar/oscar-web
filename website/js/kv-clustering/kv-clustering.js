@@ -30,6 +30,7 @@ define(
                 $('#f-content').removeClass('show active');
                 $('.nav-item.refinement-type.active').removeClass('active');
                 state.clustering = {
+                    url: state.clustering.url,
                     openedClustering : state.clustering.openedClustering,
                     kvQueryId : state.clustering.kvQueryId,
                     kQueryId : state.clustering.kQueryId,
@@ -234,7 +235,7 @@ define(
 
                 $.ajax({
                     type: "GET",
-                    url: "/oscar/kvclustering/get",
+                    url: state.clustering.url + "/kvclustering/get",
                     data: {'q' : kvClustering.replaceSpatialObjects(search.addRefinementToQuery(query)),
                            'rf' : 'admin_level',
                         'type': 'k',
@@ -286,7 +287,7 @@ define(
                 state.clustering.lastPQuery = queryDataWithoutId;
                 $.ajax({
                     type: "GET",
-                    url: "/oscar/kvclustering/get",
+                    url: state.clustering.url + "/kvclustering/get",
                     data: queryDataWithId,
                     dataType: 'JSON',
                     mimeType: 'application/JSON',
@@ -345,7 +346,7 @@ define(
                 state.clustering.lastKvQuery = queryDataWithoutId;
                 $.ajax({
                     type: "GET",
-                    url: "/oscar/kvclustering/get",
+                    url: state.clustering.url + "/kvclustering/get",
                     data: queryDataWithId,
                     dataType: 'JSON',
                     mimeType: 'application/JSON',
@@ -414,7 +415,7 @@ define(
                 state.clustering.lastFQuery = queryDataWithoutId;
                 $.ajax({
                     type: "GET",
-                    url: "/oscar/kvclustering/get",
+                    url: state.clustering.url + "/kvclustering/get",
                     data: queryDataWithId,
                     dataType: 'JSON',
                     mimeType: 'application/JSON',

@@ -72,9 +72,10 @@ define(["state", "tools", "conf", "oscar", "map", "fuzzysort", "pubsub"], functi
             state.sidebar.open("search");
             $("#flickr").hide("slide", {direction: "right"}, config.styles.slide.speed);
 
-            //query has changed, ddos the server!
-            var myQuery = search.addRefinementToQuery($("#search_text").val());
+			//query has changed, ddos the server!
 			pubsub.publish("search", "request started");
+
+			var myQuery = search.addRefinementToQuery($("#search_text").val());
 
             state.queries.lastQuery = myQuery + "";//make sure state hold a copy
 

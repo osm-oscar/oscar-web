@@ -47,6 +47,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
 		},
 
         clustering : {
+            url: "https://oscar-web.de/oscar",
             openedClustering : '#p-tab',
             kvQueryId : -1,
             kQueryId : -1,
