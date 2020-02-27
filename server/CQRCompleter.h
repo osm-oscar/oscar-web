@@ -121,7 +121,7 @@ public:
 	  */
 	void cellItems();
 	
-	/** return the maximum set of independet region children for the query q:
+	/** return the approximate maximum set of independet region children for the query q:
 	  * q=<searchstring>
 	  * rf=<region filter>
 	  * r=<regionid>
