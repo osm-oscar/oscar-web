@@ -2470,17 +2470,17 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
     var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: osmAttr,
         minZoom: 0,
-        maxZoom: 22
+        maxZoom: 18
     });
 	// var bingLayer = L.tileLayer.bing(config.map.apikeys.bing);
-    // var fmiLayer = L.tileLayer('https://tiles.fmi.uni-stuttgart.de/planet/{z}/{x}/{y}.png', {
-        // attribution: osmAttr,
-        // minZoom: 0,
-        // maxZoom: 20
-    // });
+    var fmiLayer = L.tileLayer('https://tiles.fmi.uni-stuttgart.de/{z}/{x}/{y}.png', {
+        attribution: osmAttr,
+        minZoom: 0,
+        maxZoom: 18
+    });
 	
-	//state.map.addLayer(fmiLayer); //currently not available
-	state.map.addLayer(osmLayer);
+	state.map.addLayer(fmiLayer); //currently not available
+// 	state.map.addLayer(osmLayer);
 	
 // 	L.control.layers({"OpenStreetMap FMI" : fmiLayer, "Bing Aerial" : bingLayer, "OpenStreetMap" : osmLayer}).addTo(state.map);
 	
