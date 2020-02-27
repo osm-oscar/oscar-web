@@ -2,7 +2,7 @@ requirejs.config({
     baseUrl: "",
     config: {
         'oscar': {
-			url: "http://localoscar/oscar",
+			url: "/oscar",
 // 			url: "https://oscardev.fmi.uni-stuttgart.de/oscar",
 			//the following variables have to match the ones in your server config (or should be smaller)
 			maxFetchItems: 2000,
