@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cppcms/application.h>
+#include <sserialize/stats/TimeMeasuerer.h>
 
 #include "types.h"
 

@@ -1,10 +1,11 @@
-#include "MainHandler.h"
-#include <cppcms/service.h>
-#include <cppcms/applications_pool.h>
 #include <iostream>
 #include <thread>
-#include <liboscar/StaticOsmCompleter.h>
+#include <cppcms/service.h>
+#include <cppcms/applications_pool.h>
 #include <sserialize/algorithm/hashspecializations.h>
+#include <sserialize/stats/TimeMeasuerer.h>
+#include <liboscar/StaticOsmCompleter.h>
+#include "MainHandler.h"
 #include "types.h"
 
 /*
