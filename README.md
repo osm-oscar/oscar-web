@@ -12,6 +12,8 @@ isn't capable of mapping something like "pizza" to "cuisine=pizza". To prevent t
 an additional search field, that queries the [taginfo](http://taginfo.openstreetmap.org/) database, can be used.
 
 # Running your own version
+## Using docker
+Clone https://github.com/dbahrdt/oscar-docker and build your own oscar-web app complete with updates
 
 ## Prerequisites
 
