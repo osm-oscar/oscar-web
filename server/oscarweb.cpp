@@ -5,6 +5,7 @@
 #include <sserialize/algorithm/hashspecializations.h>
 #include <sserialize/stats/TimeMeasuerer.h>
 #include <liboscar/StaticOsmCompleter.h>
+#include <path_finder/FileLoader.h>
 #include "MainHandler.h"
 #include "types.h"
 
@@ -115,14 +116,18 @@ void initMidPoints(oscar_web::CompletionFileDataPtr dataPtr) {
 
 int main(int argc, char **argv) {
 	cppcms::json::value dbfile;
+	std::string routingDataPath;
 	cppcms::service app(argc,argv);
 	try {
 		dbfile = app.settings().find("dbfile");
+        routingDataPath = app.settings().find("routing-data").get<std::string>("path");
 	}
 	catch (cppcms::json::bad_value_cast & e) {
 		std::cerr << "Failed to parse dbfile object." << std::endl;
 		return -1;
 	}
+	// TODO: make hl accessible by request handler
+	auto hl = pathFinder::FileLoader::loadHubLabels(routingDataPath);
 	
 	oscar_web::CompletionFileDataPtr completionFileDataPtr(new oscar_web::CompletionFileData() );
 	oscar_web::CompletionFileData & data = *completionFileDataPtr;

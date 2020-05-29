@@ -45,6 +45,10 @@
 				"kv" : { "admin_level" : ["1", "2", "3", "4", "5", "6"] }
 			},
 			{"name" : "named", "k" : ["name"]}
-		]
+		],
+    "routing-data" : 
+        {
+            "path" : "./routing-data"
+        }
 }
 

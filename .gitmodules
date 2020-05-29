@@ -1,3 +1,6 @@
 [submodule "vendor/liboscar"]
 	path = vendor/liboscar
 	url = https://github.com/dbahrdt/liboscar
+[submodule "vendor/path_finder"]
+	path = vendor/path_finder
+	url = https://github.com/somakolli/path_finder

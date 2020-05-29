@@ -10,7 +10,7 @@ set(CMAKE_MODULE_PATH
 include(add_buildtype_lto)
 include(add_buildtype_ultra)
 add_subdirectory(vendor/liboscar liboscar)
-
+add_subdirectory(vendor/path_finder)
 find_package(CPPCMS REQUIRED)
 find_package(LIBRT)
 
@@ -31,6 +31,7 @@ set(OSCAR_WEB_SOURCES_CPP
 SET(OSCAR_WEB_LINK_LIBS
 	liboscar
 	sserialize
+	path_finder
 	${LIBRT_LIBRARIES}
 	${CPPCMS_LIBRARY}
 	${BOOSTER_LIBRARY}
