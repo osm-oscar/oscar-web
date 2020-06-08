@@ -54,6 +54,10 @@ define([], function() {
                     normal: {color: '#00BFFF', stroke: true, fill: false, opacity: 0.5},
                     highlight: {color: '#00BFFF', stroke: true, fill: false, opacity: 1.0}
                 },
+                routequery: {
+                    normal: {color: '#FFBF00', stroke: true, fill: false, opacity: 0.5},
+                    highlight: {color: '#FFBF00', stroke: true, fill: false, opacity: 1.0}
+                },
                 pointquery: {
                     normal: {color: '#00BFFF', stroke: true, fill: false, opacity: 0.5},
                     highlight: {color: '#00BFFF', stroke: true, fill: false, opacity: 1.0}

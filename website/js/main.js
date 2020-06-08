@@ -364,6 +364,15 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                         }
                     }
                 }
+                else if (state.spatialquery.type === "route") {
+                    if (state.spatialquery.coords.length > 0) {
+                        qStr = "$route(" + jQuery('#spatialquery_radius').val() + ",0";
+                        for(let coord of state.spatialquery.coords) {
+                            qStr += "," + coord.lat + "," + coord.lng;
+                        }
+                        qStr += ")";
+                    }
+                }
                 else if (state.spatialquery.type === "point") {
                     if (state.spatialquery.coords.length > 0) {
                         qStr = "$point:" + jQuery('#spatialquery_radius').val();
@@ -385,6 +394,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                         }
                     }
                 }
+
                 if (qStr.length) {
 					var id;
 					for(i=0; true; ++i) {
@@ -410,7 +420,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 if (e.target.value !== state.spatialquery.type) {
                     query.clearSpatialQuery();
                 }
-                if (e.target.value === 'path' || e.target.value === 'point') {
+                if (e.target.value === 'path' || e.target.value === 'point' || e.target.value === 'route') {
 //                     $('#spatialquery_radius_group').removeClass('hidden');
                 }
                 else {
