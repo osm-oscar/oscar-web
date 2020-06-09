@@ -12,6 +12,7 @@ public:
 	MainHandler(cppcms::service & srv, const CompletionFileDataPtr & data);
 	virtual ~MainHandler();
 	void describe();
+	void status();
 };
 
 }//end namespace

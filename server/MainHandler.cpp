@@ -45,5 +45,14 @@ void MainHandler::describe() {
 	out << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>";
 }
 
+void MainHandler::status() {
+    response().set_content_header("text/json");
+    std::ostream & out = response().out();
+    out << '{';
+    out << "regions: " << m_data->completer->store().geoHierarchy().regionSize() << ',';
+    out << "cells: " << m_data->completer->store().geoHierarchy().cellSize() << ',';
+    out << "items: " << m_data->completer->store().size();
+    out << '}';
+}
 
 }//end namespace
