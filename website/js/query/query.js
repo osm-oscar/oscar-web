@@ -120,6 +120,9 @@ define(["jquery", "state", "map", "conf"], function($, state, map, config) {
             else if (state.spatialquery.type === "path") {
                 state.spatialquery.mapshape = L.polyline(state.spatialquery.coords, config.styles.shapes.pathquery.highlight);
             }
+            else if (state.spatialquery.type === "route") {
+                state.spatialquery.mapshape = L.polyline(state.spatialquery.coords, config.styles.shapes.routequery.highlight);
+            }
             state.map.addLayer(state.spatialquery.mapshape);
         }
     };

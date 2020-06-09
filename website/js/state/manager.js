@@ -33,7 +33,7 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
         spatialquery : {
             active : false,
             mapshape : undefined,
-            type : undefined, //one of rect, poly, path
+            type : undefined, //one of rect, poly, path, route
             coords : [],
             selectButtonState : 'select'
         },
@@ -104,6 +104,9 @@ define(["jquery", "mustache", "tools", "leaflet", "spin","conf", "dag"], functio
 			}
 			else if (e.type === "cell") {
 				t = "Cell";
+			}
+			else if (e.type === "route") {
+				t = "Route";
 			}
 			return { id : e.id, name : e.name, type : t};
 		},
