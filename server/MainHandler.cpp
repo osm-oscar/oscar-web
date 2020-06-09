@@ -12,6 +12,7 @@
 #include "CQRCompleter.h"
 #include "CQRItems.h"
 #include "KVClustering.h"
+#include "Routing.h"
 
 namespace oscar_web {
 
@@ -21,7 +22,8 @@ MainHandler::MainHandler(cppcms::service& srv, const oscar_web::CompletionFileDa
 	CQRCompleter * cqrCompleter = new CQRCompleter(srv, data);
 	CQRItems * cqrItems = new CQRItems(srv, data);
 	KVClustering * kvClustering = new KVClustering(srv, data);
-	
+	Routing * routing = new Routing(srv, data);
+
 	itemDB->setMaxPerRequest(m_data->maxItemDBReq);
 	indexDB->setMaxPerRequest(m_data->maxIndexDBReq);
 	
@@ -30,6 +32,7 @@ MainHandler::MainHandler(cppcms::service& srv, const oscar_web::CompletionFileDa
 	attach(cqrCompleter, "cqr", "/cqr{1}", "/cqr(/(.*))?", 1);
 	attach(cqrItems, "items", "/items{1}", "/items(/(.*))?", 1);
 	attach(kvClustering, "kvclustering", "/kvclustering{1}", "/kvclustering(/(.*))?", 1);
+	attach(routing, "routing", "/routing{1}", "/routing(/(.*))?", 1);
 
 	dispatcher().assign("",&MainHandler::describe,this);
 	mapper().assign(""); // default URL

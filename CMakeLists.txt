@@ -26,6 +26,7 @@ set(OSCAR_WEB_SOURCES_CPP
 	server/oscarweb.cpp
 	server/MainHandler.cpp
 	server/KVClustering.cpp
+	server/Routing.cpp
 	server/BaseApp.cpp
 )
 SET(OSCAR_WEB_LINK_LIBS
