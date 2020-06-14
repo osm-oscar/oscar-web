@@ -683,9 +683,9 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 				$("a", inserted).click(handler._slot_pageLinkClicked);
 			},
 	   
-			_setTabResultListOffset: function(tabId, offset, cb) {
+			_setTabResultListOffset: function(tabId, offset, cb, force=false) {
 				offset = (offset/handler.config.itemsPerPage)*handler.config.itemsPerPage;
-				if (offset === handler.m_tabs.at(tabId).offset) {
+				if (offset === handler.m_tabs.at(tabId).offset && !force) {
 					return;
 				}
 				
@@ -711,6 +711,16 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 						}
 					});
 				});
+			},
+
+			setMaxItemsPerPage: function(num) {
+				handler.config.itemsPerPage = num;
+				let aId = handler.activeTabId();
+				if (aId !== -1) {
+					let off = handler.m_tabs.at(aId).offset;
+					handler._updatePagination();
+					handler._setTabResultListOffset(aId, off, undefined, true);
+				}
 			},
 	   
 			//Do not use this except for iterating over all available tabs
@@ -1523,6 +1533,11 @@ function (require, state, $, config, oscar, flickr, tools, tree) {
 			map._attachEventHandlers();
 			
 			map.mapViewChanged();
+	   },
+
+	   setMaxItemsPerPage: function(num) {
+			map.cfg.resultList.itemsPerPage = num;
+			map.resultListTabs.setMaxItemsPerPage(num);
 	   },
 		
 		displayCqr: function (cqr) {
