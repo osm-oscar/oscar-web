@@ -224,13 +224,6 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 kvClustering.fetchFRefinements(search.addRefinementToQuery($("#search_text").val(), true));
             }));
 
-            $('#unpackAll-button').click(function () {
-                map.cfg.clustering.maxZoomLevel = 1;
-                map.cfg.resultList.itemsPerPage = 100;
-                // map.init();
-                map.mapViewChanged();
-            });
-
             $('#refinement-settings-icon').click(function () {
                 kvClustering.drawSettings();
             });
@@ -291,7 +284,11 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
 				var enabled = $(this).is(':checked');
 				map.cfg.resultList.showItemMarkers = enabled;
 				map.mapViewChanged();
-			});
+            });
+            
+            $('#resultlist_items_per_page_spinner').change(function() {
+				map.setMaxItemsPerPage( parseInt($(this).val()) );
+            });
 			
 			$('#cluster_max_zoom_level_spinner').change(function() {
 				var th = parseInt($(this).val());
