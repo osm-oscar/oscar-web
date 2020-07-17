@@ -126,8 +126,6 @@ int main(int argc, char **argv) {
 		std::cerr << "Failed to parse dbfile object." << std::endl;
 		return -1;
 	}
-	// TODO: make hl accessible by request handler
-	auto hl = pathFinder::FileLoader::loadHubLabels(routingDataPath);
 	
 	oscar_web::CompletionFileDataPtr completionFileDataPtr(new oscar_web::CompletionFileData() );
 	oscar_web::CompletionFileData & data = *completionFileDataPtr;
@@ -153,13 +151,15 @@ int main(int argc, char **argv) {
 		data.treedCQR = dbfile.get<bool>("treedCQR", false);
 		data.treedCQRThreads = std::min<uint32_t>(std::thread::hardware_concurrency(), dbfile.get<uint32_t>("treedCQRThreads", 1));
 		data.cqrdCacheThreshold = dbfile.get<uint32_t>("dilationCacheThreshold", 0);
+		data.m_pathFinder = pathFinder::FileLoader::loadHubLabelsShared(routingDataPath);
 	}
 	catch (cppcms::json::bad_value_cast & e) {
 		std::cerr << "Incomplete dbfiles entry: " << e.what() << std::endl;
 		return -1;
 	}
-	
-	data.completer = oscar_web::OsmCompleter( new liboscar::Static::OsmCompleter() );
+
+
+  data.completer = oscar_web::OsmCompleter( new liboscar::Static::OsmCompleter() );
 	data.log = std::shared_ptr<std::ofstream>(new std::ofstream() );
 	data.completer->setAllFilesFromPrefix(data.path);
 
