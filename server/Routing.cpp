@@ -87,9 +87,13 @@ void Routing::route() {
     response().set_content_header("text/json");
     bool first = true;
     out << "{\"path\":[";
-    sserialize::ItemIndex itemIndex(routingResult.cellIds);
 
+    auto store = data.completer->store();
+    double maxCellDiag = std::stod(request().get("d"));
 
+    std::cout << "cellSize" << routingResult.cellIds.size() << '\n';
+    std::cout << "routeSize" << routingResult.path.size() << '\n';
+    std::vector<std::string> cellBoxes;
 
     for (auto wp : routingResult.path) {
       if (!first) {
@@ -100,26 +104,81 @@ void Routing::route() {
     }
     out << "]";
     out << ",\"distance\": " << routingResult.distance;
+    bool first2 = true;
+    out << ",\"itemsBinary\": ";
+    
+    int itemCountAccum = 0;
 
-    out << R"(,"itemsBinary": ")";
-    auto cellInfo = sserialize::Static::spatial::GeoHierarchyCellInfo::makeRc(data.completer->store().geoHierarchy());
-    sserialize::CellQueryResult cqr(itemIndex, cellInfo, data.completer->indexStore(), sserialize::CellQueryResult::FF_DEFAULTS);
+    sserialize::ItemIndex itemIndex(routingResult.cellIds);
 
+    auto cqr = d().completer->cqr(itemIndex);
+
+    std::stringstream binaryString;
     sserialize::ItemIndex idx = cqr.flaten(d().treedCQRThreads);
     //now write the data
-    std::stringstream binaryString;
     BinaryWriter bw(binaryString);
-    int count = 0;
+
     for(auto i(idx.begin()), s(idx.end()); i != s; ++i) {
       bw.putU32(*i);
-      auto p = data.completer->store().geoShape(*i).first();
+      auto p = store.geoShape(*i).first();
       bw.putU32(p.intLat());
       bw.putU32(p.intLon());
-      ++count;
     }
-    out << pathFinder::base64_encode(std::string_view(binaryString.str()));
-    out << '\"';
-    out << ",\"itemCount\":" << count;
+
+    /*
+    for(uint32_t cellId : routingResult.cellIds) {
+      if(!first2) {
+        out << ',';
+      }
+      auto cell = store.geoHierarchy().cell(cellId);
+
+      if(cell.boundary().diagInM() > maxCellDiag)
+        continue;
+
+      first2 = false;
+      out << "{\"id\" :" << cell.ghId() << ",\"leafletBoundary\":[" << cell.boundary().asLeafletBBox() << "]";
+      auto ptr = cell.itemPtr();
+      auto size = cell.itemCount();
+      std::cout << "itemCount for id " << cellId << ": " << size << '\n';
+      itemCountAccum += size;
+      cell.itemPtr();
+      auto cqr = d().completer->cqrComplete("$cell:" + to_string(cellId), d().treedCQR, d().treedCQRThreads);
+
+      std::stringstream binaryString;
+      sserialize::ItemIndex idx = cqr.flaten(d().treedCQRThreads);
+      //now write the data
+      BinaryWriter bw(binaryString);
+
+      for(auto i(idx.begin()), s(idx.end()); i != s; ++i) {
+        bw.putU32(*i);
+        auto p = store.geoShape(*i).first();
+        bw.putU32(p.intLat());
+        bw.putU32(p.intLon());
+      }
+      out << ",\"itemsBinary\" :\"";
+      out << pathFinder::base64_encode(std::string_view(binaryString.str()));
+      out << "\"}";
+    }
+
+    std::cout << "itemCount(accuum): " << itemCountAccum << '\n';
+    out << ']';
+     */
+
+    out << '\"' << pathFinder::base64_encode(std::string_view(binaryString.str())) << '\"';
+
+
+    out << R"(,"edgeIds": [)";
+    bool first3 = true;
+    for(auto id : routingResult.edgeIds) {
+      if(!first3)
+        out << ',';
+      out << id;
+      first3 = false;
+    }
+    out << ']';
+
+
+    out << ",\"itemCount\":" << itemCountAccum;
     out << "}";
   }
   ttm.end();
