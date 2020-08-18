@@ -84,9 +84,10 @@ void Routing::route() {
   if (!ok) {
     response().status(response().bad_request, errmsg);
   } else {
-  //  auto cqrr = data.completer->cqrr();
-  //  auto result =  cqrr->cqr(waypoints[0], waypoints[1], flags, 0);
-
+    auto cqrr = data.completer->cqrr();
+    auto oscarResult =  cqrr->cqr(waypoints[0], waypoints[1], flags, 1000000);
+    std::cout << "has hits: " << oscarResult.hasHits() << '\n';
+    
 
     auto routingResult =
         data.hybridPathFinder->getShortestPath(pathFinder::LatLng{(float)(waypoints[0].lat()), (float)(waypoints[0].lon())},
@@ -115,15 +116,16 @@ void Routing::route() {
     out << ",\"pathTime\": " << routingResult.pathTime;
     out << ",\"cellTime\": " << routingResult.cellTime;
     out << ",\"nodeSearchTime\": " << routingResult.nodeSearchTime;
+    out << ",\"hasHits\": " << oscarResult.hasHits();
     out << ",\"itemsBinary\": ";
 
 
-    sserialize::ItemIndex itemIndex(routingResult.cellIds);
+    //sserialize::ItemIndex itemIndex(routingResult.cellIds);
 
-    auto cqr = d().completer->cqr(itemIndex);
+    //auto cqr = d().completer->cqr(itemIndex);
 
     std::stringstream binaryString;
-    sserialize::ItemIndex idx = cqr.flaten(d().treedCQRThreads);
+    sserialize::ItemIndex idx = oscarResult.flaten(d().treedCQRThreads);
     //now write the data
     
     BinaryWriter bw(binaryString);

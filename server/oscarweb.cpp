@@ -124,7 +124,6 @@ int main(int argc, char **argv) {
           dbfile = app.settings().find("dbfile");
           routingDataPath = app.settings().find("routing-data").get<std::string>("path");
           routingStorageType = app.settings().find("routing-data").get<std::string>("storageType");
-
   }
   catch (cppcms::json::bad_value_cast & e) {
           std::cerr << "Failed to parse dbfile object." << std::endl;
@@ -179,8 +178,7 @@ int main(int argc, char **argv) {
           return -1;
   }
 
-  std::function<sserialize::ItemIndex(sserialize::spatial::GeoPoint const &, sserialize::spatial::GeoPoint const &, int, double)> f =
-      ([data] (const sserialize::spatial::GeoPoint& source, const sserialize::spatial::GeoPoint& target, int x, double y)
+   auto f = ([data] (const sserialize::spatial::GeoPoint& source, const sserialize::spatial::GeoPoint& target, int x, double y)
   {
     pathFinder::LatLng sourceLatLng = pathFinder::LatLng(source.lat(), source.lon());
     pathFinder::LatLng targetLatLng = pathFinder::LatLng(source.lat(), source.lon());
