@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
    auto f = ([data] (const sserialize::spatial::GeoPoint& source, const sserialize::spatial::GeoPoint& target, int x, double y)
   {
     pathFinder::LatLng sourceLatLng = pathFinder::LatLng(source.lat(), source.lon());
-    pathFinder::LatLng targetLatLng = pathFinder::LatLng(source.lat(), source.lon());
+    pathFinder::LatLng targetLatLng = pathFinder::LatLng(target.lat(), target.lon());
     pathFinder::RoutingResult routingResult =
                           data.hybridPathFinder->getShortestPath(sourceLatLng, targetLatLng);
     auto itemIndex = sserialize::ItemIndex(routingResult.cellIds);
