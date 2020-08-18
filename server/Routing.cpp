@@ -7,7 +7,8 @@
 #include <cppcms/url_dispatcher.h>
 #include <cppcms/url_mapper.h>
 #include <cppcms/util.h>
-#include <path_finder/base64.h>
+#include <path_finder/graphs/Graph.h>
+#include <path_finder/helper/base64.h>
 
 namespace oscar_web {
 
@@ -28,6 +29,8 @@ void Routing::route() {
   std::vector<sserialize::spatial::GeoPoint> waypoints;
   int flags = liboscar::interface::CQRFromRouting::F_CAR;
   std::ostream &out = response().out();
+
+
   // params
   bool ok = true;
   std::string errmsg;
@@ -81,8 +84,12 @@ void Routing::route() {
   if (!ok) {
     response().status(response().bad_request, errmsg);
   } else {
+  //  auto cqrr = data.completer->cqrr();
+  //  auto result =  cqrr->cqr(waypoints[0], waypoints[1], flags, 0);
+
+
     auto routingResult =
-        data.m_pathFinder->getShortestPath(pathFinder::LatLng{(float)(waypoints[0].lat()), (float)(waypoints[0].lon())},
+        data.hybridPathFinder->getShortestPath(pathFinder::LatLng{(float)(waypoints[0].lat()), (float)(waypoints[0].lon())},
                                            pathFinder::LatLng{(float)(waypoints[1].lat()), (float)(waypoints[1].lon())});
     response().set_content_header("text/json");
     bool first = true;
@@ -104,10 +111,12 @@ void Routing::route() {
     }
     out << "]";
     out << ",\"distance\": " << routingResult.distance;
-    bool first2 = true;
+    out << ",\"distanceTime\": " << routingResult.distanceTime;
+    out << ",\"pathTime\": " << routingResult.pathTime;
+    out << ",\"cellTime\": " << routingResult.cellTime;
+    out << ",\"nodeSearchTime\": " << routingResult.nodeSearchTime;
     out << ",\"itemsBinary\": ";
-    
-    int itemCountAccum = 0;
+
 
     sserialize::ItemIndex itemIndex(routingResult.cellIds);
 
@@ -116,8 +125,8 @@ void Routing::route() {
     std::stringstream binaryString;
     sserialize::ItemIndex idx = cqr.flaten(d().treedCQRThreads);
     //now write the data
+    
     BinaryWriter bw(binaryString);
-
     for(auto i(idx.begin()), s(idx.end()); i != s; ++i) {
       bw.putU32(*i);
       auto p = store.geoShape(*i).first();
@@ -125,62 +134,19 @@ void Routing::route() {
       bw.putU32(p.intLon());
     }
 
-    /*
-    for(uint32_t cellId : routingResult.cellIds) {
-      if(!first2) {
-        out << ',';
-      }
-      auto cell = store.geoHierarchy().cell(cellId);
+    out << '\"' << pathFinder::base64_encode(std::string_view(binaryString.str())) << "\"";
+    out << ",\"cellIds\": [";
 
-      if(cell.boundary().diagInM() > maxCellDiag)
-        continue;
-
-      first2 = false;
-      out << "{\"id\" :" << cell.ghId() << ",\"leafletBoundary\":[" << cell.boundary().asLeafletBBox() << "]";
-      auto ptr = cell.itemPtr();
-      auto size = cell.itemCount();
-      std::cout << "itemCount for id " << cellId << ": " << size << '\n';
-      itemCountAccum += size;
-      cell.itemPtr();
-      auto cqr = d().completer->cqrComplete("$cell:" + to_string(cellId), d().treedCQR, d().treedCQRThreads);
-
-      std::stringstream binaryString;
-      sserialize::ItemIndex idx = cqr.flaten(d().treedCQRThreads);
-      //now write the data
-      BinaryWriter bw(binaryString);
-
-      for(auto i(idx.begin()), s(idx.end()); i != s; ++i) {
-        bw.putU32(*i);
-        auto p = store.geoShape(*i).first();
-        bw.putU32(p.intLat());
-        bw.putU32(p.intLon());
-      }
-      out << ",\"itemsBinary\" :\"";
-      out << pathFinder::base64_encode(std::string_view(binaryString.str()));
-      out << "\"}";
-    }
-
-    std::cout << "itemCount(accuum): " << itemCountAccum << '\n';
-    out << ']';
-     */
-
-    out << '\"' << pathFinder::base64_encode(std::string_view(binaryString.str())) << '\"';
-
-
-    out << R"(,"edgeIds": [)";
     bool first3 = true;
-    for(auto id : routingResult.edgeIds) {
+    for(auto cellId : routingResult.cellIds) {
       if(!first3)
         out << ',';
-      out << id;
       first3 = false;
+      out << cellId;
     }
-    out << ']';
 
-
-    out << ",\"itemCount\":" << itemCountAccum;
-    out << "}";
   }
+  out << "]}";
   ttm.end();
   log(irId, "route", ttm);
 }
