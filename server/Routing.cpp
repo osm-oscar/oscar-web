@@ -86,8 +86,8 @@ void Routing::route() {
   } else {
     auto cqrr = data.completer->cqrr();
     auto oscarResult =  cqrr->cqr(waypoints[0], waypoints[1], flags, 1000000);
+
     std::cout << "has hits: " << oscarResult.hasHits() << '\n';
-    
 
     auto routingResult =
         data.hybridPathFinder->getShortestPath(pathFinder::LatLng{(float)(waypoints[0].lat()), (float)(waypoints[0].lon())},
@@ -112,10 +112,10 @@ void Routing::route() {
     }
     out << "]";
     out << ",\"distance\": " << routingResult.distance;
-    out << ",\"distanceTime\": " << routingResult.distanceTime;
-    out << ",\"pathTime\": " << routingResult.pathTime;
-    out << ",\"cellTime\": " << routingResult.cellTime;
-    out << ",\"nodeSearchTime\": " << routingResult.nodeSearchTime;
+    out << ",\"distanceTime\": " << routingResult.routingResultTimingInfo.distanceTime;
+    out << ",\"pathTime\": " << routingResult.routingResultTimingInfo.pathTime;
+    out << ",\"cellTime\": " << routingResult.routingResultTimingInfo.cellTime;
+    out << ",\"nodeSearchTime\": " << routingResult.routingResultTimingInfo.nodeSearchTime;
     out << ",\"hasHits\": " << oscarResult.hasHits();
     out << ",\"itemsBinary\": ";
 
