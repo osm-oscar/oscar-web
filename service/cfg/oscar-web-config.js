@@ -49,7 +49,6 @@
     "routing-data" : 
         {
             "path" : "./routing-data",
-	    "storageType": "ram"
         }
 }
 
