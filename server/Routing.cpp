@@ -84,26 +84,18 @@ void Routing::route() {
   if (!ok) {
     response().status(response().bad_request, errmsg);
   } else {
-    auto cqrr = data.completer->cqrr();
-    auto oscarResult =  cqrr->cqr(waypoints[0], waypoints[1], flags, 1000000);
-
-    std::cout << "has hits: " << oscarResult.hasHits() << '\n';
-
-    auto routingResult =
-        data.hybridPathFinder->getShortestPath(pathFinder::LatLng{(float)(waypoints[0].lat()), (float)(waypoints[0].lon())},
-                                           pathFinder::LatLng{(float)(waypoints[1].lat()), (float)(waypoints[1].lon())});
+    pathFinder::RoutingResult completeRoutingResult;
+    for(int i = 1; i < waypoints.size(); ++i) {
+      auto routingResult =
+          data.hybridPathFinder->getShortestPath(pathFinder::LatLng{(float)(waypoints[i-1].lat()), (float)(waypoints[i-1].lon())},
+                                                 pathFinder::LatLng{(float)(waypoints[i].lat()), (float)(waypoints[i].lon())});
+      completeRoutingResult += routingResult;
+    }
     response().set_content_header("text/json");
     bool first = true;
     out << "{\"path\":[";
 
-    auto store = data.completer->store();
-    double maxCellDiag = std::stod(request().get("d"));
-
-    std::cout << "cellSize" << routingResult.cellIds.size() << '\n';
-    std::cout << "routeSize" << routingResult.path.size() << '\n';
-    std::vector<std::string> cellBoxes;
-
-    for (auto wp : routingResult.path) {
+    for (auto wp : completeRoutingResult.path) {
       if (!first) {
         out << ',';
       }
@@ -111,44 +103,13 @@ void Routing::route() {
       first = false;
     }
     out << "]";
-    out << ",\"distance\": " << routingResult.distance;
-    out << ",\"distanceTime\": " << routingResult.routingResultTimingInfo.distanceTime;
-    out << ",\"pathTime\": " << routingResult.routingResultTimingInfo.pathTime;
-    out << ",\"cellTime\": " << routingResult.routingResultTimingInfo.cellTime;
-    out << ",\"nodeSearchTime\": " << routingResult.routingResultTimingInfo.nodeSearchTime;
-    out << ",\"hasHits\": " << oscarResult.hasHits();
-    out << ",\"itemsBinary\": ";
-
-
-    //sserialize::ItemIndex itemIndex(routingResult.cellIds);
-
-    //auto cqr = d().completer->cqr(itemIndex);
-
-    std::stringstream binaryString;
-    sserialize::ItemIndex idx = oscarResult.flaten(d().treedCQRThreads);
-    //now write the data
-    
-    BinaryWriter bw(binaryString);
-    for(auto i(idx.begin()), s(idx.end()); i != s; ++i) {
-      bw.putU32(*i);
-      auto p = store.geoShape(*i).first();
-      bw.putU32(p.intLat());
-      bw.putU32(p.intLon());
-    }
-
-    out << '\"' << pathFinder::base64_encode(std::string_view(binaryString.str())) << "\"";
-    out << ",\"cellIds\": [";
-
-    bool first3 = true;
-    for(auto cellId : routingResult.cellIds) {
-      if(!first3)
-        out << ',';
-      first3 = false;
-      out << cellId;
-    }
-
+    out << ",\"distance\": " << completeRoutingResult.distance;
+    out << ",\"distanceTime\": " << completeRoutingResult.routingResultTimingInfo.distanceTime;
+    out << ",\"pathTime\": " << completeRoutingResult.routingResultTimingInfo.pathTime;
+    out << ",\"cellTime\": " << completeRoutingResult.routingResultTimingInfo.cellTime;
+    out << ",\"nodeSearchTime\": " << completeRoutingResult.routingResultTimingInfo.nodeSearchTime;
   }
-  out << "]}";
+  out << "}";
   ttm.end();
   log(irId, "route", ttm);
 }
