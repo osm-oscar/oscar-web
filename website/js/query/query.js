@@ -120,10 +120,35 @@ define(["jquery", "state", "map", "conf"], function($, state, map, config) {
             else if (state.spatialquery.type === "path") {
                 state.spatialquery.mapshape = L.polyline(state.spatialquery.coords, config.styles.shapes.pathquery.highlight);
             }
-            else if (state.spatialquery.type === "route") {
-                state.spatialquery.mapshape = L.polyline(state.spatialquery.coords, config.styles.shapes.routequery.highlight);
+            else if (state.spatialquery.type === "route" && state.spatialquery.coords.length >= 2) {
+                let q = "[";
+                let first = true;
+                for(let coord of state.spatialquery.coords) {
+                    if(!first) {
+                        q += ',';
+                    } else {
+                        first = false
+                    }
+                    q += '[' + coord.lat;
+                    q += ',' + coord.lng + ']';
+                }
+                q += ']';
+                console.log(encodeURI(q));
+                $.ajax({
+                    type: "GET",
+                    url: "/oscar/routing/route",
+                    data: 'q=' + encodeURI(q) + '&d=1000',
+                    dataType: 'JSON',
+                    mimeType: 'application/JSON',
+                    success: function (data) {
+                        state.spatialquery.mapshape = L.polyline(data.path, config.styles.shapes.routequery.highlight);
+                        state.map.addLayer(state.spatialquery.mapshape);
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                    }
+                });
+
             }
-            state.map.addLayer(state.spatialquery.mapshape);
         }
     };
 
