@@ -123,7 +123,6 @@ int main(int argc, char **argv) {
   try {
           dbfile = app.settings().find("dbfile");
           routingDataPath = app.settings().find("routing-data").get<std::string>("path");
-          routingStorageType = app.settings().find("routing-data").get<std::string>("storageType");
   }
   catch (cppcms::json::bad_value_cast & e) {
           std::cerr << "Failed to parse dbfile object." << std::endl;
