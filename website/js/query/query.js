@@ -120,7 +120,10 @@ define(["jquery", "state", "map", "conf"], function($, state, map, config) {
             else if (state.spatialquery.type === "path") {
                 state.spatialquery.mapshape = L.polyline(state.spatialquery.coords, config.styles.shapes.pathquery.highlight);
             }
-            else if (state.spatialquery.type === "route" && state.spatialquery.coords.length >= 2) {
+            else if (state.spatialquery.type === "route") {
+                if (state.spatialquery.coords.length < 2) {
+                    return;
+                }
                 let q = "[";
                 let first = true;
                 for(let coord of state.spatialquery.coords) {
@@ -133,22 +136,21 @@ define(["jquery", "state", "map", "conf"], function($, state, map, config) {
                     q += ',' + coord.lng + ']';
                 }
                 q += ']';
-                console.log(encodeURI(q));
                 $.ajax({
                     type: "GET",
                     url: "/oscar/routing/route",
                     data: 'q=' + encodeURI(q) + '&d=1000',
                     dataType: 'JSON',
                     mimeType: 'application/JSON',
+                    async: false,
                     success: function (data) {
                         state.spatialquery.mapshape = L.polyline(data.path, config.styles.shapes.routequery.highlight);
-                        state.map.addLayer(state.spatialquery.mapshape);
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
                     }
                 });
-
             }
+            state.map.addLayer(state.spatialquery.mapshape);
         }
     };
 

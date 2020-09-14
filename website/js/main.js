@@ -417,7 +417,7 @@ requirejs(["leaflet", "jquery", "mustache", "jqueryui", "sidebar", "mustacheLoad
                 if (e.target.value !== state.spatialquery.type) {
                     query.clearSpatialQuery();
                 }
-                if (e.target.value === 'path' || e.target.value === 'point') {
+                if (e.target.value === 'path' || e.target.value === 'point' || e.target.value === 'route') {
 //                     $('#spatialquery_radius_group').removeClass('hidden');
                 }
                 else {
