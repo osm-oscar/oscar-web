@@ -7,7 +7,8 @@
 #include <cppcms/url_dispatcher.h>
 #include <cppcms/url_mapper.h>
 #include <cppcms/util.h>
-#include <path_finder/base64.h>
+#include <path_finder/graphs/Graph.h>
+#include <path_finder/helper/base64.h>
 
 namespace oscar_web {
 
@@ -28,6 +29,8 @@ void Routing::route() {
   std::vector<sserialize::spatial::GeoPoint> waypoints;
   int flags = liboscar::interface::CQRFromRouting::F_CAR;
   std::ostream &out = response().out();
+
+
   // params
   bool ok = true;
   std::string errmsg;
@@ -81,17 +84,18 @@ void Routing::route() {
   if (!ok) {
     response().status(response().bad_request, errmsg);
   } else {
-    auto routingResult =
-        data.m_pathFinder->getShortestPath(pathFinder::LatLng{(float)(waypoints[0].lat()), (float)(waypoints[0].lon())},
-                                           pathFinder::LatLng{(float)(waypoints[1].lat()), (float)(waypoints[1].lon())});
+    pathFinder::RoutingResult completeRoutingResult;
+    for(int i = 1; i < waypoints.size(); ++i) {
+      auto routingResult =
+          data.hybridPathFinder->getShortestPath(pathFinder::LatLng{(float)(waypoints[i-1].lat()), (float)(waypoints[i-1].lon())},
+                                                 pathFinder::LatLng{(float)(waypoints[i].lat()), (float)(waypoints[i].lon())});
+      completeRoutingResult += routingResult;
+    }
     response().set_content_header("text/json");
     bool first = true;
     out << "{\"path\":[";
-    sserialize::ItemIndex itemIndex(routingResult.cellIds);
 
-
-
-    for (auto wp : routingResult.path) {
+    for (auto wp : completeRoutingResult.path) {
       if (!first) {
         out << ',';
       }
@@ -99,29 +103,13 @@ void Routing::route() {
       first = false;
     }
     out << "]";
-    out << ",\"distance\": " << routingResult.distance;
-
-    out << R"(,"itemsBinary": ")";
-    auto cellInfo = sserialize::Static::spatial::GeoHierarchyCellInfo::makeRc(data.completer->store().geoHierarchy());
-    sserialize::CellQueryResult cqr(itemIndex, cellInfo, data.completer->indexStore(), sserialize::CellQueryResult::FF_DEFAULTS);
-
-    sserialize::ItemIndex idx = cqr.flaten(d().treedCQRThreads);
-    //now write the data
-    std::stringstream binaryString;
-    BinaryWriter bw(binaryString);
-    int count = 0;
-    for(auto i(idx.begin()), s(idx.end()); i != s; ++i) {
-      bw.putU32(*i);
-      auto p = data.completer->store().geoShape(*i).first();
-      bw.putU32(p.intLat());
-      bw.putU32(p.intLon());
-      ++count;
-    }
-    out << pathFinder::base64_encode(std::string_view(binaryString.str()));
-    out << '\"';
-    out << ",\"itemCount\":" << count;
-    out << "}";
+    out << ",\"distance\": " << completeRoutingResult.distance;
+    out << ",\"distanceTime\": " << completeRoutingResult.routingResultTimingInfo.distanceTime;
+    out << ",\"pathTime\": " << completeRoutingResult.routingResultTimingInfo.pathTime;
+    out << ",\"cellTime\": " << completeRoutingResult.routingResultTimingInfo.cellTime;
+    out << ",\"nodeSearchTime\": " << completeRoutingResult.routingResultTimingInfo.nodeSearchTime;
   }
+  out << "}";
   ttm.end();
   log(irId, "route", ttm);
 }

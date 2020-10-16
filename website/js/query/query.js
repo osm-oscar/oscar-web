@@ -121,7 +121,34 @@ define(["jquery", "state", "map", "conf"], function($, state, map, config) {
                 state.spatialquery.mapshape = L.polyline(state.spatialquery.coords, config.styles.shapes.pathquery.highlight);
             }
             else if (state.spatialquery.type === "route") {
-                state.spatialquery.mapshape = L.polyline(state.spatialquery.coords, config.styles.shapes.routequery.highlight);
+                if (state.spatialquery.coords.length < 2) {
+                    return;
+                }
+                let q = "[";
+                let first = true;
+                for(let coord of state.spatialquery.coords) {
+                    if(!first) {
+                        q += ',';
+                    } else {
+                        first = false
+                    }
+                    q += '[' + coord.lat;
+                    q += ',' + coord.lng + ']';
+                }
+                q += ']';
+                $.ajax({
+                    type: "GET",
+                    url: "/oscar/routing/route",
+                    data: 'q=' + encodeURI(q) + '&d=1000',
+                    dataType: 'JSON',
+                    mimeType: 'application/JSON',
+                    async: false,
+                    success: function (data) {
+                        state.spatialquery.mapshape = L.polyline(data.path, config.styles.shapes.routequery.highlight);
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                    }
+                });
             }
             state.map.addLayer(state.spatialquery.mapshape);
         }

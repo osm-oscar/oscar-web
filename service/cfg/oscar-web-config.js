@@ -48,7 +48,7 @@
 		],
     "routing-data" : 
         {
-            "path" : "./routing-data"
+            "path" : "./routing-data",
         }
 }
 

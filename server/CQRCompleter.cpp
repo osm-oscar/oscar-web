@@ -376,13 +376,14 @@ void CQRCompleter::itemsWithLocation() {
 		bw.putU32(p.intLon());
 	}
 	ttm.end();
-	log(irId, "dag", ttm, cqr, idx);
+	log(irId, "itemsWithLocation", ttm, cqr, idx);
 }
 
 void CQRCompleter::children() {
 	auto irId = genIntReqId("children");
 	
 	sserialize::TimeMeasurer ttm;
+
 	ttm.begin();
 
 	const sserialize::Static::spatial::GeoHierarchy & gh = d().completer->store().geoHierarchy();

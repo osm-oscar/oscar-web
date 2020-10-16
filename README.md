@@ -74,6 +74,7 @@ Edit the configuration. See ${PROJECT_ROOT}/server/oscar-web-config.js for possi
 ```
 vim cfg/oscar-web-config.js
 ```
+To enable routing put the folder generated with https://github.com/somakolli/path-finder-cli into the service folder and call it routing-data.
 
 Run the server component. By default this is run using cgdb to catch crashes in order to debug them. Though we haven't seen any for a longer period of time.
 ```
