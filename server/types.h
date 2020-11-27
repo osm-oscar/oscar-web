@@ -5,7 +5,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <liboscar/StaticOsmCompleter.h>
-#include <path_finder/storage/FileLoader.h>
+#include <path_finder/routing/PathFinderBase.h>
 
 
 namespace oscar_web {
@@ -49,7 +49,7 @@ struct CompletionFileData {
 	std::unordered_map<std::string, sserialize::spatial::GeoHierarchySubGraph> ghSubSetCreators;
 	std::vector< std::pair<double, double> > regionMidPoints;
 	std::vector< std::pair<double, double> > cellMidPoints;
-	std::shared_ptr<pathFinder::HybridPathFinder> hybridPathFinder;
+	std::shared_ptr<pathFinder::PathFinderBase> hybridPathFinder;
 };
 
 

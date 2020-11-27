@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
     data.treedCQR = dbfile.get<bool>("treedCQR", false);
     data.treedCQRThreads = std::min<uint32_t>(std::thread::hardware_concurrency(), dbfile.get<uint32_t>("treedCQRThreads", 1));
     data.cqrdCacheThreshold = dbfile.get<uint32_t>("dilationCacheThreshold", 0);
-    data.hybridPathFinder = pathFinder::FileLoader::loadHubLabelsShared(routingDataPath);
+    data.hybridPathFinder = pathFinder::FileLoader::loadHubLabelBundle(routingDataPath);
   }
   catch (cppcms::json::bad_value_cast & e) {
     std::cerr << "Incomplete dbfiles entry: " << e.what() << std::endl;
