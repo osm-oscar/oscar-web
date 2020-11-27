@@ -2,6 +2,11 @@
 
 The master branch version is runnig at [www.oscar-web.de](http://www.oscar-web.de).
 
+# Routing
+Thanks to https://github.com/somakolli/path_finder we also have support for car-based routing on the whole planet.
+
+A demo version is running at [routing.oscar-web.de](http://routing.oscar-web.de).
+
 # oscar-web
 
 oscar-web is a web-interface for simple interaction with the OpenStreetMap search engine [oscar](https://github.com/dbahrdt/oscar). The goal is to provide an easy to use interface and allowing
