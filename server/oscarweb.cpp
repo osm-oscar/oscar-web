@@ -122,10 +122,19 @@ int main(int argc, char **argv) {
 	cppcms::service app(argc,argv);
 	try {
 		dbfile = app.settings().find("dbfile");
-		routingDataPath = app.settings().find("routing-data").get<std::string>("path");
 	}
 	catch (cppcms::json::bad_value_cast & e) {
 		std::cerr << "Failed to parse dbfile object." << std::endl;
+		return -1;
+	}
+	try {
+		auto rs = app.settings().find("routing-data");
+		if (rs.type() != cppcms::json::is_undefined) {
+			routingDataPath = rs.get<std::string>("path");
+		}
+	}
+	catch (cppcms::json::bad_value_cast & e) {
+		std::cerr << "Failed to parse routing-data object." << std::endl;
 		return -1;
 	}
 
@@ -153,7 +162,6 @@ int main(int argc, char **argv) {
 		data.treedCQR = dbfile.get<bool>("treedCQR", false);
 		data.treedCQRThreads = std::min<uint32_t>(std::thread::hardware_concurrency(), dbfile.get<uint32_t>("treedCQRThreads", 1));
 		data.cqrdCacheThreshold = dbfile.get<uint32_t>("dilationCacheThreshold", 0);
-		data.hybridPathFinder = pathFinder::FileLoader::loadHubLabelBundle(routingDataPath);
 	}
 	catch (cppcms::json::bad_value_cast & e) {
 		std::cerr << "Incomplete dbfiles entry: " << e.what() << std::endl;
@@ -176,17 +184,24 @@ int main(int argc, char **argv) {
 		std::cerr << "Failed to initialize completer from " << data.path << ": " << e.what() << std::endl;
 		return -1;
 	}
-
-	auto f = ([data] (const sserialize::spatial::GeoPoint& source, const sserialize::spatial::GeoPoint& target, int x, double y)
-	{
-		pathFinder::LatLng sourceLatLng = pathFinder::LatLng(source.lat(), source.lon());
-		pathFinder::LatLng targetLatLng = pathFinder::LatLng(target.lat(), target.lon());
-		pathFinder::RoutingResult routingResult =
-							data.hybridPathFinder->getShortestPath(sourceLatLng, targetLatLng);
-		auto itemIndex = sserialize::ItemIndex(routingResult.cellIds);
-		return itemIndex;
-	});
-	data.completer->setCQRFromRouting(f);
+	if (routingDataPath.size()) {
+		try {
+			std::cout << "Loading hybrid path finder data" << std::endl;
+			data.hybridPathFinder = pathFinder::FileLoader::loadHubLabelBundle(routingDataPath);
+		}
+		catch (std::exception const & e) {
+			std::cerr << "Failed to load hybrid path finder data " << e.what() << std::endl;
+		}
+		auto f = [completionFileDataPtr](const sserialize::spatial::GeoPoint& source, const sserialize::spatial::GeoPoint& target, int x, double y)
+		{
+			pathFinder::LatLng sourceLatLng = pathFinder::LatLng(source.lat(), source.lon());
+			pathFinder::LatLng targetLatLng = pathFinder::LatLng(target.lat(), target.lon());
+			pathFinder::RoutingResult routingResult =
+				completionFileDataPtr->hybridPathFinder->getShortestPath(sourceLatLng, targetLatLng);
+			return sserialize::ItemIndex(std::move(routingResult.cellIds));
+		};
+		data.completer->setCQRFromRouting(f);
+	}
 
 	{ //preload data
 		std::vector<std::string> fns = dbfile.get< std::vector<std::string> >("preload", std::vector<std::string>());
