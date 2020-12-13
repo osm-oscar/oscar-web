@@ -183,7 +183,7 @@ void CQRCompleter::simpleCQR() {
 	{
 		std::string tmpStr = request().get("oh");
 		if (!tmpStr.empty()) {
-			ohf = atof(tmpStr.c_str());
+			ohf = sserialize::stod(tmpStr);
 			if (ohf >= 1.0 || ohf < 0.0) {
 				ohf = 0.0;
 			}
