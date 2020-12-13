@@ -173,6 +173,7 @@ int main(int argc, char **argv) {
 	data.completer->setAllFilesFromPrefix(data.path);
 
 	try {
+		std::cout << "Loading oscar source data" << std::endl;
 		if (data.cachedGeoHierarchy) {
 			data.completer->energize(sserialize::spatial::GeoHierarchySubGraph::T_IN_MEMORY);
 		}
