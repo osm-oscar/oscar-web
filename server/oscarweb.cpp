@@ -205,6 +205,7 @@ int main(int argc, char **argv) {
 	}
 
 	{ //preload data
+		std::cout << "Applying pre-load configuration" << std::endl;
 		std::vector<std::string> fns = dbfile.get< std::vector<std::string> >("preload", std::vector<std::string>());
 		for(const std::string & fn : fns) {
 			auto fc = liboscar::fileConfigFromString(fn);
@@ -224,6 +225,7 @@ int main(int argc, char **argv) {
 	}
 
 	try {
+		std::cout << "Computing cell mid points" << std::endl;
 		initMidPoints(completionFileDataPtr);
 	}
 	catch (std::exception & e) {
@@ -232,6 +234,7 @@ int main(int argc, char **argv) {
 	}
 
 	try {
+		std::cout << "Computing GeoHierarchy filters" << std::endl;
 		initGhFilters(app.settings().find("ghfilters"), completionFileDataPtr);
 	}
 	catch (cppcms::json::bad_value_cast & e) {
@@ -240,6 +243,7 @@ int main(int argc, char **argv) {
 	}
 
 
+	std::cout << "Settings cell distance" << std::endl;
 	std::string celldistance = dbfile.get<std::string>("celldistance", "mass");
 	if (celldistance == "annulus") {
 		data.completer->setCellDistance(liboscar::Static::OsmCompleter::CDT_ANULUS, 0);
@@ -293,7 +297,7 @@ int main(int argc, char **argv) {
 		data.log->open(data.logFilePath, std::ios::out | std::ios::app);
 	}
 
-
+	std::cout << "Starting web application" << std::endl;
 	try {
 		app.applications_pool().mount(cppcms::applications_factory<oscar_web::MainHandler, oscar_web::CompletionFileDataPtr>(completionFileDataPtr));
 		app.run();
