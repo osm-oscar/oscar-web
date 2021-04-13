@@ -264,7 +264,6 @@ void CQRItems::isRegion() {
         }
     }
 
-    std::cout << returnRegions.size() << '\n';
     // return found regions
     response().set_content_header("text/json");
     std::ostream & out = response().out();
@@ -276,14 +275,12 @@ void CQRItems::isRegion() {
         else
             out << ',';
         auto storeItem = store.at(gh.ghIdToStoreId(regionId));
-        std::cout << storeItem.geoShape().boundary().asLeafletBBox() << '\n';
         m_serializer.serialize(out, storeItem,
                                static_cast<ItemSerializer::SerializationFormat>(ItemSerializer::SF_GEO_JSON |
                                                                                 ItemSerializer::SF_WITH_SHAPE));
     }
     out << ']';
     ttm.end();
-    std::cout << ttm.elapsedMilliSeconds() << " ms" << '\n';
     log(irId, "isRegion", ttm, cqr);
 }
 }//end namespace oscar_web
