@@ -15,6 +15,7 @@ BaseApp(srv, dataPtr, "CQRItems")
 {
 	dispatcher().assign("/all", &CQRItems::all, this);
 	dispatcher().assign("/info", &CQRItems::info, this);
+    dispatcher().assign("/isregion", &CQRItems::isRegion, this);
 	mapper().assign("all","/all");
 }
 
@@ -190,4 +191,96 @@ void CQRItems::info() {
 	log(irId, "info", ttm);
 }
 
+void CQRItems::isRegion() {
+    auto irId = genIntReqId("isRegion");
+
+    sserialize::TimeMeasurer ttm;
+    ttm.begin();
+
+    // set up environment
+    const auto gh = d().completer->store().geoHierarchy();
+    const auto cqs = request().get("q");
+    const auto cqr = d().completer->cqrComplete(cqs, d().treedCQR, d().treedCQRThreads);
+    auto const idxStore = d().completer->indexStore();
+    const auto subGraph = d().completer->ghsg();
+    const auto store = d().completer->store();
+
+    // find all regions in the query
+    std::unordered_set<uint32_t> regions;
+    std::unordered_set<uint32_t> cqrCells;
+    for (sserialize::CellQueryResult::const_iterator it(cqr.begin()), end(cqr.end()); it != end; ++it) {
+        const auto &cellParents = subGraph.cellParents(it.cellId());
+        cqrCells.insert(it.cellId());
+        for (const uint32_t cellParent : cellParents) {
+            if(!regions.contains(cellParent))
+                regions.insert(cellParent);
+        }
+    }
+
+    // find regions with similar item count to the query result
+    typedef std::pair<uint32_t, size_t> Region;
+    auto cqrItemCount = cqr.maxItems();
+    std::vector<Region> potentialRegions;
+
+    for(auto regionId: regions) {
+        size_t regionItemCount = 0;
+        const auto& regionCells = idxStore.at(gh.regionCellIdxPtr(regionId));
+        bool tooManyItems = false;
+        float relativeSize;
+        for(const auto cell: regionCells) {
+            regionItemCount += gh.cellItemsCount(cell);
+            relativeSize = float(regionItemCount) / cqrItemCount;
+            if(relativeSize > 1.05) {
+                tooManyItems = true;
+                break;
+            }
+        }
+        if(tooManyItems)
+            continue;
+
+        // check if not too small
+        if( relativeSize > 0.95 ) {
+            potentialRegions.emplace_back(std::make_pair(regionId, regionCells.size()));
+        }
+    }
+
+    std::vector<Region> returnRegions;
+    // filter out regions which do not contain all query cells
+    for(auto [regionId, regionCellCount]: potentialRegions) {
+        uint32_t misses = 0;
+        for(const auto regionCell: idxStore.at(gh.regionCellIdxPtr(regionId))) {
+            if(!cqrCells.contains(regionCell)) {
+                misses++;
+                break;
+            }
+        }
+        /*
+         * Some queries like for example "Aalen" have most of their items in the region "Aalen",
+         * but just only slightly more than half of the query cells are in the region "Aalen".
+         * That's why we decide here "democratically" which region to choose.
+         */
+        if(misses == 0 && (regionCellCount > 0.5f * cqrCells.size()) ) {
+            returnRegions.emplace_back(regionId, regionCellCount);
+        }
+    }
+
+    // return found regions
+    response().set_content_header("text/json");
+    std::ostream & out = response().out();
+    out << '[';
+    bool first = true;
+    for(auto [regionId, cellCount]: returnRegions) {
+        if(first)
+            first = false;
+        else
+            out << ',';
+        auto storeItem = store.at(gh.ghIdToStoreId(regionId));
+        m_serializer.serialize(out, storeItem,
+                               static_cast<ItemSerializer::SerializationFormat>(ItemSerializer::SF_GEO_JSON |
+                                                                                ItemSerializer::SF_WITH_SHAPE));
+    }
+    out << ']';
+    ttm.end();
+    log(irId, "isRegion", ttm, cqr);
+}
 }//end namespace oscar_web

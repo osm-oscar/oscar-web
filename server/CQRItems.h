@@ -40,6 +40,13 @@ public:
 	  * [Json item description]
 	  */
 	void info();
+	/** returns a region if the query is very similar to the region
+	 *  q=<searchstring>
+	 *  Return:
+	 *  [region as geojson]
+	 */
+    void isRegion();
+
 private:
 	typedef sserialize::Static::spatial::GeoHierarchy::SubSet::NodePtr SubSetNodePtr;
 private:
