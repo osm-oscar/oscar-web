@@ -52,3 +52,4 @@ SET(OSCAR_WEB_LINK_LIBS
 
 add_executable(${PROJECT_NAME} ${OSCAR_WEB_SOURCES_CPP})
 target_link_libraries(${PROJECT_NAME} ${OSCAR_WEB_LINK_LIBS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/vendor/cppcms ${CMAKE_CURRENT_SOURCE_DIR}/vendor/cppcms/booster)
