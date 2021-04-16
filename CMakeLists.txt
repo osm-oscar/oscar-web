@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.16)
 project(oscar-web)
 
 set(CMAKE_MODULE_PATH
@@ -7,8 +7,14 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/vendor/sserialize/cmake/
 )
 
-include(add_buildtype_lto)
-include(add_buildtype_ultra)
+option(OPTIMIZE_ULTRA "Build oscar-web with lto and aggressive optimization settings for sserialize")
+if (OPTIMIZE_ULTRA)
+	set(LIBOSCAR_NO_DATA_REFCOUNTING_ENABLED TRUE)
+	set(SSERIALIZE_INLINE_IN_LTO_ENABLED TRUE)
+	set(SSERIALIZE_CONTIGUOUS_UBA_ONLY_SOFT_FAIL_ENABLED TRUE)
+	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
 add_subdirectory(vendor/liboscar liboscar)
 add_subdirectory(vendor/path_finder)
 find_package(CPPCMS REQUIRED)
