@@ -3,4 +3,4 @@
 	url = https://github.com/dbahrdt/liboscar
 [submodule "vendor/path_finder"]
 	path = vendor/path_finder
-	url = https://github.com/dbahrdt/path_finder
+	url = https://github.com/somakolli/path_finder
