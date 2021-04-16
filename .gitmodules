@@ -4,3 +4,6 @@
 [submodule "vendor/path_finder"]
 	path = vendor/path_finder
 	url = https://github.com/dbahrdt/path_finder
+[submodule "vendor/cppcms"]
+	path = vendor/cppcms
+	url = https://github.com/dbahrdt/cppcms.git

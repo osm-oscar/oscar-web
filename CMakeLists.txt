@@ -6,6 +6,7 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/cmake/
 	${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/vendor/sserialize/cmake/
 )
+find_package(LIBRT)
 
 option(OPTIMIZE_ULTRA "Build oscar-web with lto and aggressive optimization settings for sserialize")
 if (OPTIMIZE_ULTRA)
@@ -17,8 +18,12 @@ endif()
 
 add_subdirectory(vendor/liboscar liboscar)
 add_subdirectory(vendor/path_finder)
-find_package(CPPCMS REQUIRED)
-find_package(LIBRT)
+
+set(DISABLE_SHARED ON)
+set(DISABLE_SCGI ON)
+set(DISABLE_HTTP ON)
+set(DISABLE_TCPCACHE ON)
+add_subdirectory(vendor/cppcms cppcms)
 
 set(OSCAR_WEB_SOURCES_CPP
 	server/ItemSerializer.cpp
@@ -39,8 +44,9 @@ SET(OSCAR_WEB_LINK_LIBS
 	liboscar
 	sserialize
 	path_finder
+	cppcms-static
+	booster-static
 	${LIBRT_LIBRARIES}
-	${CPPCMS_LIBRARY}
 	${BOOSTER_LIBRARY}
 )
 
