@@ -333,7 +333,7 @@ void KVClustering::printResult(const std::uint32_t &id, const long &itemCount) {
 	} else if (m_mode == 3) {
 		m_outStr << R"({"name": ")" << je.escape(m_store.at(gh.ghIdToStoreId(id)).value("name"))
 				 << R"(", "itemCount":)" << itemCount
-				 << ",\"id\":" << id << "}";
+				 << ",\"id\":" << gh.ghIdToStoreId(id) << "}";
 	}
 }
 
