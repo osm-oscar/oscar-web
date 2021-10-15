@@ -5,11 +5,12 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake/
 	${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/cmake/
 	${CMAKE_CURRENT_SOURCE_DIR}/vendor/liboscar/vendor/sserialize/cmake/
+	${CMAKE_MODULE_PATH}
 )
 find_package(LIBRT)
 
-option(OPTIMIZE_ULTRA "Build oscar-web with lto and aggressive optimization settings for sserialize")
-if (OPTIMIZE_ULTRA)
+option(OSCARWEB_OPTIMIZE_ULTRA "Build oscar-web with lto and aggressive optimization settings for sserialize")
+if (OSCARWEB_OPTIMIZE_ULTRA)
 	set(LIBOSCAR_NO_DATA_REFCOUNTING_ENABLED TRUE)
 	set(SSERIALIZE_INLINE_IN_LTO_ENABLED TRUE)
 	set(SSERIALIZE_CONTIGUOUS_UBA_ONLY_SOFT_FAIL_ENABLED TRUE)
