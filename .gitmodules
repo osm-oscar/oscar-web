@@ -1,9 +1,9 @@
 [submodule "vendor/liboscar"]
 	path = vendor/liboscar
-	url = https://github.com/dbahrdt/liboscar
+	url = https://github.com/osm-oscar/liboscar
 [submodule "vendor/path_finder"]
 	path = vendor/path_finder
-	url = https://github.com/dbahrdt/path_finder
+	url = https://github.com/osm-oscar/path_finder
 [submodule "vendor/cppcms"]
 	path = vendor/cppcms
-	url = https://github.com/dbahrdt/cppcms.git
+	url = https://github.com/osm-oscar/cppcms.git
