@@ -48,7 +48,6 @@ SET(OSCAR_WEB_LINK_LIBS
 	cppcms-static
 	booster-static
 	${LIBRT_LIBRARIES}
-	${BOOSTER_LIBRARY}
 )
 
 add_executable(${PROJECT_NAME} ${OSCAR_WEB_SOURCES_CPP})
