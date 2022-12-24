@@ -50,8 +50,13 @@ public:
 
 	/** returns items and their location for the query q:
 	  * q=<searchstring>
+	  * bounding-radius=true|false
 	  * Return:
-	  * array<uint32_t> : [item id, maxLon*10^7, maxLat*10^7]
+	  * if bounding-radius==false:
+	  *    array<uint32_t> : [item id, maxLon*10^7, maxLat*10^7]
+	  *    
+	  * if bounding-radius==true:
+	  *    array<uint32_t> : [item id, maxLon*10^7, maxLat*10^7, radius maxLat*10^7]
 	  */
 	void itemsWithLocation();
 	

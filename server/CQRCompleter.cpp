@@ -356,6 +356,7 @@ void CQRCompleter::itemsWithLocation() {
 	//params
 	std::string cqs = request().get("q");
 	std::string regionFilter = request().get("rf");
+	bool withBoundingRadius = request().get("bounding-radius") == "true";
 
 	sserialize::CellQueryResult cqr;
 	if (d().ghSubSetCreators.count(regionFilter)) {
@@ -368,12 +369,33 @@ void CQRCompleter::itemsWithLocation() {
 	sserialize::ItemIndex idx = cqr.flaten(d().treedCQRThreads);
 	//now write the data
 	BinaryWriter bw(response().out());
-
-	for(auto i(idx.begin()), s(idx.end()); i != s; ++i) {
-		bw.putU32(*i);
-		auto p = store.geoShape(*i).first();
-		bw.putU32(p.intLat());
-		bw.putU32(p.intLon());
+	if (withBoundingRadius) {
+		for(auto i(idx.begin()), s(idx.end()); i != s; ++i) {
+			bw.putU32(*i);
+			auto shape = store.geoShape(*i);
+			auto p = shape.first();
+			bw.putU32(p.intLat());
+			bw.putU32(p.intLon());
+			double apxRadius = 0.0;
+			if (shape.type() != sserialize::spatial::GeoShapeType::GS_POINT) {
+				//The approximate radius is the maximum axis-aligned distance from the first point
+				//to the border of the axis aligned bounding box of the spatial object
+				auto bbox = shape.boundary();
+				apxRadius = std::max<double>(
+												std::max<double>(p.lat()-bbox.minLat(), bbox.maxLat()-p.lat()),
+												std::max<double>(p.lon()-bbox.minLon(), bbox.maxLon()-p.lon())
+									   );
+			}
+			bw.putU32(sserialize::spatial::GeoPoint::toIntLat(apxRadius));
+		}
+	}
+	else {
+		for(auto i(idx.begin()), s(idx.end()); i != s; ++i) {
+			bw.putU32(*i);
+			auto p = store.geoShape(*i).first();
+			bw.putU32(p.intLat());
+			bw.putU32(p.intLon());
+		}
 	}
 	ttm.end();
 	log(irId, "itemsWithLocation", ttm, cqr, idx);
