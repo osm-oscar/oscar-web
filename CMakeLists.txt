@@ -9,6 +9,8 @@ set(CMAKE_MODULE_PATH
 )
 find_package(LIBRT)
 
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations)
+
 option(OSCARWEB_OPTIMIZE_ULTRA "Build oscar-web with lto and aggressive optimization settings for sserialize")
 if (OSCARWEB_OPTIMIZE_ULTRA)
 	set(LIBOSCAR_NO_DATA_REFCOUNTING_ENABLED TRUE)
